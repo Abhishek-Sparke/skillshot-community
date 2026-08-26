@@ -26,7 +26,8 @@ export default async function Profile() {
 
       <div className="accountActions" aria-label="Account options">
         <a className="accountAction" href="/upload"><strong>＋</strong><span><b>Upload a post</b><small>Share a new screenshot</small></span></a>
-        <a className="accountAction" href="/#explore"><strong>⌕</strong><span><b>Browse community</b><small>Discover other creators</small></span></a>
+        <a className="accountAction" href="/my-posts"><strong>▦</strong><span><b>My posts</b><small>See everything you shared</small></span></a>
+        <a className="accountAction" href="/community"><strong>⌕</strong><span><b>Browse community</b><small>Discover other creators</small></span></a>
         <a className="accountAction" href="#edit-profile"><strong>✎</strong><span><b>Edit profile</b><small>Update your public details</small></span></a>
       </div>
 

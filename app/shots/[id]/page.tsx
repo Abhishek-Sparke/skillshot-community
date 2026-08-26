@@ -1,2 +1,8 @@
-'use client';import { FormEvent,useState } from 'react';
-export default function Shot({params}:{params:Promise<{id:string}>}){const[comments,setComments]=useState([{id:'demo',author:'Maya Chen',body:'The spacing and type choices are so confident. Beautiful work.'}]);const[text,setText]=useState('');async function add(e:FormEvent){e.preventDefault();const{id}=await params;const r=await fetch(`/api/posts/${id}/comments`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({body:text})});if(r.ok){const c=await r.json();setComments(v=>[...v,{id:c.id,author:'You',body:text}]);setText('')}}return <main className="formPage"><a className="brand" href="/"><span>S</span> Skillshot</a><section className="detail"><div className="detailShot">Make it useful.<br/><em>Then beautiful.</em></div><h1>Fintech dashboard exploration</h1><p>A calm, data-dense portfolio view built around confident decisions.</p><form className="commentForm" onSubmit={add}><input value={text} onChange={e=>setText(e.target.value)} placeholder="Add a thoughtful comment" required/><button className="primary">Post</button></form>{comments.map(c=><div className="comment" key={c.id}><b>{c.author}</b><p>{c.body}</p>{c.author==='You'&&<button onClick={()=>setComments(v=>v.filter(x=>x.id!==c.id))}>Delete</button>}</div>)}</section></main>}
+import ShotDetail from '../../components/shot-detail';
+
+export const dynamic = 'force-dynamic';
+
+export default async function ShotPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <ShotDetail id={id} />;
+}
