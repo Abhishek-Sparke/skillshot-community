@@ -38,7 +38,10 @@ export default async function Profile() {
         <label>Website<input name="website" type="url" placeholder="https://"/></label>
         <button className="primary">Save profile</button>
       </form>
-      <a className="quietLink" href={chatGPTSignOutPath('/')}>Sign out</a>
+      <div className="profileLinks">
+        <a className="backHome" href="/">← Back to home</a>
+        <a className="quietLink" href={chatGPTSignOutPath('/')}>Sign out</a>
+      </div>
     </section>
   </main>;
 }
