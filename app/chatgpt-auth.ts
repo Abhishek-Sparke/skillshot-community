@@ -12,7 +12,7 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   const session = await auth();
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
-  const name = session.user?.name?.trim() || null;
+  const name = session?.user?.name?.trim() || null;
   return { userId: email, email, displayName: name ?? email, fullName: name };
 }
 
@@ -23,14 +23,13 @@ export async function requireChatGPTUser(returnTo: string) {
 }
 
 export function chatGPTSignInPath(returnTo: string) {
-  return `/signin?callbackUrl=${encodeURIComponent(safePath(returnTo))}`;
+  return '/signin?callbackUrl=' + encodeURIComponent(safePath(returnTo));
 }
 
 export function chatGPTSignOutPath(returnTo = '/') {
-  return `/api/auth/signout?callbackUrl=${encodeURIComponent(safePath(returnTo))}`;
+  return '/api/auth/signout?callbackUrl=' + encodeURIComponent(safePath(returnTo));
 }
 
 function safePath(value: string) {
   return value.startsWith('/') && !value.startsWith('//') ? value : '/';
 }
-
