@@ -1,19 +1,15 @@
-import { env } from 'cloudflare:workers';
-import { eq } from 'drizzle-orm';
-import { getReadyDb } from '../../../../db';
-import { posts } from '../../../../db/schema';
+import { getReadyDb } from '../../../../lib/db';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [row] = await (await getReadyDb()).select().from(posts).where(eq(posts.id, id)).limit(1);
-  if (!row) return new Response('Image not found', { status: 404 });
-  const object = await env.FILES.get(row.imageKey);
-  if (!object) return new Response('Image not found', { status: 404 });
+  const rows = await (await getReadyDb()).query(`SELECT image_url,image_type FROM posts WHERE id=$1 LIMIT 1`, [id]);
+  if (!rows.length) return new Response('Image not found', { status: 404 });
+  const upstream = await fetch(String(rows[0].image_url));
+  if (!upstream.ok || !upstream.body) return new Response('Image not found', { status: 404 });
   const download = new URL(request.url).searchParams.get('download') === '1';
-  return new Response(object.body, { headers: {
-    'Content-Type': row.imageType,
+  return new Response(upstream.body, { headers: {
+    'Content-Type': String(rows[0].image_type),
     'Content-Disposition': `${download ? 'attachment' : 'inline'}; filename="skillshot-${id}"`,
-    'Cache-Control': 'public, max-age=3600',
-    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff',
   } });
 }

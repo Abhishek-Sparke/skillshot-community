@@ -11,8 +11,8 @@ export default async function Profile() {
       <section className="formCard auth">
         <p className="eyebrow">WELCOME TO SKILLSHOT</p>
         <h1>Your work deserves a home.</h1>
-        <p>Sign in securely to upload screenshots, react, comment, and shape your profile. Your account provides a verified email, so there is no extra password to store.</p>
-        <a className="primary" href={chatGPTSignInPath('/profile')}>Sign in to continue →</a>
+        <p>Sign in securely with Google to upload screenshots, react, comment, and shape your profile. There is no extra password to store.</p>
+        <a className="primary" href={chatGPTSignInPath('/profile')}>Continue with Google →</a>
       </section>
     </main>;
   }

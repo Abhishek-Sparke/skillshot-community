@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://skillshot-community.berry-cove-4069.chatgpt.site'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: 'Skillshot — Show your skills in one shot',
   description: 'Share screenshots of your best work, discover talented makers, and celebrate the details.',
   openGraph: { title: 'Skillshot — Show your skills in one shot', description: 'Share the work you’re proud of.', images: ['/og.png'] },
