@@ -1,6 +1,7 @@
 import { put } from '@vercel/blob';
 import { getChatGPTUser } from '../../chatgpt-auth';
 import { ensureUser, getReadyDb } from '../../../lib/db';
+import { normalizeRole, roleForEmail } from '../../../lib/roles';
 
 const allowed = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
   const sql = await getReadyDb();
   const rows = await sql.query(`
     SELECT p.id, p.user_id, p.title, p.description, p.tags, p.created_at,
-      u.display_name, u.username,
+      u.display_name, u.username, u.email, u.role,
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS reaction_count,
       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
     FROM posts p JOIN users u ON u.id = p.user_id
@@ -21,7 +22,9 @@ export async function GET(request: Request) {
   return Response.json({ posts: rows.map(row => ({
     id: row.id, title: row.title, description: row.description,
     tags: Array.isArray(row.tags) ? row.tags : [], author: row.display_name,
-    username: row.username, createdAt: new Date(row.created_at as string).getTime(),
+    username: row.username,
+    authorRole: roleForEmail(String(row.email)) === 'admin' ? 'admin' : normalizeRole(row.role),
+    createdAt: new Date(row.created_at as string).getTime(),
     reactionCount: Number(row.reaction_count), commentCount: Number(row.comment_count),
     imageUrl: `/api/images/${row.id}`, downloadUrl: `/api/images/${row.id}?download=1`,
     isOwner: user?.userId === row.user_id,
