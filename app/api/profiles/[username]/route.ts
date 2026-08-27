@@ -1,6 +1,7 @@
 import { getChatGPTUser } from '../../../chatgpt-auth';
 import { getReadyDb } from '../../../../lib/db';
 import { normalizeRole, roleForEmail } from '../../../../lib/roles';
+import { safeStoredSocialLinks } from '../../../../lib/social-links';
 
 export async function GET(_: Request, { params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -40,7 +41,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     website,
     location: String(row.location || ''),
     skills: Array.isArray(row.skills) ? row.skills.map(String) : [],
-    socialLinks: row.social_links && typeof row.social_links === 'object' ? row.social_links : {},
+    socialLinks: safeStoredSocialLinks(row.social_links),
     avatarUrl: row.avatar_url ? `/api/avatars/${encodeURIComponent(String(row.username))}?v=${encodeURIComponent(String(row.avatar_url))}` : '',
     role: roleForEmail(String(row.email)) === 'admin' ? 'admin' : normalizeRole(row.role),
     joinedAt: new Date(row.created_at as string).getTime(),
