@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import RoleBadge from './role-badge';
+import type { UserRole } from '../../lib/roles';
 
 export type CommunityPost = {
   id: string;
@@ -9,6 +11,7 @@ export type CommunityPost = {
   tags: string[];
   author: string;
   username: string;
+  authorRole: UserRole;
   createdAt: number;
   reactionCount: number;
   commentCount: number;
@@ -77,7 +80,7 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
         <div className="meta">
           <div className="user">
             <span className="avatar">{initials(post.author)}</span>
-            <div><a className="postTitle" href={`/shots/${post.id}`}>{post.title}</a><small>{post.author} · @{post.username}</small></div>
+            <div><a className="postTitle" href={`/shots/${post.id}`}>{post.title}</a><small className="authorLine">{post.author} <RoleBadge role={post.authorRole} /> · @{post.username}</small></div>
           </div>
           {post.description && <p>{post.description}</p>}
           <div className="tags">
@@ -91,4 +94,3 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
     </div>}
   </>;
 }
-
