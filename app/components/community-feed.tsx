@@ -93,8 +93,8 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
           <a className="shotMediaLink" href={`/shots/${post.id}`} aria-label={`Open ${post.title}`}>
             <img src={post.imageUrl} alt={post.title}/>
           </a>
-          <button className="shotPreview" type="button" onClick={() => setPreviewPost(post)} aria-haspopup="dialog">
-            Preview ↗
+          <button className="shotPreview" type="button" onClick={() => setPreviewPost(post)} aria-haspopup="dialog" aria-label={`Preview ${post.title}`}>
+            ↗
           </button>
           <span className="postAvatar" aria-hidden="true">{initials(post.author)}</span>
         </div>
