@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import Link from 'next/link';
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
@@ -43,7 +44,7 @@ export default function Upload() {
   }
 
   return <main className="formPage">
-    <a className="brand" href="/"><span>S</span> Skillshot</a>
+    <Link className="brand" href="/"><span>S</span> Skillshot</Link>
     <section className="formCard">
       <p className="eyebrow">SHARE YOUR WORK</p>
       <h1>Put your skills in the frame.</h1>
@@ -63,15 +64,14 @@ export default function Upload() {
             setPreview(URL.createObjectURL(file));
           }}/>
         </label>
-        <label>Title<input required name="title" maxLength={100} placeholder="What did you make?"/></label>
+        <label>Skillshot title<input required name="title" maxLength={100} placeholder="What did you make?"/></label>
         <label>Description<textarea name="description" maxLength={1000} placeholder="Tell us about the idea or process"/></label>
-        <label>Skills / tags<input name="tags" placeholder="UI Design, React, Illustration"/></label>
+        <label>Skillshot tags<input name="tags" placeholder="UI Design, React, Illustration"/></label>
         <button className="primary" type="submit" disabled={busy}>{busy ? 'Publishing…' : 'Publish shot →'}</button>
         <p role="status" aria-live="polite">{status}</p>
       </form>
-      <a className="backHome" href="/">← Back to home</a>
-      <a className="quietLink" href="/my-posts">View my posts</a>
+      <Link className="backHome" href="/">← Back to home</Link>
+      <Link className="quietLink" href="/my-posts">View my posts</Link>
     </section>
   </main>;
 }
-
