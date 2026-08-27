@@ -10,8 +10,11 @@ const messages: Record<string, string> = {
   'username-taken': 'That username is already taken.',
   website: 'Website must begin with http:// or https://.',
   social: 'Social links must begin with http:// or https://.',
-  avatar: 'Choose a PNG, JPG, or WebP avatar smaller than 2 MB.',
-  'avatar-upload': 'Your avatar could not be uploaded. Please try again.',
+  avatar: 'Choose a PNG, JPG, or WebP image. Your saved avatar has a 2 MB maximum and is optimized automatically.',
+  'avatar-size': 'Profile picture must be smaller than 2 MB.',
+  'avatar-type': 'Unsupported image format. Use PNG, JPG, or WebP.',
+  'avatar-invalid': "That image couldn't be read. Please choose another PNG, JPG, or WebP image.",
+  'avatar-upload': "Couldn't upload your profile picture. Please try again.",
   save: 'Your profile could not be saved. Please try again.',
 };
 
