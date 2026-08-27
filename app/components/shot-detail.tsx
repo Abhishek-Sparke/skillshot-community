@@ -18,6 +18,9 @@ export default function ShotDetail({ id }: { id: string }) {
   const [text, setText] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -51,8 +54,33 @@ export default function ShotDetail({ id }: { id: string }) {
   }
 
   async function deleteComment(commentId: string) {
+    if (!window.confirm('Delete this comment?')) return;
     const response = await fetch(`/api/posts/${id}/comments?commentId=${encodeURIComponent(commentId)}`, { method: 'DELETE' });
-    if (response.ok) setComments(current => current.filter(comment => comment.id !== commentId));
+    if (response.ok) {
+      setComments(current => current.filter(comment => comment.id !== commentId));
+      setOpenMenu(null);
+      setStatus('Comment deleted.');
+    }
+  }
+
+  function startEditing(comment: Comment) {
+    setEditingId(comment.id);
+    setEditingText(comment.body);
+    setOpenMenu(null);
+    setStatus('');
+  }
+
+  async function saveComment(event: FormEvent, commentId: string) {
+    event.preventDefault();
+    const response = await fetch(`/api/posts/${id}/comments?commentId=${encodeURIComponent(commentId)}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: editingText }),
+    });
+    if (!response.ok) { setStatus('Could not edit your comment.'); return; }
+    const updated = await response.json();
+    setComments(current => current.map(comment => comment.id === commentId ? { ...comment, body: updated.body } : comment));
+    setEditingId(null);
+    setEditingText('');
+    setStatus('Comment updated.');
   }
 
   if (loading) return <main className="formPage"><div className="feedState"><span className="loader"/> Loading shot…</div></main>;
@@ -79,9 +107,20 @@ export default function ShotDetail({ id }: { id: string }) {
         <p className="actionStatus" role="status">{status}</p>
         {comments.length === 0 && <p className="noComments">No comments yet. Start the conversation.</p>}
         {comments.map(comment => <div className="comment" key={comment.id}>
-          <b className="authorLine">{comment.author} <RoleBadge role={comment.authorRole} /> <small>@{comment.username}</small></b>
-          <p>{comment.body}</p>
-          {comment.canDelete && <button onClick={() => deleteComment(comment.id)}>Delete</button>}
+          <div className="commentHeader">
+            <b className="authorLine">{comment.author} <RoleBadge role={comment.authorRole} /> <small>@{comment.username}</small></b>
+            {comment.canDelete && <div className="commentMenu">
+              <button type="button" className="commentMenuButton" aria-label="Comment actions" aria-expanded={openMenu === comment.id} onClick={() => setOpenMenu(current => current === comment.id ? null : comment.id)}>•••</button>
+              {openMenu === comment.id && <div className="commentMenuPanel" role="menu">
+                <button type="button" role="menuitem" onClick={() => startEditing(comment)}>Edit</button>
+                <button type="button" role="menuitem" className="dangerAction" onClick={() => deleteComment(comment.id)}>Delete</button>
+              </div>}
+            </div>}
+          </div>
+          {editingId === comment.id ? <form className="commentEditForm" onSubmit={event => saveComment(event, comment.id)}>
+            <input value={editingText} onChange={event => setEditingText(event.target.value)} maxLength={1000} required autoFocus/>
+            <div><button type="submit" className="editSave">Save</button><button type="button" onClick={() => setEditingId(null)}>Cancel</button></div>
+          </form> : <p>{comment.body}</p>}
         </div>)}
       </section>
     </section>

@@ -76,11 +76,18 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
       {visible.map(post => <article className="post" key={post.id}>
         <a className="shot uploadedShot" href={`/shots/${post.id}`} aria-label={`Open ${post.title}`}>
           <img src={post.imageUrl} alt={post.title}/>
+          <span className="shotPreview">Preview ↗</span>
         </a>
         <div className="meta">
           <div className="user">
             <span className="avatar">{initials(post.author)}</span>
-            <div><a className="postTitle" href={`/shots/${post.id}`}>{post.title}</a><small className="authorLine">{post.author} <RoleBadge role={post.authorRole} /> · @{post.username}</small></div>
+            <div className="postIdentity">
+              <a className="postTitle" href={`/shots/${post.id}`}>{post.title}</a>
+              <small className="authorBlock">
+                <span className="authorName"><span>{post.author}</span><RoleBadge role={post.authorRole} /></span>
+                <span className="authorHandle">@{post.username}</span>
+              </small>
+            </div>
           </div>
           {post.description && <p>{post.description}</p>}
           <div className="tags">
