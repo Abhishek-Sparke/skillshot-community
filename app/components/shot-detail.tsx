@@ -91,7 +91,7 @@ export default function ShotDetail({ id }: { id: string }) {
     <section className="detail">
       <img className="detailImage" src={post.imageUrl} alt={post.title}/>
       <div className="detailHeading">
-        <div><p className="eyebrow">@{post.username}</p><h1>{post.title}</h1><p>Shared by <b className="authorLine">{post.author} <RoleBadge role={post.authorRole} /></b></p></div>
+        <div><a className="eyebrow creatorLink" href={`/users/${encodeURIComponent(post.username)}`}>@{post.username}</a><h1>{post.title}</h1><p>Shared by <a className="authorLine creatorLink" href={`/users/${encodeURIComponent(post.username)}`}><b>{post.author}</b> <RoleBadge role={post.authorRole} /></a></p></div>
         <a className="downloadButton" href={post.downloadUrl}>↓ Download</a>
       </div>
       {post.description && <p className="detailDescription">{post.description}</p>}
@@ -108,7 +108,7 @@ export default function ShotDetail({ id }: { id: string }) {
         {comments.length === 0 && <p className="noComments">No comments yet. Start the conversation.</p>}
         {comments.map(comment => <div className="comment" key={comment.id}>
           <div className="commentHeader">
-            <b className="authorLine">{comment.author} <RoleBadge role={comment.authorRole} /> <small>@{comment.username}</small></b>
+            <a className="authorLine creatorLink" href={`/users/${encodeURIComponent(comment.username)}`}><b>{comment.author}</b> <RoleBadge role={comment.authorRole} /> <small>@{comment.username}</small></a>
             {comment.canDelete && <div className="commentMenu">
               <button type="button" className="commentMenuButton" aria-label="Comment actions" aria-expanded={openMenu === comment.id} onClick={() => setOpenMenu(current => current === comment.id ? null : comment.id)}>•••</button>
               {openMenu === comment.id && <div className="commentMenuPanel" role="menu">
