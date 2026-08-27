@@ -12,15 +12,18 @@ export function getDb() {
 
 export async function getReadyDb() {
   const sql = getDb();
-  initialization ??= Promise.all([
-    sql.query(`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY, email text UNIQUE NOT NULL, display_name text NOT NULL, username text UNIQUE NOT NULL, bio text NOT NULL DEFAULT '', website text NOT NULL DEFAULT '', created_at timestamptz NOT NULL DEFAULT now())`),
-    sql.query(`CREATE TABLE IF NOT EXISTS posts (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, title text NOT NULL, description text NOT NULL DEFAULT '', tags jsonb NOT NULL DEFAULT '[]'::jsonb, image_url text NOT NULL, image_type text NOT NULL, image_size integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`),
-    sql.query(`CREATE TABLE IF NOT EXISTS reactions (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(post_id, user_id))`),
-    sql.query(`CREATE TABLE IF NOT EXISTS comments (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, body text NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`),
-    sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`),
-    sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id)`),
-    sql.query(`CREATE INDEX IF NOT EXISTS idx_comments_post_created ON comments(post_id, created_at)`),
-  ]);
+  // These statements depend on one another, so run them in order. Executing
+  // them concurrently can try to create posts before users (or indexes before
+  // their tables), leaving a fresh database only partially initialized.
+  initialization ??= (async () => {
+    await sql.query(`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY, email text UNIQUE NOT NULL, display_name text NOT NULL, username text UNIQUE NOT NULL, bio text NOT NULL DEFAULT '', website text NOT NULL DEFAULT '', created_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS posts (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, title text NOT NULL, description text NOT NULL DEFAULT '', tags jsonb NOT NULL DEFAULT '[]'::jsonb, image_url text NOT NULL, image_type text NOT NULL, image_size integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS reactions (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(post_id, user_id))`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS comments (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, body text NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_comments_post_created ON comments(post_id, created_at)`);
+  })();
   await initialization;
   return sql;
 }

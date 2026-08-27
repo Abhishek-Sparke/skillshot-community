@@ -12,7 +12,7 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   const session = await auth();
   const email = session?.user?.email?.toLowerCase();
   if (!email) return null;
-  const name = session.user?.name?.trim() || null;
+  const name = session?.user?.name?.trim() || null;
   return { userId: email, email, displayName: name ?? email, fullName: name };
 }
 
