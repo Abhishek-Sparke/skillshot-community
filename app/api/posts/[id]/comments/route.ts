@@ -27,6 +27,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   return Response.json({ id, body, author: profile.display_name ?? user.displayName, username: profile.username ?? user.email.split('@')[0], authorRole: roleForEmail(user.email), createdAt: Date.now(), canDelete: true }, { status: 201 });
 }
 
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getChatGPTUser();
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { id: postId } = await params;
+  const commentId = new URL(request.url).searchParams.get('commentId');
+  const body = String((await request.json()).body || '').trim().slice(0, 1000);
+  if (!commentId || !body) return Response.json({ error: 'Comment required' }, { status: 400 });
+  const updated = await (await getReadyDb()).query(
+    `UPDATE comments SET body=$1 WHERE id=$2 AND post_id=$3 AND user_id=$4 RETURNING id,body`,
+    [body, commentId, postId, user.userId],
+  );
+  if (!updated.length) return Response.json({ error: 'Comment not found' }, { status: 404 });
+  return Response.json({ id: updated[0].id, body: updated[0].body });
+}
+
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getChatGPTUser();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });

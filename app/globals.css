@@ -39,6 +39,8 @@ body { margin:0; background:var(--paper); color:var(--ink); font-family:Arial,sa
 .uploadedShot { display:block; overflow:hidden; background:#ece8df; }
 .uploadedShot img { width:100%; height:100%; display:block; object-fit:cover; transition:transform .25s; }
 .uploadedShot:hover img { transform:scale(1.025); }
+.shotPreview { position:absolute; left:12px; bottom:12px; padding:7px 10px; border-radius:8px; background:#20201de8; color:#fff; font-size:11px; font-weight:800; letter-spacing:.2px; box-shadow:0 3px 10px #0003; transition:transform .15s,background .15s; }
+.uploadedShot:hover .shotPreview { transform:translateY(-2px); background:var(--red); }
 .meta { padding:20px; }
 .user { display:flex; gap:11px; align-items:center; }
 .avatar { width:37px; height:37px; flex:none; border-radius:50%; display:grid; place-items:center; background:#eee2d5; font-size:11px; font-weight:bold; }
@@ -59,7 +61,7 @@ body { margin:0; background:var(--paper); color:var(--ink); font-family:Arial,sa
 .tags span { font-size:10px; background:#f1eee7; padding:6px 8px; border-radius:5px; }
 .tags a { text-decoration:none; color:#777; font-weight:bold; }
 .postStat { margin-left:auto!important; background:transparent!important; font-weight:800; color:#777; }
-.cardDownload { background:#222!important; color:white!important; border-radius:50%; width:26px; height:26px; display:grid; place-items:center; }
+.cardDownload { background:#222!important; color:white!important; border-radius:50%; width:22px; height:22px; display:grid; place-items:center; font-size:11px; }
 .feedState,.emptyFeed { min-height:260px; display:flex; align-items:center; justify-content:center; gap:12px; color:#706c64; }
 .errorState { color:#a33; }
 .loader { width:20px; height:20px; border:2px solid #d2ccc0; border-top-color:var(--red); border-radius:50%; animation:spin .8s linear infinite; }
@@ -133,9 +135,21 @@ footer a { color:inherit; text-decoration:none; }
 .commentForm input { flex:1; }
 .commentForm button { border:0; }
 .comment { border-top:1px solid var(--line); padding:18px 0; }
+.commentHeader { display:flex; align-items:center; justify-content:space-between; gap:14px; }
 .comment p { color:#666; }
 .comment b small { color:#888; font-weight:400; }
-.comment button { border:0; background:transparent; color:#c44; cursor:pointer; padding:0; }
+.commentMenu { position:relative; flex:none; }
+.commentMenuButton { width:32px; height:30px; border:1px solid var(--line); border-radius:8px; background:#fff; color:#555; cursor:pointer; font-weight:900; letter-spacing:1px; }
+.commentMenuButton:hover,.commentMenuButton[aria-expanded='true'] { background:#f1eee7; color:var(--ink); }
+.commentMenuPanel { position:absolute; top:35px; right:0; z-index:15; display:grid; min-width:120px; padding:5px; border:1px solid var(--line); border-radius:10px; background:#fff; box-shadow:0 10px 28px #0002; }
+.commentMenuPanel button { border:0; border-radius:7px; background:transparent; padding:9px 11px; text-align:left; color:var(--ink); cursor:pointer; font-weight:700; }
+.commentMenuPanel button:hover { background:#f4f1ea; }
+.commentMenuPanel .dangerAction { color:#c33; }
+.commentEditForm { display:grid; gap:9px; margin-top:13px; }
+.commentEditForm input { width:100%; font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:8px; background:#faf9f6; }
+.commentEditForm>div { display:flex; gap:8px; }
+.commentEditForm button { border:0; border-radius:7px; padding:8px 11px; background:#eeeae2; color:#555; cursor:pointer; font-weight:700; }
+.commentEditForm .editSave { background:var(--ink); color:#fff; }
 .actionStatus,.noComments { color:#777; font-size:13px; }
 
 @media(max-width:800px) {

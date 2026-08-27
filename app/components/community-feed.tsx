@@ -76,6 +76,7 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
       {visible.map(post => <article className="post" key={post.id}>
         <a className="shot uploadedShot" href={`/shots/${post.id}`} aria-label={`Open ${post.title}`}>
           <img src={post.imageUrl} alt={post.title}/>
+          <span className="shotPreview">Preview ↗</span>
         </a>
         <div className="meta">
           <div className="user">
