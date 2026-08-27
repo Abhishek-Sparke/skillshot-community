@@ -11,6 +11,7 @@ export type CommunityPost = {
   tags: string[];
   author: string;
   username: string;
+  avatarUrl: string;
   authorRole: UserRole;
   createdAt: number;
   reactionCount: number;
@@ -20,13 +21,16 @@ export type CommunityPost = {
   isOwner: boolean;
 };
 
-type Props = { mine?: boolean; limit?: number; compact?: boolean };
+type Props = {
+  mine?: boolean; username?: string; likedBy?: string; limit?: number; compact?: boolean;
+  showComments?: boolean; emptyTitle?: string; emptyText?: string;
+};
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'S';
 }
 
-export default function CommunityFeed({ mine = false, limit, compact = false }: Props) {
+export default function CommunityFeed({ mine = false, username, likedBy, limit, compact = false, showComments = false, emptyTitle, emptyText }: Props) {
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<'recent' | 'popular'>('recent');
@@ -36,7 +40,11 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
 
   useEffect(() => {
     let active = true;
-    fetch(`/api/posts${mine ? '?mine=1' : ''}`)
+    const search = new URLSearchParams();
+    if (mine) search.set('mine', '1');
+    if (username) search.set('username', username);
+    if (likedBy) search.set('likedBy', likedBy);
+    fetch(`/api/posts${search.size ? `?${search}` : ''}`)
       .then(async response => {
         if (!response.ok) throw new Error(response.status === 401 ? 'Please sign in to see your posts.' : 'Could not load posts.');
         return response.json();
@@ -45,7 +53,7 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
       .catch(reason => { if (active) setError(reason.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [mine]);
+  }, [mine, username, likedBy]);
 
   useEffect(() => {
     if (!previewPost) return;
@@ -70,7 +78,7 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
     return typeof limit === 'number' ? filtered.slice(0, limit) : filtered;
   }, [posts, query, sort, limit]);
 
-  if (loading) return <div className="feedState"><span className="loader"/> Loading community posts…</div>;
+  if (loading) return <div className="feedSkeleton" aria-label="Loading Skillshots" aria-live="polite">{[0, 1, 2].map(item => <span key={item} className="skeletonCard"><i/><b/><small/></span>)}</div>;
   if (error) return <div className="feedState errorState">{error}</div>;
 
   return <>
@@ -84,33 +92,34 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
 
     {visible.length === 0 ? <div className="emptyFeed">
       <span>✦</span>
-      <h3>{query ? 'No matching shots yet.' : mine ? 'You have not shared a shot yet.' : 'Be the first creator here.'}</h3>
-      <p>{query ? 'Try another search term.' : 'Upload a screenshot and it will appear here.'}</p>
+      <h3>{query ? 'No matching shots yet.' : emptyTitle ?? (mine ? 'Your first Skillshot starts here.' : 'Be the first creator here.')}</h3>
+      <p>{query ? 'Try another search term.' : emptyText ?? (mine ? 'Share something you are proud of and let the community discover it.' : 'Upload a screenshot and it will appear here.')}</p>
       {!query && <a className="primary" href="/upload">Share a shot →</a>}
     </div> : <div className="grid">
       {visible.map(post => <article className="post" key={post.id}>
         <div className="shot uploadedShot">
           <a className="shotMediaLink" href={`/shots/${post.id}`} aria-label={`Open ${post.title}`}>
-            <img src={post.imageUrl} alt={post.title}/>
+            <img src={post.imageUrl} alt={post.title} loading="lazy" width="640" height="420" onError={event => { event.currentTarget.style.display = 'none'; }}/>
           </a>
           <button className="shotPreview" type="button" onClick={() => setPreviewPost(post)} aria-haspopup="dialog" aria-label={`Preview ${post.title}`}>
             ↗
           </button>
-          <span className="postAvatar" aria-hidden="true">{initials(post.author)}</span>
+          <a className="postAvatar" href={`/users/${encodeURIComponent(post.username)}`} aria-label={`View ${post.author}'s profile`}><span>{initials(post.author)}</span>{post.avatarUrl && <img src={post.avatarUrl} alt="" loading="lazy" onError={event => { event.currentTarget.style.display = 'none'; }}/>}</a>
         </div>
         <div className="meta">
           <div className="user">
             <div className="postIdentity">
               <a className="postTitle" href={`/shots/${post.id}`}>{post.title}</a>
               <small className="authorBlock">
-                <span className="authorName"><span>{post.author}</span><RoleBadge role={post.authorRole} /></span>
-                <span className="authorHandle">@{post.username}</span>
+                <span className="authorName"><a href={`/users/${encodeURIComponent(post.username)}`}>{post.author}</a><RoleBadge role={post.authorRole} /></span>
+                <a className="authorHandle" href={`/users/${encodeURIComponent(post.username)}`}>@{post.username}</a>
               </small>
             </div>
           </div>
           <div className="tags">
             {post.tags.slice(0, 3).map(tag => <span key={tag}>{tag}</span>)}
             <span className="postStat">♥ {post.reactionCount}</span>
+            {showComments && <a href={`/shots/${post.id}`} aria-label={`${post.commentCount} comments`}>◌ {post.commentCount}</a>}
             <a className="cardDownload" href={post.downloadUrl} title="Download image">↓</a>
           </div>
         </div>
