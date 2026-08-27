@@ -80,7 +80,13 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
         <div className="meta">
           <div className="user">
             <span className="avatar">{initials(post.author)}</span>
-            <div><a className="postTitle" href={`/shots/${post.id}`}>{post.title}</a><small className="authorLine">{post.author} <RoleBadge role={post.authorRole} /> · @{post.username}</small></div>
+            <div className="postIdentity">
+              <a className="postTitle" href={`/shots/${post.id}`}>{post.title}</a>
+              <small className="authorBlock">
+                <span className="authorName"><span>{post.author}</span><RoleBadge role={post.authorRole} /></span>
+                <span className="authorHandle">@{post.username}</span>
+              </small>
+            </div>
           </div>
           {post.description && <p>{post.description}</p>}
           <div className="tags">
