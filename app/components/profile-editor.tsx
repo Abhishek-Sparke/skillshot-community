@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { normalizeSocialUrl, SOCIAL_PLATFORMS, type SocialPlatformKey } from '../../lib/social-links';
 
 type EditorProfile = {
   displayName: string; username: string; bio: string; website: string; location: string;
@@ -11,6 +12,12 @@ type EditorPost = { id: string; title: string; featured: boolean };
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'S';
+}
+
+function SocialIcon({ platform }: { platform: SocialPlatformKey }) {
+  if (platform === 'github') return <svg className="socialIconSolid" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.86c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.55 9.55 0 0 1 12 6.83c.85 0 1.71.12 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>;
+  if (platform === 'instagram') return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" className="socialIconFill"/></svg>;
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="7.5" cy="8" r="1.2" className="socialIconFill"/><path d="M6.5 11v6M11 17v-6m0 2.6c.7-1.7 5-2.2 5 1.2V17"/></svg>;
 }
 
 const MAX_SOURCE_AVATAR_SIZE = 12 * 1024 * 1024;
@@ -69,6 +76,8 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
   const [avatarInputKey, setAvatarInputKey] = useState(0);
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [selectedFeatured, setSelectedFeatured] = useState(posts.filter(post => post.featured).map(post => post.id).slice(0, 3));
+  const [socialValues, setSocialValues] = useState<Record<SocialPlatformKey, string>>(() => Object.fromEntries(SOCIAL_PLATFORMS.map(platform => [platform.key, profile.socialLinks[platform.key] || ''])) as Record<SocialPlatformKey, string>);
+  const [socialErrors, setSocialErrors] = useState<Partial<Record<SocialPlatformKey, string>>>({});
   const [feedback, setFeedback] = useState('');
   const [busy, setBusy] = useState(false);
   const avatarSelection = useRef(0);
@@ -130,14 +139,35 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
     });
   }
 
+  function validateSocialLinks() {
+    const normalized = {} as Record<SocialPlatformKey, string>;
+    const errors: Partial<Record<SocialPlatformKey, string>> = {};
+    for (const platform of SOCIAL_PLATFORMS) {
+      const value = socialValues[platform.key].trim();
+      if (!value) { normalized[platform.key] = ''; continue; }
+      try {
+        normalized[platform.key] = normalizeSocialUrl(platform.key, value);
+      } catch {
+        const original = String(profile.socialLinks[platform.key] || '').trim();
+        if (value === original) normalized[platform.key] = original;
+        else errors[platform.key] = `Enter a valid ${platform.label} profile URL.`;
+      }
+    }
+    setSocialErrors(errors);
+    return Object.keys(errors).length ? null : normalized;
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     if (!form.checkValidity()) { form.reportValidity(); return; }
     if (avatarBusy) { setFeedback('Please wait while your profile picture is prepared.'); return; }
+    const normalizedSocialLinks = validateSocialLinks();
+    if (!normalizedSocialLinks) { setFeedback('Check the highlighted social links and try again.'); return; }
     setBusy(true);
     setFeedback(avatarFile ? 'Uploading your profile picture…' : 'Saving your profile…');
     const data = new FormData(form);
+    for (const platform of SOCIAL_PLATFORMS) data.set(platform.key, normalizedSocialLinks[platform.key]);
     data.delete('avatar');
     if (avatarFile && !removeAvatar) data.set('avatar', avatarFile);
     try {
@@ -178,9 +208,18 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
     <label>Profile skills<input name="skills" maxLength={400} defaultValue={profile.skills.join(', ')} placeholder="UI/UX, React, Photography"/><small>These describe your creator profile, not individual Skillshot titles. Separate skills with commas. Up to 12 skills.</small></label>
     <label>Website<input name="website" type="url" maxLength={300} defaultValue={profile.website} placeholder="https://yourportfolio.com"/></label>
     <fieldset className="socialEditor"><legend>Social links</legend>
-      <label>GitHub<input name="github" type="url" defaultValue={profile.socialLinks.github || ''} placeholder="https://github.com/username"/></label>
-      <label>Instagram<input name="instagram" type="url" defaultValue={profile.socialLinks.instagram || ''} placeholder="https://instagram.com/username"/></label>
-      <label>LinkedIn<input name="linkedin" type="url" defaultValue={profile.socialLinks.linkedin || ''} placeholder="https://linkedin.com/in/username"/></label>
+      <p className="socialHelp">Optional profile links. You can enter them with or without https://.</p>
+      {SOCIAL_PLATFORMS.map(platform => {
+        const errorId = `${platform.key}-error`;
+        return <div className="socialField" key={platform.key}>
+          <label htmlFor={`social-${platform.key}`}>{platform.label}</label>
+          <div className={`socialInput ${socialErrors[platform.key] ? 'hasError' : ''}`}>
+            <span className="socialInputIcon"><SocialIcon platform={platform.key}/></span>
+            <input id={`social-${platform.key}`} name={platform.key} type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={socialValues[platform.key]} placeholder={platform.placeholder} aria-invalid={Boolean(socialErrors[platform.key])} aria-describedby={socialErrors[platform.key] ? errorId : undefined} onChange={event => { setSocialValues(current => ({ ...current, [platform.key]: event.target.value })); setSocialErrors(current => ({ ...current, [platform.key]: undefined })); }} onBlur={validateSocialLinks}/>
+          </div>
+          {socialErrors[platform.key] && <p className="socialError" id={errorId} role="alert">{socialErrors[platform.key]}</p>}
+        </div>;
+      })}
     </fieldset>
     <fieldset className="featuredEditor"><legend>Featured Skillshots <small>{selectedFeatured.length}/3 selected</small></legend>
       {posts.length ? <div className="featuredChoices">{posts.map(post => <label key={post.id} className={selectedFeatured.includes(post.id) ? 'selected' : ''}><input type="checkbox" name="featuredPost" value={post.id} checked={selectedFeatured.includes(post.id)} onChange={() => toggleFeatured(post.id)}/><span>✓</span><b>{post.title}</b></label>)}</div> : <p>Publish your first Skillshot, then return here to feature your best work.</p>}

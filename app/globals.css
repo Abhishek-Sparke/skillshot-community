@@ -156,8 +156,19 @@ footer a { color:inherit; text-decoration:none; }
 .avatarUploadButton input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
 .avatarEditor small,.profileEditor label>small { display:block; margin-top:7px; color:#777; font-weight:400; }
 .removeAvatarButton { border:0; background:transparent; color:#b33; font-weight:800; cursor:pointer; }
-.socialEditor { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.socialEditor { display:grid; grid-template-columns:minmax(0,1fr); gap:18px; }
 .socialEditor legend { grid-column:1/-1; }
+.socialHelp { margin:-4px 0 0; color:#777; font-size:13px; line-height:1.5; }
+.socialField { min-width:0; display:grid; gap:7px; }
+.socialField>label { display:block; }
+.socialInput { position:relative; min-width:0; }
+.socialInputIcon { width:42px; position:absolute; inset:0 auto 0 0; display:grid; place-items:center; color:#777; pointer-events:none; }
+.socialInputIcon svg { width:17px; height:17px; overflow:visible; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.socialInputIcon .socialIconSolid path { fill:currentColor; stroke:none; }
+.socialInputIcon .socialIconFill { fill:currentColor; stroke:none; }
+.socialInput input { width:100%; min-width:0; min-height:46px; padding-left:42px; }
+.socialInput.hasError input { border-color:#c43d31; background:#fff8f6; }
+.socialError { margin:0; color:#a83329; font-size:12px; font-weight:700; }
 .featuredEditor legend { display:flex; align-items:center; gap:8px; }
 .featuredEditor legend small { color:#888; font-weight:500; }
 .featuredChoices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
@@ -307,7 +318,6 @@ footer a { color:inherit; text-decoration:none; }
   .profileStats { margin:0 20px; justify-content:space-between; }
   .profileStats div { min-width:0; padding-right:10px; }
   .profileTabs { margin-left:20px; margin-right:20px; }
-  .socialEditor { grid-template-columns:1fr; }
   footer { flex-wrap:wrap; height:auto; padding-top:35px; padding-bottom:35px; }
   footer div { margin-left:0; width:100%; }
 }

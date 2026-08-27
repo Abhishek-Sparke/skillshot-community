@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { getChatGPTUser } from '../../chatgpt-auth';
 import { ensureUser, getReadyDb } from '../../../lib/db';
+import { normalizeSocialUrl, SOCIAL_PLATFORMS } from '../../../lib/social-links';
 
 const avatarTypes: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
@@ -16,14 +17,6 @@ async function hasValidImageSignature(file: File) {
   if (file.type === 'image/jpeg') return bytes.length >= 3 && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
   if (file.type === 'image/webp') return bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
   return false;
-}
-
-function safeUrl(value: FormDataEntryValue | null) {
-  const raw = String(value || '').trim().slice(0, 300);
-  if (!raw) return '';
-  const parsed = new URL(raw);
-  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Unsupported protocol');
-  return parsed.toString().slice(0, 300);
 }
 
 export async function POST(request: Request) {
@@ -41,8 +34,13 @@ export async function POST(request: Request) {
   const removeAvatar = form.get('removeAvatar') === '1';
   const requestedFeatured = [...new Set(form.getAll('featuredPost').map(String).filter(Boolean))].slice(0, 3);
   if (!username) return redirectError(request, 'username');
+  const sql = await getReadyDb();
+  const current = await sql.query(`SELECT avatar_url,avatar_type,avatar_size,social_links FROM users WHERE id=$1 LIMIT 1`, [user.userId]);
+  const existingSocialLinks = current[0]?.social_links && typeof current[0].social_links === 'object'
+    ? current[0].social_links as Record<string, unknown>
+    : {};
   let safeWebsite = '';
-  let socialLinks: Record<string, string> = {};
+  const socialLinks: Record<string, string> = {};
   if (website) {
     try {
       const parsed = new URL(website);
@@ -53,7 +51,16 @@ export async function POST(request: Request) {
     }
   }
   try {
-    socialLinks = Object.fromEntries(['github', 'instagram', 'linkedin'].map(key => [key, safeUrl(form.get(key))]).filter(([, value]) => value));
+    for (const platform of SOCIAL_PLATFORMS) {
+      const raw = String(form.get(platform.key) || '').trim().slice(0, 300);
+      if (!raw) continue;
+      try {
+        socialLinks[platform.key] = normalizeSocialUrl(platform.key, raw);
+      } catch {
+        if (raw === String(existingSocialLinks[platform.key] || '').trim()) socialLinks[platform.key] = raw;
+        else return redirectError(request, `social-${platform.key}`);
+      }
+    }
   } catch {
     return redirectError(request, 'social');
   }
@@ -62,10 +69,8 @@ export async function POST(request: Request) {
     if (avatar.size > MAX_AVATAR_SIZE) return redirectError(request, 'avatar-size');
     if (!(await hasValidImageSignature(avatar))) return redirectError(request, 'avatar-invalid');
   }
-  const sql = await getReadyDb();
   const conflict = await sql.query(`SELECT 1 FROM users WHERE lower(username)=lower($1) AND id<>$2 LIMIT 1`, [username, user.userId]);
   if (conflict.length) return redirectError(request, 'username-taken');
-  const current = await sql.query(`SELECT avatar_url,avatar_type,avatar_size FROM users WHERE id=$1 LIMIT 1`, [user.userId]);
   let avatarUrl = removeAvatar ? null : current[0]?.avatar_url ?? null;
   let avatarType = removeAvatar ? null : current[0]?.avatar_type ?? null;
   let avatarSize = removeAvatar ? null : current[0]?.avatar_size ?? null;
