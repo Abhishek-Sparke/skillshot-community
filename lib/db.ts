@@ -19,13 +19,24 @@ export async function getReadyDb() {
   initialization ??= (async () => {
     await sql.query(`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY, email text UNIQUE NOT NULL, display_name text NOT NULL, username text UNIQUE NOT NULL, bio text NOT NULL DEFAULT '', website text NOT NULL DEFAULT '', role text NOT NULL DEFAULT 'member', created_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'member'`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS location text NOT NULL DEFAULT ''`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS skills jsonb NOT NULL DEFAULT '[]'::jsonb`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS social_links jsonb NOT NULL DEFAULT '{}'::jsonb`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_type text`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_size integer`);
     await sql.query(`UPDATE users SET role='admin' WHERE lower(email)=$1 AND role <> 'admin'`, [PRIMARY_ADMIN_EMAIL]);
     await sql.query(`CREATE TABLE IF NOT EXISTS posts (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, title text NOT NULL, description text NOT NULL DEFAULT '', tags jsonb NOT NULL DEFAULT '[]'::jsonb, image_url text NOT NULL, image_type text NOT NULL, image_size integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`CREATE TABLE IF NOT EXISTS reactions (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(post_id, user_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS comments (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, body text NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS follows (follower_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, followed_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (follower_id, followed_id), CHECK (follower_id <> followed_id))`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS featured_posts (user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, position smallint NOT NULL CHECK (position BETWEEN 1 AND 3), created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (user_id, post_id), UNIQUE (user_id, position))`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_comments_post_created ON comments(post_id, created_at)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_follows_followed_id ON follows(followed_id)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_follows_follower_id ON follows(follower_id)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_featured_posts_user ON featured_posts(user_id, position)`);
   })();
   await initialization;
   return sql;
