@@ -32,6 +32,7 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
   const [sort, setSort] = useState<'recent' | 'popular'>('recent');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [previewPost, setPreviewPost] = useState<CommunityPost | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +46,20 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [mine]);
+
+  useEffect(() => {
+    if (!previewPost) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPreviewPost(null);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [previewPost]);
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -74,10 +89,14 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
       {!query && <a className="primary" href="/upload">Share a shot →</a>}
     </div> : <div className="grid">
       {visible.map(post => <article className="post" key={post.id}>
-        <a className="shot uploadedShot" href={`/shots/${post.id}`} aria-label={`Open ${post.title}`}>
-          <img src={post.imageUrl} alt={post.title}/>
-          <span className="shotPreview">Preview ↗</span>
-        </a>
+        <div className="shot uploadedShot">
+          <a className="shotMediaLink" href={`/shots/${post.id}`} aria-label={`Open ${post.title}`}>
+            <img src={post.imageUrl} alt={post.title}/>
+          </a>
+          <button className="shotPreview" type="button" onClick={() => setPreviewPost(post)} aria-haspopup="dialog">
+            Preview ↗
+          </button>
+        </div>
         <div className="meta">
           <div className="user">
             <span className="avatar">{initials(post.author)}</span>
@@ -98,6 +117,19 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
           </div>
         </div>
       </article>)}
+    </div>}
+
+    {previewPost && <div className="imageLightbox" role="dialog" aria-modal="true" aria-label={`Preview ${previewPost.title}`} onClick={() => setPreviewPost(null)}>
+      <div className="imageLightboxPanel" onClick={event => event.stopPropagation()}>
+        <div className="imageLightboxTop">
+          <div>
+            <strong>{previewPost.title}</strong>
+            <span>by {previewPost.author}</span>
+          </div>
+          <button type="button" onClick={() => setPreviewPost(null)} aria-label="Close image preview">×</button>
+        </div>
+        <img src={previewPost.imageUrl} alt={previewPost.title}/>
+      </div>
     </div>}
   </>;
 }
