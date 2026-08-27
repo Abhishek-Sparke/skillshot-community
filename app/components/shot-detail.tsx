@@ -1,13 +1,16 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import RoleBadge from './role-badge';
+import type { UserRole } from '../../lib/roles';
 
 type Post = {
   id: string; title: string; description: string; tags: string[]; author: string; username: string;
+  authorRole: UserRole;
   createdAt: number; reactionCount: number; commentCount: number; viewerLiked: boolean;
   signedIn: boolean; imageUrl: string; downloadUrl: string;
 };
-type Comment = { id: string; body: string; author: string; username: string; createdAt: number; canDelete: boolean };
+type Comment = { id: string; body: string; author: string; username: string; authorRole: UserRole; createdAt: number; canDelete: boolean };
 
 export default function ShotDetail({ id }: { id: string }) {
   const [post, setPost] = useState<Post | null>(null);
@@ -60,7 +63,7 @@ export default function ShotDetail({ id }: { id: string }) {
     <section className="detail">
       <img className="detailImage" src={post.imageUrl} alt={post.title}/>
       <div className="detailHeading">
-        <div><p className="eyebrow">@{post.username}</p><h1>{post.title}</h1><p>Shared by <b>{post.author}</b></p></div>
+        <div><p className="eyebrow">@{post.username}</p><h1>{post.title}</h1><p>Shared by <b className="authorLine">{post.author} <RoleBadge role={post.authorRole} /></b></p></div>
         <a className="downloadButton" href={post.downloadUrl}>↓ Download</a>
       </div>
       {post.description && <p className="detailDescription">{post.description}</p>}
@@ -76,7 +79,7 @@ export default function ShotDetail({ id }: { id: string }) {
         <p className="actionStatus" role="status">{status}</p>
         {comments.length === 0 && <p className="noComments">No comments yet. Start the conversation.</p>}
         {comments.map(comment => <div className="comment" key={comment.id}>
-          <b>{comment.author} <small>@{comment.username}</small></b>
+          <b className="authorLine">{comment.author} <RoleBadge role={comment.authorRole} /> <small>@{comment.username}</small></b>
           <p>{comment.body}</p>
           {comment.canDelete && <button onClick={() => deleteComment(comment.id)}>Delete</button>}
         </div>)}

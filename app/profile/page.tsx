@@ -1,4 +1,6 @@
 import { chatGPTSignInPath, chatGPTSignOutPath, getChatGPTUser } from '../chatgpt-auth';
+import RoleBadge from '../components/role-badge';
+import { roleForEmail } from '../../lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +23,7 @@ export default async function Profile() {
     <a className="brand" href="/"><span>S</span> Skillshot</a>
     <section className="formCard">
       <p className="eyebrow">SIGNED IN · EMAIL VERIFIED ✓</p>
-      <h1>Welcome, {user.displayName}</h1>
+      <h1 className="profileWelcome">Welcome, {user.displayName} <RoleBadge role={roleForEmail(user.email)} /></h1>
       <p className="profileIntro">What would you like to do?</p>
 
       <div className="accountActions" aria-label="Account options">

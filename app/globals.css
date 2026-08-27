@@ -44,6 +44,12 @@ body { margin:0; background:var(--paper); color:var(--ink); font-family:Arial,sa
 .avatar { width:37px; height:37px; flex:none; border-radius:50%; display:grid; place-items:center; background:#eee2d5; font-size:11px; font-weight:bold; }
 .postTitle { display:block; color:inherit; text-decoration:none; font-size:15px; font-weight:800; margin-bottom:3px; }
 .user small { color:#777; }
+.authorLine,.profileWelcome { display:inline-flex; align-items:center; gap:5px; }
+.adminBadge { position:relative; display:inline-grid; place-items:center; width:17px; height:17px; flex:none; border-radius:50%; background:var(--red); color:#fff; font:9px/1 Arial,sans-serif; box-shadow:0 0 0 2px #ffe2dc; cursor:help; vertical-align:middle; outline:none; }
+.adminBadge::after { content:'Admin'; position:absolute; left:50%; bottom:calc(100% + 8px); z-index:10; transform:translate(-50%,4px); padding:6px 8px; border-radius:6px; background:var(--ink); color:#fff; font:700 11px/1 Arial,sans-serif; letter-spacing:0; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s,transform .15s; }
+.adminBadge::before { content:''; position:absolute; left:50%; bottom:calc(100% + 3px); z-index:10; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--ink); opacity:0; pointer-events:none; transition:opacity .15s; }
+.adminBadge:hover::after,.adminBadge:focus-visible::after { opacity:1; transform:translate(-50%,0); }
+.adminBadge:hover::before,.adminBadge:focus-visible::before { opacity:1; }
 .meta p { font-size:13px; line-height:1.5; color:#666; }
 .tags { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .tags span { font-size:10px; background:#f1eee7; padding:6px 8px; border-radius:5px; }

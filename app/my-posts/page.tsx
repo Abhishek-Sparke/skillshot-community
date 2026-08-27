@@ -1,5 +1,7 @@
 import CommunityFeed from '../components/community-feed';
 import { requireChatGPTUser } from '../chatgpt-auth';
+import RoleBadge from '../components/role-badge';
+import { roleForEmail } from '../../lib/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +14,7 @@ export default async function MyPostsPage() {
     </nav>
     <section className="communityHero shell">
       <p className="eyebrow">YOUR SKILLSHOT LIBRARY</p>
-      <h1>{user.displayName}&apos;s posts</h1>
+      <h1 className="profileWelcome">{user.displayName}&apos;s posts <RoleBadge role={roleForEmail(user.email)} /></h1>
       <p>Every screenshot you publish is collected here, ready to view, share, or download.</p>
     </section>
     <section className="feed communityFeed shell"><CommunityFeed mine /></section>

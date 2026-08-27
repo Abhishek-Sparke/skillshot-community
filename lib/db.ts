@@ -1,4 +1,5 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
+import { PRIMARY_ADMIN_EMAIL, roleForEmail } from './roles';
 
 let client: NeonQueryFunction<false, false> | null = null;
 let initialization: Promise<unknown> | null = null;
@@ -16,7 +17,9 @@ export async function getReadyDb() {
   // them concurrently can try to create posts before users (or indexes before
   // their tables), leaving a fresh database only partially initialized.
   initialization ??= (async () => {
-    await sql.query(`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY, email text UNIQUE NOT NULL, display_name text NOT NULL, username text UNIQUE NOT NULL, bio text NOT NULL DEFAULT '', website text NOT NULL DEFAULT '', created_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY, email text UNIQUE NOT NULL, display_name text NOT NULL, username text UNIQUE NOT NULL, bio text NOT NULL DEFAULT '', website text NOT NULL DEFAULT '', role text NOT NULL DEFAULT 'member', created_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'member'`);
+    await sql.query(`UPDATE users SET role='admin' WHERE lower(email)=$1 AND role <> 'admin'`, [PRIMARY_ADMIN_EMAIL]);
     await sql.query(`CREATE TABLE IF NOT EXISTS posts (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, title text NOT NULL, description text NOT NULL DEFAULT '', tags jsonb NOT NULL DEFAULT '[]'::jsonb, image_url text NOT NULL, image_type text NOT NULL, image_size integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`CREATE TABLE IF NOT EXISTS reactions (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(post_id, user_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS comments (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, body text NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`);
@@ -33,10 +36,17 @@ export type AppUser = { userId: string; email: string; displayName: string };
 export async function ensureUser(user: AppUser) {
   const sql = await getReadyDb();
   const existing = await sql.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [user.userId]);
-  if (existing.length) return existing[0] as Record<string, unknown>;
+  if (existing.length) {
+    const assignedRole = roleForEmail(user.email);
+    if (assignedRole === 'admin' && existing[0].role !== 'admin') {
+      const promoted = await sql.query(`UPDATE users SET role='admin' WHERE id=$1 RETURNING *`, [user.userId]);
+      return promoted[0] as Record<string, unknown>;
+    }
+    return existing[0] as Record<string, unknown>;
+  }
   const base = user.email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase().slice(0, 20) || 'creator';
   const suffix = crypto.randomUUID().slice(0, 6);
-  await sql.query(`INSERT INTO users (id, email, display_name, username) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`, [user.userId, user.email, user.displayName, `${base}-${suffix}`]);
+  await sql.query(`INSERT INTO users (id, email, display_name, username, role) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`, [user.userId, user.email, user.displayName, `${base}-${suffix}`, roleForEmail(user.email)]);
   const created = await sql.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [user.userId]);
   return created[0] as Record<string, unknown>;
 }
