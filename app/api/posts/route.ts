@@ -46,8 +46,8 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const data = await request.formData();
   const image = data.get('image');
-  const title = String(data.get('title') || '').trim().slice(0, 100);
-  if (!(image instanceof File) || !allowed.has(image.type) || image.size > 4 * 1024 * 1024 || !title) {
+  const skillshotTitle = String(data.get('title') || '').trim().slice(0, 100);
+  if (!(image instanceof File) || !allowed.has(image.type) || image.size > 4 * 1024 * 1024 || !skillshotTitle) {
     return Response.json({ error: 'Invalid upload' }, { status: 400 });
   }
   await ensureUser(user);
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   const sql = await getReadyDb();
   const tags = String(data.get('tags') || '').split(',').map(value => value.trim()).filter(Boolean).slice(0, 8);
   await sql.query(`INSERT INTO posts (id, user_id, title, description, tags, image_url, image_type, image_size) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8)`, [
-    id, user.userId, title, String(data.get('description') || '').trim().slice(0, 1000), JSON.stringify(tags), blob.pathname, image.type, image.size,
+    id, user.userId, skillshotTitle, String(data.get('description') || '').trim().slice(0, 1000), JSON.stringify(tags), blob.pathname, image.type, image.size,
   ]);
   return Response.json({ id }, { status: 201 });
 }
