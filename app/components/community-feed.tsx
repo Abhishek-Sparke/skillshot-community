@@ -108,7 +108,6 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
               </small>
             </div>
           </div>
-          {post.description && <p>{post.description}</p>}
           <div className="tags">
             {post.tags.slice(0, 3).map(tag => <span key={tag}>{tag}</span>)}
             <span className="postStat">♥ {post.reactionCount}</span>
