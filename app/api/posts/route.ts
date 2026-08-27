@@ -34,17 +34,17 @@ export async function POST(request: Request) {
   const data = await request.formData();
   const image = data.get('image');
   const title = String(data.get('title') || '').trim().slice(0, 100);
-  if (!(image instanceof File) || !allowed.has(image.type) || image.size > 10 * 1024 * 1024 || !title) {
+  if (!(image instanceof File) || !allowed.has(image.type) || image.size > 4 * 1024 * 1024 || !title) {
     return Response.json({ error: 'Invalid upload' }, { status: 400 });
   }
   await ensureUser(user);
   const id = crypto.randomUUID();
   const cleanName = image.name.replace(/[^a-z0-9._-]/gi, '-') || `${id}.png`;
-  const blob = await put(`shots/${user.userId}/${id}-${cleanName}`, image, { access: 'public', addRandomSuffix: true, contentType: image.type });
+  const blob = await put(`shots/${user.userId}/${id}-${cleanName}`, image, { access: 'private', addRandomSuffix: true, contentType: image.type });
   const sql = await getReadyDb();
   const tags = String(data.get('tags') || '').split(',').map(value => value.trim()).filter(Boolean).slice(0, 8);
   await sql.query(`INSERT INTO posts (id, user_id, title, description, tags, image_url, image_type, image_size) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8)`, [
-    id, user.userId, title, String(data.get('description') || '').trim().slice(0, 1000), JSON.stringify(tags), blob.url, image.type, image.size,
+    id, user.userId, title, String(data.get('description') || '').trim().slice(0, 1000), JSON.stringify(tags), blob.pathname, image.type, image.size,
   ]);
   return Response.json({ id }, { status: 201 });
 }
