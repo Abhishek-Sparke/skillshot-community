@@ -4,6 +4,19 @@ import { getChatGPTUser } from '../../chatgpt-auth';
 import { ensureUser, getReadyDb } from '../../../lib/db';
 
 const avatarTypes: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+
+function redirectError(request: Request, error: string) {
+  return NextResponse.redirect(new URL(`/profile/edit?error=${encodeURIComponent(error)}`, request.url), 303);
+}
+
+async function hasValidImageSignature(file: File) {
+  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  if (file.type === 'image/png') return bytes.length >= 8 && [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value);
+  if (file.type === 'image/jpeg') return bytes.length >= 3 && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
+  if (file.type === 'image/webp') return bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
+  return false;
+}
 
 function safeUrl(value: FormDataEntryValue | null) {
   const raw = String(value || '').trim().slice(0, 300);
@@ -19,15 +32,15 @@ export async function POST(request: Request) {
   await ensureUser(user);
   const form = await request.formData();
   const displayName = String(form.get('displayName') || user.displayName).trim().slice(0, 80) || user.displayName;
-  const username = String(form.get('username') || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 30);
+  const username = String(form.get('username') || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 30);
   const bio = String(form.get('bio') || '').trim().slice(0, 500);
   const website = String(form.get('website') || '').trim().slice(0, 300);
   const location = String(form.get('location') || '').trim().slice(0, 100);
-  const skills = String(form.get('skills') || '').split(',').map(value => value.trim()).filter(Boolean).slice(0, 12).map(value => value.slice(0, 40));
+  const profileSkills = String(form.get('skills') || '').split(',').map(value => value.trim()).filter(Boolean).slice(0, 12).map(value => value.slice(0, 40));
   const avatar = form.get('avatar');
   const removeAvatar = form.get('removeAvatar') === '1';
   const requestedFeatured = [...new Set(form.getAll('featuredPost').map(String).filter(Boolean))].slice(0, 3);
-  if (!username) return NextResponse.redirect(new URL('/profile/edit?error=username', request.url), 303);
+  if (!username) return redirectError(request, 'username');
   let safeWebsite = '';
   let socialLinks: Record<string, string> = {};
   if (website) {
@@ -36,20 +49,22 @@ export async function POST(request: Request) {
       if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Unsupported protocol');
       safeWebsite = parsed.toString().slice(0, 300);
     } catch {
-      return NextResponse.redirect(new URL('/profile/edit?error=website', request.url), 303);
+      return redirectError(request, 'website');
     }
   }
   try {
     socialLinks = Object.fromEntries(['github', 'instagram', 'linkedin'].map(key => [key, safeUrl(form.get(key))]).filter(([, value]) => value));
   } catch {
-    return NextResponse.redirect(new URL('/profile/edit?error=social', request.url), 303);
+    return redirectError(request, 'social');
   }
-  if (!removeAvatar && avatar instanceof File && avatar.size > 0 && (!avatarTypes[avatar.type] || avatar.size > 2 * 1024 * 1024)) {
-    return NextResponse.redirect(new URL('/profile/edit?error=avatar', request.url), 303);
+  if (!removeAvatar && avatar instanceof File && avatar.size > 0) {
+    if (!avatarTypes[avatar.type]) return redirectError(request, 'avatar-type');
+    if (avatar.size > MAX_AVATAR_SIZE) return redirectError(request, 'avatar-size');
+    if (!(await hasValidImageSignature(avatar))) return redirectError(request, 'avatar-invalid');
   }
   const sql = await getReadyDb();
   const conflict = await sql.query(`SELECT 1 FROM users WHERE lower(username)=lower($1) AND id<>$2 LIMIT 1`, [username, user.userId]);
-  if (conflict.length) return NextResponse.redirect(new URL('/profile/edit?error=username-taken', request.url), 303);
+  if (conflict.length) return redirectError(request, 'username-taken');
   const current = await sql.query(`SELECT avatar_url,avatar_type,avatar_size FROM users WHERE id=$1 LIMIT 1`, [user.userId]);
   let avatarUrl = removeAvatar ? null : current[0]?.avatar_url ?? null;
   let avatarType = removeAvatar ? null : current[0]?.avatar_type ?? null;
@@ -62,12 +77,12 @@ export async function POST(request: Request) {
       avatarType = avatar.type;
       avatarSize = avatar.size;
     } catch {
-      return NextResponse.redirect(new URL('/profile/edit?error=avatar-upload', request.url), 303);
+      return redirectError(request, 'avatar-upload');
     }
   }
   try {
     await sql.query(`UPDATE users SET display_name=$1,username=$2,bio=$3,website=$4,location=$5,skills=$6::jsonb,social_links=$7::jsonb,avatar_url=$8,avatar_type=$9,avatar_size=$10 WHERE id=$11`, [
-      displayName, username, bio, safeWebsite, location, JSON.stringify(skills), JSON.stringify(socialLinks), avatarUrl, avatarType, avatarSize, user.userId,
+      displayName, username, bio, safeWebsite, location, JSON.stringify(profileSkills), JSON.stringify(socialLinks), avatarUrl, avatarType, avatarSize, user.userId,
     ]);
     const ownedFeatured = requestedFeatured.length ? await sql.query(`SELECT id FROM posts WHERE user_id=$1 AND id=ANY($2::text[])`, [user.userId, requestedFeatured]) : [];
     const allowedFeatured = new Set(ownedFeatured.map(row => String(row.id)));
@@ -78,7 +93,7 @@ export async function POST(request: Request) {
       await sql.query(`INSERT INTO featured_posts (user_id,post_id,position) VALUES ($1,$2,$3)`, [user.userId, postId, position++]);
     }
   } catch {
-    return NextResponse.redirect(new URL('/profile/edit?error=save', request.url), 303);
+    return redirectError(request, 'save');
   }
   return NextResponse.redirect(new URL('/profile?saved=1', request.url), 303);
 }
