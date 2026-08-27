@@ -34,15 +34,17 @@ body { margin:0; background:var(--paper); color:var(--ink); font-family:Arial,sa
 .filters button { border:0; background:transparent; padding:9px 14px; border-radius:7px; font-weight:700; color:#777; cursor:pointer; }
 .filters button.active { background:#fff; color:#222; }
 .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:25px; }
-.post { background:#fff; border:1px solid var(--line); border-radius:17px; overflow:hidden; }
+.post { position:relative; background:#fff; border:1px solid var(--line); border-radius:17px; overflow:hidden; transition:transform .18s,box-shadow .18s; }
+.post:hover { transform:translateY(-3px); box-shadow:0 13px 30px #34302814; }
 .shot { height:260px; position:relative; }
-.uploadedShot { display:block; overflow:hidden; background:#ece8df; }
-.shotMediaLink { display:block; width:100%; height:100%; }
+.uploadedShot { display:block; overflow:visible; background:#ece8df; }
+.shotMediaLink { display:block; width:100%; height:100%; overflow:hidden; }
 .uploadedShot img { width:100%; height:100%; display:block; object-fit:cover; transition:transform .25s; }
 .uploadedShot:hover img { transform:scale(1.025); }
-.shotPreview { position:absolute; left:12px; bottom:12px; border:0; padding:7px 10px; border-radius:8px; background:#20201de8; color:#fff; font-size:11px; font-weight:800; letter-spacing:.2px; box-shadow:0 3px 10px #0003; transition:transform .15s,background .15s; cursor:pointer; }
+.shotPreview { position:absolute; right:12px; bottom:12px; border:0; padding:7px 10px; border-radius:8px; background:#20201de8; color:#fff; font-size:11px; font-weight:800; letter-spacing:.2px; box-shadow:0 3px 10px #0003; transition:transform .15s,background .15s; cursor:pointer; }
 .uploadedShot:hover .shotPreview { transform:translateY(-2px); background:var(--red); }
 .shotPreview:focus-visible { outline:3px solid #fff; outline-offset:2px; background:var(--red); }
+.postAvatar { position:absolute; left:18px; bottom:-24px; z-index:3; width:50px; height:50px; display:grid; place-items:center; border:4px solid #fff; border-radius:50%; background:#eee2d5; color:var(--ink); font-size:12px; font-weight:900; box-shadow:0 4px 12px #0002; }
 .imageLightbox { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:28px; background:#11110fe8; backdrop-filter:blur(7px); animation:lightboxIn .18s ease-out; }
 .imageLightboxPanel { width:min(1180px,96vw); max-height:94vh; display:flex; flex-direction:column; overflow:hidden; border:1px solid #ffffff2b; border-radius:18px; background:#1d1d1a; box-shadow:0 28px 80px #0009; }
 .imageLightboxTop { min-height:60px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:11px 14px 11px 20px; color:#fff; }
@@ -53,9 +55,8 @@ body { margin:0; background:var(--paper); color:var(--ink); font-family:Arial,sa
 .imageLightboxTop button:hover,.imageLightboxTop button:focus-visible { background:var(--red); outline:none; }
 .imageLightboxPanel>img { width:100%; min-height:0; max-height:calc(94vh - 60px); display:block; object-fit:contain; background:#0c0c0b; }
 @keyframes lightboxIn { from { opacity:0; } to { opacity:1; } }
-.meta { padding:20px; }
-.user { display:flex; gap:11px; align-items:center; }
-.avatar { width:37px; height:37px; flex:none; border-radius:50%; display:grid; place-items:center; background:#eee2d5; font-size:11px; font-weight:bold; }
+.meta { padding:31px 20px 20px; }
+.user { display:flex; align-items:center; }
 .postIdentity { flex:1; min-width:0; }
 .postTitle { display:block; color:inherit; text-decoration:none; font-size:15px; font-weight:800; margin-bottom:3px; }
 .user small { color:#777; }

@@ -96,10 +96,10 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
           <button className="shotPreview" type="button" onClick={() => setPreviewPost(post)} aria-haspopup="dialog">
             Preview ↗
           </button>
+          <span className="postAvatar" aria-hidden="true">{initials(post.author)}</span>
         </div>
         <div className="meta">
           <div className="user">
-            <span className="avatar">{initials(post.author)}</span>
             <div className="postIdentity">
               <a className="postTitle" href={`/shots/${post.id}`}>{post.title}</a>
               <small className="authorBlock">
