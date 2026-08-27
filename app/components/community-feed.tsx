@@ -112,7 +112,6 @@ export default function CommunityFeed({ mine = false, limit, compact = false }: 
           <div className="tags">
             {post.tags.slice(0, 3).map(tag => <span key={tag}>{tag}</span>)}
             <span className="postStat">♥ {post.reactionCount}</span>
-            <a href={`/shots/${post.id}`}>◌ {post.commentCount}</a>
             <a className="cardDownload" href={post.downloadUrl} title="Download image">↓</a>
           </div>
         </div>
