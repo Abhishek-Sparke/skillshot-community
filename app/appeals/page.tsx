@@ -1,0 +1,2 @@
+import Link from 'next/link';import { requireChatGPTUser } from '../chatgpt-auth';import AccountCenter from '../components/account-center';
+export default async function Page(){await requireChatGPTUser('/appeals');return <main className="accountPage shell"><nav className="staffNav"><Link className="brand" href="/"><span>S</span> Skillshot</Link><Link href="/guidelines">Guidelines</Link><Link href="/community">Community</Link></nav><AccountCenter section="appeals"/></main>}
