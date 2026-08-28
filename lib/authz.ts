@@ -18,11 +18,14 @@ export async function requirePrincipal(permission?: Permission) {
   if (permission && !can(principal.role, permission, principal.profile.custom_permissions)) return { error: Response.json({ error: 'Forbidden' }, { status: 403 }) } as const;
   return { principal } as const;
 }
-export async function requirePanel(kind: 'admin' | 'mod') {
+export async function requirePanel(kind: 'admin' | 'head-mod' | 'mod') {
   const principal = await getPrincipal();
   if (!principal) redirect(`/signin?callbackUrl=/${kind}`);
-  const allowed = kind === 'admin' ? ['OWNER','ADMIN'].includes(principal.role) : principal.role === 'MODERATOR';
+  const allowed = kind === 'admin'
+    ? ['OWNER','ADMIN'].includes(principal.role)
+    : kind === 'head-mod'
+      ? ['OWNER','ADMIN','HEAD_MODERATOR'].includes(principal.role)
+      : ['OWNER','ADMIN','HEAD_MODERATOR','MODERATOR'].includes(principal.role);
   if (!allowed) redirect(panelForRole(principal.role));
   return principal;
 }
-

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { can, normalizeRole, permissionsFor } from '../lib/roles.ts';
+import { can, canChangeRole, canModerateUser, normalizeRole, panelForRole, permissionsFor } from '../lib/roles.ts';
 import { moderateImage, moderateText } from '../lib/moderation.ts';
 import { normalizeSocialUrl } from '../lib/social-links.ts';
 
@@ -11,6 +11,21 @@ test('roles default safely and keep staff boundaries',()=>{
   assert.equal(can('MODERATOR','roles.manage'),false);
   assert.equal(can('ADMIN','settings.manage'),false);
   assert.equal(permissionsFor('USER',['users.ban']).length,0);
+});
+
+test('head moderator hierarchy is enforced independently of the UI',()=>{
+  assert.equal(normalizeRole('head_moderator'),'HEAD_MODERATOR');
+  assert.equal(panelForRole('HEAD_MODERATOR'),'/head-mod');
+  assert.equal(canChangeRole('HEAD_MODERATOR','USER','MODERATOR'),true);
+  assert.equal(canChangeRole('HEAD_MODERATOR','MODERATOR','USER'),true);
+  assert.equal(canChangeRole('HEAD_MODERATOR','USER','HEAD_MODERATOR'),false);
+  assert.equal(canChangeRole('HEAD_MODERATOR','USER','ADMIN'),false);
+  assert.equal(canChangeRole('ADMIN','USER','ADMIN'),false);
+  assert.equal(canChangeRole('ADMIN','USER','HEAD_MODERATOR'),true);
+  assert.equal(canChangeRole('OWNER','USER','ADMIN'),true);
+  assert.equal(canChangeRole('ADMIN','ADMIN','USER'),false);
+  assert.equal(canModerateUser('MODERATOR','HEAD_MODERATOR'),false);
+  assert.equal(canModerateUser('HEAD_MODERATOR','MODERATOR'),true);
 });
 
 test('social profile links normalize scheme-less input and reject wrong hosts',()=>{
