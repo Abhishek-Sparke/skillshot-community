@@ -1,5 +1,5 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
-import { PRIMARY_ADMIN_EMAIL, roleForEmail } from './roles';
+import { OWNER_EMAIL, PRIMARY_ADMIN_EMAIL, normalizeRole, roleForEmail } from './roles';
 
 let client: NeonQueryFunction<false, false> | null = null;
 let initialization: Promise<unknown> | null = null;
@@ -18,17 +18,32 @@ export async function getReadyDb() {
   // their tables), leaving a fresh database only partially initialized.
   initialization ??= (async () => {
     await sql.query(`CREATE TABLE IF NOT EXISTS users (id text PRIMARY KEY, email text UNIQUE NOT NULL, display_name text NOT NULL, username text UNIQUE NOT NULL, bio text NOT NULL DEFAULT '', website text NOT NULL DEFAULT '', role text NOT NULL DEFAULT 'member', created_at timestamptz NOT NULL DEFAULT now())`);
-    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'member'`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role text NOT NULL DEFAULT 'USER'`);
+    await sql.query(`UPDATE users SET role='USER' WHERE lower(role)='member'`);
+    await sql.query(`UPDATE users SET role=upper(role)`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'ACTIVE'`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_permissions jsonb NOT NULL DEFAULT '[]'::jsonb`);
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS location text NOT NULL DEFAULT ''`);
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS skills jsonb NOT NULL DEFAULT '[]'::jsonb`);
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS social_links jsonb NOT NULL DEFAULT '{}'::jsonb`);
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text`);
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_type text`);
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_size integer`);
-    await sql.query(`UPDATE users SET role='admin' WHERE lower(email)=$1 AND role <> 'admin'`, [PRIMARY_ADMIN_EMAIL]);
+    if (PRIMARY_ADMIN_EMAIL) await sql.query(`UPDATE users SET role='ADMIN' WHERE lower(email)=$1 AND role NOT IN ('OWNER','ADMIN')`, [PRIMARY_ADMIN_EMAIL]);
+    if (OWNER_EMAIL) await sql.query(`UPDATE users SET role='OWNER' WHERE lower(email)=$1`, [OWNER_EMAIL]);
     await sql.query(`CREATE TABLE IF NOT EXISTS posts (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, title text NOT NULL, description text NOT NULL DEFAULT '', tags jsonb NOT NULL DEFAULT '[]'::jsonb, image_url text NOT NULL, image_type text NOT NULL, image_size integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'VISIBLE'`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS moderation_category text`);
     await sql.query(`CREATE TABLE IF NOT EXISTS reactions (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(post_id, user_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS comments (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, body text NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`ALTER TABLE comments ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'VISIBLE'`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS reports (id text PRIMARY KEY, reporter_id text NOT NULL REFERENCES users(id), target_type text NOT NULL, target_id text NOT NULL, category text NOT NULL, details text NOT NULL DEFAULT '', status text NOT NULL DEFAULT 'PENDING', created_at timestamptz NOT NULL DEFAULT now(), resolved_at timestamptz, resolved_by text REFERENCES users(id), UNIQUE(reporter_id,target_type,target_id))`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS moderation_queue (id text PRIMARY KEY, source text NOT NULL, target_type text NOT NULL, target_id text NOT NULL, creator_id text REFERENCES users(id), category text NOT NULL, severity text NOT NULL, status text NOT NULL DEFAULT 'PENDING', provider_ref text, created_at timestamptz NOT NULL DEFAULT now(), reviewed_at timestamptz, reviewed_by text REFERENCES users(id))`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS appeals (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id), target_type text NOT NULL, target_id text NOT NULL, reason text NOT NULL, explanation text NOT NULL DEFAULT '', status text NOT NULL DEFAULT 'PENDING', created_at timestamptz NOT NULL DEFAULT now(), reviewed_at timestamptz, reviewed_by text REFERENCES users(id))`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS trusted_contributor_applications (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id), reason text NOT NULL, contribution text NOT NULL, portfolio_url text NOT NULL DEFAULT '', status text NOT NULL DEFAULT 'PENDING', created_at timestamptz NOT NULL DEFAULT now(), reviewed_at timestamptz, reviewed_by text REFERENCES users(id), review_note text NOT NULL DEFAULT '')`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS audit_logs (id text PRIMARY KEY, actor_id text REFERENCES users(id), action text NOT NULL, target_type text NOT NULL, target_id text NOT NULL, metadata jsonb NOT NULL DEFAULT '{}'::jsonb, created_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS notifications (id text PRIMARY KEY, user_id text REFERENCES users(id), audience text NOT NULL DEFAULT 'USER', type text NOT NULL, title text NOT NULL, body text NOT NULL DEFAULT '', read_at timestamptz, created_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS rate_limits (key text PRIMARY KEY, count integer NOT NULL, window_start timestamptz NOT NULL)`);
     await sql.query(`CREATE TABLE IF NOT EXISTS follows (follower_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, followed_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (follower_id, followed_id), CHECK (follower_id <> followed_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS featured_posts (user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, position smallint NOT NULL CHECK (position BETWEEN 1 AND 3), created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (user_id, post_id), UNIQUE (user_id, position))`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`);
@@ -37,6 +52,10 @@ export async function getReadyDb() {
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_follows_followed_id ON follows(followed_id)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_follows_follower_id ON follows(follower_id)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_featured_posts_user ON featured_posts(user_id, position)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_reports_status_created ON reports(status, created_at)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_moderation_status_created ON moderation_queue(status, created_at)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_appeals_user_created ON appeals(user_id, created_at DESC)`);
   })();
   await initialization;
   return sql;
@@ -49,15 +68,15 @@ export async function ensureUser(user: AppUser) {
   const existing = await sql.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [user.userId]);
   if (existing.length) {
     const assignedRole = roleForEmail(user.email);
-    if (assignedRole === 'admin' && existing[0].role !== 'admin') {
-      const promoted = await sql.query(`UPDATE users SET role='admin' WHERE id=$1 RETURNING *`, [user.userId]);
+    if (assignedRole && normalizeRole(existing[0].role) !== assignedRole) {
+      const promoted = await sql.query(`UPDATE users SET role=$2 WHERE id=$1 RETURNING *`, [user.userId, assignedRole]);
       return promoted[0] as Record<string, unknown>;
     }
     return existing[0] as Record<string, unknown>;
   }
   const base = user.email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase().slice(0, 20) || 'creator';
   const suffix = crypto.randomUUID().slice(0, 6);
-  await sql.query(`INSERT INTO users (id, email, display_name, username, role) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`, [user.userId, user.email, user.displayName, `${base}-${suffix}`, roleForEmail(user.email)]);
+  await sql.query(`INSERT INTO users (id, email, display_name, username, role) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`, [user.userId, user.email, user.displayName, `${base}-${suffix}`, roleForEmail(user.email) ?? 'USER']);
   const created = await sql.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [user.userId]);
   return created[0] as Record<string, unknown>;
 }
