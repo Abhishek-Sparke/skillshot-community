@@ -25,7 +25,7 @@ export default function Upload() {
       const response = await fetch('/api/posts', { method: 'POST', body: new FormData(form) });
       if (response.ok) {
         const post = await response.json();
-        setStatus('Your shot is live! Opening it now…');
+        setStatus(post.status === 'VISIBLE' ? 'Your shot is live! Opening it now…' : 'Your shot was uploaded and is awaiting a quick safety review.');
         window.location.assign(`/shots/${post.id}`);
       } else if (response.status === 401) {
         setStatus('Please sign in before publishing your shot.');
