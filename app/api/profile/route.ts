@@ -3,6 +3,7 @@ import { put } from '@vercel/blob';
 import { getChatGPTUser } from '../../chatgpt-auth';
 import { ensureUser, getReadyDb } from '../../../lib/db';
 import { normalizeSocialUrl, SOCIAL_PLATFORMS } from '../../../lib/social-links';
+import { requirePrincipal } from '../../../lib/authz';
 
 const avatarTypes: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
@@ -20,8 +21,11 @@ async function hasValidImageSignature(file: File) {
 }
 
 export async function POST(request: Request) {
-  const user = await getChatGPTUser();
-  if (!user) return NextResponse.redirect(new URL('/signin?callbackUrl=/profile', request.url), 303);
+  const auth=await requirePrincipal();
+  if('error'in auth){const denied=auth.error!;return denied.status===401?NextResponse.redirect(new URL('/signin?callbackUrl=/profile',request.url),303):denied;}
+  const session=await getChatGPTUser();
+  if(!session)return NextResponse.redirect(new URL('/signin?callbackUrl=/profile',request.url),303);
+  const user=session;
   await ensureUser(user);
   const form = await request.formData();
   const displayName = String(form.get('displayName') || user.displayName).trim().slice(0, 80) || user.displayName;
