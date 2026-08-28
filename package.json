@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ignore-pattern .next"
+    "lint": "eslint . --ignore-pattern .next",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/core.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
@@ -28,4 +30,3 @@
     "typescript": "5.9.3"
   }
 }
-
