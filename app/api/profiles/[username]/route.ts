@@ -1,6 +1,6 @@
 import { getChatGPTUser } from '../../../chatgpt-auth';
 import { getReadyDb } from '../../../../lib/db';
-import { normalizeRole, roleForEmail } from '../../../../lib/roles';
+import { normalizeRole } from '../../../../lib/roles';
 import { safeStoredSocialLinks } from '../../../../lib/social-links';
 
 export async function GET(_: Request, { params }: { params: Promise<{ username: string }> }) {
@@ -9,10 +9,11 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
   const rows = await (await getReadyDb()).query(`
     SELECT u.id, u.email, u.display_name, u.username, u.bio, u.website, u.location,
       u.skills, u.social_links, u.avatar_url, u.role, u.created_at,
-      (SELECT COUNT(*) FROM posts p WHERE p.user_id=u.id) AS post_count,
+      (SELECT COUNT(*) FROM posts p WHERE p.user_id=u.id AND p.status='VISIBLE') AS post_count,
       (SELECT COUNT(*) FROM reactions r JOIN posts p ON p.id=r.post_id WHERE p.user_id=u.id) AS likes_received,
       (SELECT COUNT(*) FROM follows f WHERE f.followed_id=u.id) AS follower_count,
       (SELECT COUNT(*) FROM follows f WHERE f.follower_id=u.id) AS following_count,
+      (SELECT COUNT(*) FROM comments c WHERE c.user_id=u.id AND c.status='VISIBLE') AS comment_count,
       EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=$1 AND f.followed_id=u.id) AS viewer_follows
     FROM users u WHERE lower(u.username)=lower($2) LIMIT 1
   `, [viewer?.userId ?? '', username]);
@@ -34,6 +35,14 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
       if (['http:', 'https:'].includes(parsed.protocol)) website = parsed.toString();
     } catch { /* Ignore legacy invalid website values. */ }
   }
+  const reputation=Math.min(9999,Number(row.likes_received)*3+Number(row.follower_count)*5+Number(row.post_count)*10+Number(row.comment_count)*2);
+  const achievements=[
+    Number(row.post_count)>=1&&{key:'FIRST_SHOT',label:'First Skillshot',description:'Published a first piece of work.'},
+    Number(row.post_count)>=10&&{key:'MAKER_10',label:'Prolific Maker',description:'Published 10 visible Skillshots.'},
+    Number(row.likes_received)>=25&&{key:'APPRECIATED',label:'Community Favorite',description:'Received 25 reactions.'},
+    Number(row.comment_count)>=10&&{key:'CONVERSATION',label:'Community Voice',description:'Added 10 visible comments.'},
+    Number(row.follower_count)>=25&&{key:'CONNECTED',label:'Connected Creator',description:'Reached 25 followers.'},
+  ].filter(Boolean);
   return Response.json({ profile: {
     displayName: String(row.display_name),
     username: String(row.username),
@@ -43,10 +52,12 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     skills: Array.isArray(row.skills) ? row.skills.map(String) : [],
     socialLinks: safeStoredSocialLinks(row.social_links),
     avatarUrl: row.avatar_url ? `/api/avatars/${encodeURIComponent(String(row.username))}?v=${encodeURIComponent(String(row.avatar_url))}` : '',
-    role: roleForEmail(String(row.email)) === 'admin' ? 'admin' : normalizeRole(row.role),
+    role: normalizeRole(row.role),
     joinedAt: new Date(row.created_at as string).getTime(),
     postCount: Number(row.post_count),
     likesReceived: Number(row.likes_received),
+    reputation,
+    achievements,
     followerCount: Number(row.follower_count),
     followingCount: Number(row.following_count),
     isFollowing: Boolean(row.viewer_follows),

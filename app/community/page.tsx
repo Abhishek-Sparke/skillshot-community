@@ -1,12 +1,13 @@
 import CommunityFeed from '../components/community-feed';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
 export default function CommunityPage() {
   return <main>
     <nav className="nav shell">
-      <a className="brand" href="/"><span>S</span> Skillshot</a>
-      <div className="navlinks"><a href="/my-posts">My posts</a><a href="/profile">Profile</a><a className="upload" href="/upload">＋ Share a shot</a></div>
+      <Link className="brand" href="/"><span>S</span> Skillshot</Link>
+      <div className="navlinks"><Link href="/search">Search</Link><Link href="/my-posts">My posts</Link><Link href="/notifications">Notifications</Link><Link href="/profile">Profile</Link><Link className="upload" href="/upload">＋ Share a shot</Link></div>
     </nav>
     <section className="communityHero shell">
       <p className="eyebrow">EXPLORE SKILLSHOT</p>
