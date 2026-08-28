@@ -1,9 +1,9 @@
 import type { UserRole } from '../../lib/roles';
 
-export default function RoleBadge({ role }: { role: UserRole }) {
-  if (role !== 'admin') return null;
-
-  return <span className="adminBadge" aria-label="Admin" tabIndex={0}>
-    <span aria-hidden="true">✓</span>
-  </span>;
+const labels: Partial<Record<UserRole,string>> = { OWNER:'Owner', ADMIN:'Admin', MODERATOR:'Moderator', TRUSTED_CONTRIBUTOR:'Trusted Contributor' };
+const icons: Partial<Record<UserRole,string>> = { OWNER:'♛', ADMIN:'✦', MODERATOR:'✦', TRUSTED_CONTRIBUTOR:'♙' };
+export default function RoleBadge({ role, variant = 'compact' }: { role: UserRole; variant?: 'profile'|'compact' }) {
+  const label = labels[role];
+  if (!label) return null;
+  return <span className={`roleBadge role${role} ${variant}`} aria-label={label} title={label} role="img"><span aria-hidden="true">{icons[role]}</span>{variant === 'profile' && <b>{label}</b>}</span>;
 }
