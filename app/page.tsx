@@ -1,14 +1,19 @@
-import CommunityFeed from './components/community-feed';
+import { Suspense } from 'react';
+import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
+import Link from 'next/link';
+
+export const dynamic = 'force-dynamic';
 
 export default function Home() {
   return <main>
     <nav className="nav shell">
-      <a className="brand" href="/"><span>S</span> Skillshot</a>
+      <Link className="brand" href="/"><span>S</span> Skillshot</Link>
       <div className="navlinks">
-        <a href="/community">Community</a>
-        <a href="/my-posts">My posts</a>
-        <a href="/profile">Profile</a>
-        <a className="upload" href="/upload">＋ Share a shot</a>
+        <Link href="/community">Community</Link>
+        <Link href="/search">Search</Link>
+        <Link href="/my-posts">My posts</Link>
+        <Link href="/profile">Profile</Link>
+        <Link className="upload" href="/upload">＋ Share a shot</Link>
       </div>
     </nav>
 
@@ -18,8 +23,8 @@ export default function Home() {
         <h1>Show your skills.<br/><em>In one shot.</em></h1>
         <p className="lede">Share the screenshots behind your best work, discover how others create, and cheer on the details that deserve attention.</p>
         <div className="heroActions">
-          <a className="primary" href="/upload">Share your first shot →</a>
-          <a href="/community">Explore the community</a>
+          <Link className="primary" href="/upload">Share your first shot →</Link>
+          <Link href="/community">Explore the community</Link>
         </div>
       </div>
       <div className="heroCard">
@@ -32,9 +37,9 @@ export default function Home() {
     <section className="feed shell" id="explore">
       <div className="sectionHead">
         <div><p className="eyebrow">FRESH FROM THE COMMUNITY</p><h2>Real work, shared by creators.</h2></div>
-        <a className="textLink" href="/community">See the full community →</a>
+        <Link className="textLink" href="/community">See the full community →</Link>
       </div>
-      <CommunityFeed limit={6} compact />
+      <Suspense fallback={<HomeFreshSkeleton/>}><HomeFresh/></Suspense>
     </section>
 
     <section className="cta"><div>
@@ -42,14 +47,13 @@ export default function Home() {
       <p className="eyebrow">YOUR WORK BELONGS HERE</p>
       <h2>Made something good lately?</h2>
       <p>Share the process, the polish, or the tiny detail you finally got right.</p>
-      <a className="primary" href="/upload">Upload a screenshot →</a>
+      <Link className="primary" href="/upload">Upload a screenshot →</Link>
     </div></section>
 
     <footer className="shell">
-      <a className="brand" href="/"><span>S</span> Skillshot</a>
+      <Link className="brand" href="/"><span>S</span> Skillshot</Link>
       <p>A community for people who make things.</p>
-      <div><a href="/community">Community</a> · <a href="/my-posts">My posts</a> · <a href="/profile">Profile</a></div>
+      <div><Link href="/community">Community</Link> · <Link href="/search">Search</Link> · <Link href="/guidelines">Guidelines</Link> · <Link href="/my-posts">My posts</Link> · <Link href="/profile">Profile</Link></div>
     </footer>
   </main>;
 }
-
