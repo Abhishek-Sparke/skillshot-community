@@ -4,6 +4,7 @@ import RoleBadge from '../components/role-badge';
 import { normalizeRole } from '../../lib/roles';
 import { ensureUser } from '../../lib/db';
 import Link from 'next/link';
+import StaffDashboardLink from '../components/staff-dashboard-link';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export default async function MyPostsPage() {
   return <main>
     <nav className="nav shell">
       <Link className="brand" href="/"><span>S</span> Skillshot</Link>
-      <div className="navlinks"><Link href="/community">Community</Link><Link href="/profile">Profile</Link><Link className="upload" href="/upload">＋ Share a shot</Link></div>
+      <div className="navlinks"><Link href="/community">Community</Link><Link href="/profile">Profile</Link><StaffDashboardLink/><Link className="upload" href="/upload">＋ Share a shot</Link></div>
     </nav>
     <section className="communityHero shell">
       <p className="eyebrow">YOUR SKILLSHOT LIBRARY</p>
