@@ -1,21 +1,21 @@
 import { Suspense } from 'react';
 import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
 import Link from 'next/link';
-import StaffDashboardLink from './components/staff-dashboard-link';
+import AuthNavItems from './components/auth-nav-items';
+import { getChatGPTUser } from './chatgpt-auth';
+import { signInPath } from '../lib/auth-path';
 
 export const dynamic = 'force-dynamic';
 
-export default function Home() {
+export default async function Home() {
+  const signedIn = Boolean(await getChatGPTUser());
   return <main>
     <nav className="nav shell">
       <Link className="brand" href="/"><span>S</span> Skillshot</Link>
       <div className="navlinks">
         <Link href="/community">Community</Link>
         <Link href="/search">Search</Link>
-        <Link href="/my-posts">My posts</Link>
-        <Link href="/profile">Profile</Link>
-        <StaffDashboardLink/>
-        <Link className="upload" href="/upload">＋ Share a shot</Link>
+        <AuthNavItems returnTo="/" notifications={false}/>
       </div>
     </nav>
 
@@ -25,7 +25,7 @@ export default function Home() {
         <h1>Show your skills.<br/><em>In one shot.</em></h1>
         <p className="lede">Share the screenshots behind your best work, discover how others create, and cheer on the details that deserve attention.</p>
         <div className="heroActions">
-          <Link className="primary" href="/upload">Share your first shot →</Link>
+          <Link className="primary" href={signedIn ? '/upload' : signInPath('/upload', 'Sign in to share your first Skillshot')}>Share your first shot →</Link>
           <Link href="/community">Explore the community</Link>
         </div>
       </div>
@@ -49,13 +49,13 @@ export default function Home() {
       <p className="eyebrow">YOUR WORK BELONGS HERE</p>
       <h2>Made something good lately?</h2>
       <p>Share the process, the polish, or the tiny detail you finally got right.</p>
-      <Link className="primary" href="/upload">Upload a screenshot →</Link>
+      <Link className="primary" href={signedIn ? '/upload' : signInPath('/upload', 'Sign in to create a Skillshot')}>Create a Skillshot →</Link>
     </div></section>
 
     <footer className="shell">
       <Link className="brand" href="/"><span>S</span> Skillshot</Link>
       <p>A community for people who make things.</p>
-      <div><Link href="/community">Community</Link> · <Link href="/search">Search</Link> · <Link href="/guidelines">Guidelines</Link> · <Link href="/my-posts">My posts</Link> · <Link href="/profile">Profile</Link></div>
+      <div><Link href="/community">Community</Link> · <Link href="/search">Search</Link> · <Link href="/guidelines">Guidelines</Link> · <Link href={signedIn ? '/profile' : signInPath('/')}>{signedIn ? 'Profile' : 'Sign in'}</Link></div>
     </footer>
   </main>;
 }

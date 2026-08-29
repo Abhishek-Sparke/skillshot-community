@@ -5,6 +5,17 @@ import { moderateImage, moderateText } from '../lib/moderation.ts';
 import { normalizeSocialUrl } from '../lib/social-links.ts';
 import sharp from 'sharp';
 import { AVATAR_MAX_BYTES, processSkillshot, SKILLSHOT_MAX_BYTES, uploadError } from '../lib/image-processing.ts';
+import { safeReturnPath, signInPath } from '../lib/auth-path.ts';
+
+test('sign-in links preserve the requested page and reject external redirects', () => {
+  assert.equal(safeReturnPath('/shots/abc?view=full#comments'), '/shots/abc?view=full#comments');
+  assert.equal(safeReturnPath('//malicious.example'), '/');
+  assert.equal(safeReturnPath('https://malicious.example'), '/');
+  assert.equal(
+    signInPath('/search?q=design#results', 'Sign in to continue'),
+    '/signin?callbackUrl=%2Fsearch%3Fq%3Ddesign%23results&reason=Sign+in+to+continue',
+  );
+});
 
 test('roles default safely and keep staff boundaries',()=>{
   assert.equal(normalizeRole('member'),'USER');

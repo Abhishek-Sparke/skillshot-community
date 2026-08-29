@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '../auth';
+import { safeReturnPath, signInPath } from '../lib/auth-path';
 
 export type ChatGPTUser = {
   userId: string;
@@ -23,13 +24,9 @@ export async function requireChatGPTUser(returnTo: string) {
 }
 
 export function chatGPTSignInPath(returnTo: string) {
-  return `/signin?callbackUrl=${encodeURIComponent(safePath(returnTo))}`;
+  return signInPath(returnTo);
 }
 
 export function chatGPTSignOutPath(returnTo = '/') {
-  return `/api/auth/signout?callbackUrl=${encodeURIComponent(safePath(returnTo))}`;
-}
-
-function safePath(value: string) {
-  return value.startsWith('/') && !value.startsWith('//') ? value : '/';
+  return `/api/auth/signout?callbackUrl=${encodeURIComponent(safeReturnPath(returnTo))}`;
 }

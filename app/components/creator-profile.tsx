@@ -6,6 +6,7 @@ import CommunityFeed from './community-feed';
 import RoleBadge from './role-badge';
 import { isStaffRole, panelForRole, type UserRole } from '../../lib/roles';
 import ReportButton from './report-button';
+import { requireClientAuth, signInPath } from '../../lib/auth-path';
 
 type FeaturedPost = { id: string; title: string; description: string; createdAt: number; reactionCount: number; commentCount: number; imageUrl: string };
 type Profile = {
@@ -45,10 +46,11 @@ export default function CreatorProfile({ username, saved = false }: { username: 
 
   async function toggleFollow() {
     if (!profile || busy) return;
+    if (!requireClientAuth(profile.signedIn, `/users/${profile.username}`, `Sign in to follow @${profile.username}`)) return;
     setBusy(true);
     setError('');
     const response = await fetch(`/api/profiles/${encodeURIComponent(profile.username)}/follow`, { method: profile.isFollowing ? 'DELETE' : 'POST' });
-    if (response.status === 401) { window.location.assign(`/signin?callbackUrl=${encodeURIComponent(`/users/${profile.username}`)}`); return; }
+    if (response.status === 401) { window.location.assign(signInPath(`/users/${profile.username}`, `Sign in to follow @${profile.username}`)); return; }
     if (!response.ok) { setError('Could not update your follow. Please try again.'); setBusy(false); return; }
     const data = await response.json();
     setProfile({ ...profile, isFollowing: Boolean(data.following), followerCount: Number(data.followerCount) });
@@ -71,7 +73,7 @@ export default function CreatorProfile({ username, saved = false }: { username: 
   return <main className="profilePage">
     <nav className="nav shell">
       <Link className="brand" href="/"><span>S</span> Skillshot</Link>
-      <div className="navlinks"><Link href="/community">Community</Link><Link href="/search">Search</Link><Link href="/notifications">Notifications</Link><Link href="/my-posts">My posts</Link><Link href="/profile">Profile</Link>{profile.isSelf && isStaffRole(profile.role) && <Link className="staffDashboardLink" href={panelForRole(profile.role)}>◆ Dashboard</Link>}<Link className="upload" href="/upload">＋ Share a shot</Link></div>
+      <div className="navlinks"><Link href="/community">Community</Link><Link href="/search">Search</Link>{profile.signedIn ? <><Link href="/notifications">Notifications</Link><Link href="/my-posts">My posts</Link><Link href="/profile">Profile</Link>{profile.isSelf && isStaffRole(profile.role) && <Link className="staffDashboardLink" href={panelForRole(profile.role)}>◆ Dashboard</Link>}<Link className="upload" href="/upload">＋ Share a shot</Link></> : <><Link className="authEntry" href={signInPath(`/users/${profile.username}`)}>Sign in</Link><Link className="upload" href={signInPath('/upload', 'Sign in to create a Skillshot')}>＋ Share a shot</Link></>}</div>
     </nav>
     {saved && <div className="saveToast" role="status">✓ Profile updated</div>}
     <section className="profileHero shell">

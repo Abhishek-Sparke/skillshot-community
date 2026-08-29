@@ -6,6 +6,7 @@ import { normalizeSocialUrl, SOCIAL_PLATFORMS } from '../../../lib/social-links'
 import { requirePrincipal } from '../../../lib/authz';
 import { AVATAR_MAX_BYTES, processAvatar, uploadError } from '../../../lib/image-processing';
 import { rateLimit } from '../../../lib/rate-limit';
+import { signInPath } from '../../../lib/auth-path';
 
 function redirectError(request: Request, error: string) {
   return NextResponse.redirect(new URL(`/profile/edit?error=${encodeURIComponent(error)}`, request.url), 303);
@@ -13,9 +14,9 @@ function redirectError(request: Request, error: string) {
 
 export async function POST(request: Request) {
   const auth=await requirePrincipal();
-  if('error'in auth){const denied=auth.error!;return denied.status===401?NextResponse.redirect(new URL('/signin?callbackUrl=/profile',request.url),303):denied;}
+  if('error'in auth){const denied=auth.error!;return denied.status===401?NextResponse.redirect(new URL(signInPath('/profile'),request.url),303):denied;}
   const session=await getChatGPTUser();
-  if(!session)return NextResponse.redirect(new URL('/signin?callbackUrl=/profile',request.url),303);
+  if(!session)return NextResponse.redirect(new URL(signInPath('/profile'),request.url),303);
   const user=session;
   await ensureUser(user);
   const form = await request.formData();
