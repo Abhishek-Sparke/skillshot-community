@@ -55,6 +55,7 @@ export default function StaffPanel({ title, focus = 'all' }: { title: string; fo
       {data?.permissions.includes('team.view') && <Link href={data.role==='HEAD_MODERATOR'?'/head-mod/moderators':'/admin/team'}>{data.role==='HEAD_MODERATOR'?'Moderators':'Team & Roles'}</Link>}
       {data?.permissions.includes('users.view') && data.role!=='HEAD_MODERATOR' && <Link href="/admin/users">Users</Link>}
       {data?.permissions.includes('analytics.view') && <Link href="/admin/analytics">Analytics</Link>}
+      {data?.permissions.includes('analytics.view') && ['OWNER','ADMIN'].includes(data.role) && <Link href="/admin/storage">Storage</Link>}
       {data?.permissions.includes('audit.view') && <Link href="/admin/audit">Audit log</Link>}
       {data?.permissions.includes('trusted_contributor.review') && ['OWNER','ADMIN'].includes(data.role) && <Link href="/admin/trusted-contributors">Trusted Contributors</Link>}
       {data?.permissions.includes('settings.manage') && <Link href="/admin/settings">Settings</Link>}
