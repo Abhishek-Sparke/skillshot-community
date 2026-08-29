@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import CommunityFeed from './community-feed';
 import RoleBadge from './role-badge';
-import type { UserRole } from '../../lib/roles';
+import { isStaffRole, panelForRole, type UserRole } from '../../lib/roles';
 import ReportButton from './report-button';
 
 type FeaturedPost = { id: string; title: string; description: string; createdAt: number; reactionCount: number; commentCount: number; imageUrl: string };
@@ -71,7 +71,7 @@ export default function CreatorProfile({ username, saved = false }: { username: 
   return <main className="profilePage">
     <nav className="nav shell">
       <Link className="brand" href="/"><span>S</span> Skillshot</Link>
-      <div className="navlinks"><Link href="/community">Community</Link><Link href="/search">Search</Link><Link href="/notifications">Notifications</Link><Link href="/my-posts">My posts</Link><Link href="/profile">Profile</Link><Link className="upload" href="/upload">＋ Share a shot</Link></div>
+      <div className="navlinks"><Link href="/community">Community</Link><Link href="/search">Search</Link><Link href="/notifications">Notifications</Link><Link href="/my-posts">My posts</Link><Link href="/profile">Profile</Link>{profile.isSelf && isStaffRole(profile.role) && <Link className="staffDashboardLink" href={panelForRole(profile.role)}>◆ Dashboard</Link>}<Link className="upload" href="/upload">＋ Share a shot</Link></div>
     </nav>
     {saved && <div className="saveToast" role="status">✓ Profile updated</div>}
     <section className="profileHero shell">
