@@ -28,6 +28,7 @@ export function permissionsFor(role: UserRole, custom: unknown = []): Permission
 }
 export function can(role: UserRole, permission: Permission, custom?: unknown) { return permissionsFor(role, custom).includes(permission); }
 export function panelForRole(role: UserRole) { return role === 'OWNER' || role === 'ADMIN' ? '/admin' : role === 'HEAD_MODERATOR' ? '/head-mod' : role === 'MODERATOR' ? '/mod' : '/community'; }
+export function isStaffRole(role: UserRole) { return ['OWNER','ADMIN','HEAD_MODERATOR','MODERATOR'].includes(role); }
 
 export function assignableRoles(role: UserRole): UserRole[] {
   if (role === 'OWNER') return ['ADMIN','HEAD_MODERATOR','MODERATOR','USER'];

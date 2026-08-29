@@ -10,6 +10,7 @@ body { margin:0; background:var(--paper); color:var(--ink); font-family:Arial,sa
 .brand span { display:grid; place-items:center; background:var(--ink); color:white; width:31px; height:31px; border-radius:9px; transform:rotate(-5deg); }
 .navlinks { display:flex; gap:24px; align-items:center; margin-left:auto; }
 .navlinks a,.heroActions a { text-decoration:none; color:inherit; font-weight:700; font-size:14px; }
+.staffDashboardLink { display:inline-block; background:var(--ink); color:white!important; padding:10px 14px; border-radius:9px; text-decoration:none; }
 .upload,.primary { display:inline-block; background:var(--red)!important; color:white!important; padding:12px 18px; border-radius:10px; box-shadow:3px 3px 0 var(--ink); text-decoration:none; }
 .eyebrow { font-size:11px; letter-spacing:2px; font-weight:900; color:#78746b; }
 
