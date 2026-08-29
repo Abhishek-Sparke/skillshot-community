@@ -20,7 +20,7 @@ function SocialIcon({ platform }: { platform: SocialPlatformKey }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="7.5" cy="8" r="1.2" className="socialIconFill"/><path d="M6.5 11v6M11 17v-6m0 2.6c.7-1.7 5-2.2 5 1.2V17"/></svg>;
 }
 
-const MAX_SOURCE_AVATAR_SIZE = 12 * 1024 * 1024;
+const MAX_SOURCE_AVATAR_SIZE = 2 * 1024 * 1024;
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
 const TARGET_AVATAR_SIZE = 500 * 1024;
 const AVATAR_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -92,14 +92,14 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
       event.target.value = '';
       setAvatarFile(null);
       setAvatarPreview(profile.avatarUrl);
-      setFeedback('Unsupported image format. Use PNG, JPG, or WebP.');
+      setFeedback('Please upload a PNG, JPG, or WebP image.');
       return;
     }
     if (file.size > MAX_SOURCE_AVATAR_SIZE) {
       event.target.value = '';
       setAvatarFile(null);
       setAvatarPreview(profile.avatarUrl);
-      setFeedback('That photo is too large to process. Please choose one smaller than 12 MB.');
+      setFeedback('Image is too large. Please choose an image smaller than 2 MB.');
       return;
     }
 
@@ -176,8 +176,9 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
       const error = destination.searchParams.get('error');
       if (error) {
         const messages: Record<string, string> = {
-          'avatar-size': 'Profile picture must be smaller than 2 MB.',
-          'avatar-type': 'Unsupported image format. Use PNG, JPG, or WebP.',
+          'avatar-size': 'Image is too large. Please choose an image smaller than 2 MB.',
+          'avatar-type': 'Please upload a PNG, JPG, or WebP image.',
+          'avatar-rate': 'You have changed your profile picture several times today. Please try again later.',
           'avatar-invalid': "That image couldn't be read. Please choose another PNG, JPG, or WebP image.",
           'avatar-upload': "Couldn't upload your profile picture. Please try again.",
         };
@@ -197,7 +198,7 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
     <fieldset className="avatarEditor">
       <legend>Profile picture</legend>
       <div className="avatarPreview">{avatarPreview ? <img src={avatarPreview} alt="Avatar preview" onError={() => setAvatarPreview('')}/> : <span>{initials(displayName)}</span>}</div>
-      <div><label className="avatarUploadButton">{avatarBusy ? 'Preparing…' : 'Choose image'}<input key={avatarInputKey} name="avatar" type="file" accept="image/png,image/jpeg,image/webp" disabled={avatarBusy || busy} onChange={selectAvatar}/></label><small>PNG, JPG, or WebP · automatically optimized · saved avatar maximum 2 MB</small></div>
+      <div><label className="avatarUploadButton">{avatarBusy ? 'Preparing…' : 'Choose image'}<input key={avatarInputKey} name="avatar" type="file" accept="image/png,image/jpeg,image/webp" disabled={avatarBusy || busy} onChange={selectAvatar}/></label><small>PNG, JPG, or WebP · 2 MB maximum · automatically optimized for you</small></div>
       {(avatarPreview || profile.avatarUrl) && <button type="button" className="removeAvatarButton" disabled={avatarBusy || busy} onClick={() => { avatarSelection.current += 1; setAvatarFile(null); setAvatarInputKey(value => value + 1); setAvatarPreview(''); setRemoveAvatar(true); setAvatarBusy(false); setFeedback('Profile picture will be removed when you save.'); }}>Remove</button>}
       <input type="hidden" name="removeAvatar" value={removeAvatar ? '1' : '0'}/>
     </fieldset>

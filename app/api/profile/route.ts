@@ -1,23 +1,14 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { del, put } from '@vercel/blob';
 import { getChatGPTUser } from '../../chatgpt-auth';
 import { ensureUser, getReadyDb } from '../../../lib/db';
 import { normalizeSocialUrl, SOCIAL_PLATFORMS } from '../../../lib/social-links';
 import { requirePrincipal } from '../../../lib/authz';
-
-const avatarTypes: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
-const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
+import { AVATAR_MAX_BYTES, processAvatar, uploadError } from '../../../lib/image-processing';
+import { rateLimit } from '../../../lib/rate-limit';
 
 function redirectError(request: Request, error: string) {
   return NextResponse.redirect(new URL(`/profile/edit?error=${encodeURIComponent(error)}`, request.url), 303);
-}
-
-async function hasValidImageSignature(file: File) {
-  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
-  if (file.type === 'image/png') return bytes.length >= 8 && [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value);
-  if (file.type === 'image/jpeg') return bytes.length >= 3 && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255;
-  if (file.type === 'image/webp') return bytes.length >= 12 && String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
-  return false;
 }
 
 export async function POST(request: Request) {
@@ -36,6 +27,7 @@ export async function POST(request: Request) {
   const profileSkills = String(form.get('skills') || '').split(',').map(value => value.trim()).filter(Boolean).slice(0, 12).map(value => value.slice(0, 40));
   const avatar = form.get('avatar');
   const removeAvatar = form.get('removeAvatar') === '1';
+  if ((removeAvatar || (avatar instanceof File && avatar.size > 0)) && !await rateLimit(`avatar:${user.userId}`, 12, 86400)) return redirectError(request, 'avatar-rate');
   const requestedFeatured = [...new Set(form.getAll('featuredPost').map(String).filter(Boolean))].slice(0, 3);
   if (!username) return redirectError(request, 'username');
   const sql = await getReadyDb();
@@ -69,24 +61,27 @@ export async function POST(request: Request) {
     return redirectError(request, 'social');
   }
   if (!removeAvatar && avatar instanceof File && avatar.size > 0) {
-    if (!avatarTypes[avatar.type]) return redirectError(request, 'avatar-type');
-    if (avatar.size > MAX_AVATAR_SIZE) return redirectError(request, 'avatar-size');
-    if (!(await hasValidImageSignature(avatar))) return redirectError(request, 'avatar-invalid');
+    const validation = uploadError(avatar, AVATAR_MAX_BYTES);
+    if (validation === 'UNSUPPORTED_FORMAT') return redirectError(request, 'avatar-type');
+    if (validation === 'FILE_TOO_LARGE') return redirectError(request, 'avatar-size');
+    if (validation) return redirectError(request, 'avatar-invalid');
   }
   const conflict = await sql.query(`SELECT 1 FROM users WHERE lower(username)=lower($1) AND id<>$2 LIMIT 1`, [username, user.userId]);
   if (conflict.length) return redirectError(request, 'username-taken');
   let avatarUrl = removeAvatar ? null : current[0]?.avatar_url ?? null;
   let avatarType = removeAvatar ? null : current[0]?.avatar_type ?? null;
   let avatarSize = removeAvatar ? null : current[0]?.avatar_size ?? null;
+  let newlyUploadedAvatar: string | null = null;
   if (!removeAvatar && avatar instanceof File && avatar.size > 0) {
     try {
-      const extension = avatarTypes[avatar.type];
-      const blob = await put(`avatars/${user.userId}/${crypto.randomUUID()}.${extension}`, avatar, { access: 'private', addRandomSuffix: true, contentType: avatar.type });
+      const optimized = await processAvatar(Buffer.from(await avatar.arrayBuffer()));
+      const blob = await put(`avatars/${user.userId}/${crypto.randomUUID()}.webp`, optimized, { access: 'private', addRandomSuffix: false, contentType: 'image/webp' });
       avatarUrl = blob.pathname;
-      avatarType = avatar.type;
-      avatarSize = avatar.size;
+      avatarType = 'image/webp';
+      avatarSize = optimized.length;
+      newlyUploadedAvatar = blob.pathname;
     } catch {
-      return redirectError(request, 'avatar-upload');
+      return redirectError(request, 'avatar-invalid');
     }
   }
   try {
@@ -102,7 +97,10 @@ export async function POST(request: Request) {
       await sql.query(`INSERT INTO featured_posts (user_id,post_id,position) VALUES ($1,$2,$3)`, [user.userId, postId, position++]);
     }
   } catch {
+    if (newlyUploadedAvatar) await del(newlyUploadedAvatar).catch(() => undefined);
     return redirectError(request, 'save');
   }
+  const previousAvatar = current[0]?.avatar_url ? String(current[0].avatar_url) : null;
+  if (previousAvatar && previousAvatar !== avatarUrl) await del(previousAvatar).catch(() => undefined);
   return NextResponse.redirect(new URL('/profile?saved=1', request.url), 303);
 }

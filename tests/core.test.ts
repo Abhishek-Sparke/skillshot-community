@@ -3,6 +3,8 @@ import test from 'node:test';
 import { can, canChangeRole, canModerateUser, normalizeRole, panelForRole, permissionsFor } from '../lib/roles.ts';
 import { moderateImage, moderateText } from '../lib/moderation.ts';
 import { normalizeSocialUrl } from '../lib/social-links.ts';
+import sharp from 'sharp';
+import { AVATAR_MAX_BYTES, processSkillshot, SKILLSHOT_MAX_BYTES, uploadError } from '../lib/image-processing.ts';
 
 test('roles default safely and keep staff boundaries',()=>{
   assert.equal(normalizeRole('member'),'USER');
@@ -38,4 +40,14 @@ test('fallback moderation blocks high-risk text without blocking ordinary upload
   assert.equal((await moderateText('A clean interface design')).level,'SAFE');
   assert.equal((await moderateText('credit card dump for sale')).level,'HIGH');
   assert.equal((await moderateImage('https://example.test/image.png')).level,'SAFE');
+});
+
+test('upload limits and decoded image validation are enforced', async () => {
+  assert.equal(uploadError(new File([Buffer.alloc(AVATAR_MAX_BYTES + 1)], 'avatar.jpg', { type: 'image/jpeg' }), AVATAR_MAX_BYTES), 'FILE_TOO_LARGE');
+  assert.equal(uploadError(new File([Buffer.alloc(10)], 'payload.jpg', { type: 'application/octet-stream' }), SKILLSHOT_MAX_BYTES), 'UNSUPPORTED_FORMAT');
+  await assert.rejects(() => processSkillshot(Buffer.from('not an image')));
+  const source = await sharp({ create: { width: 1600, height: 900, channels: 3, background: '#f45b4f' } }).png().toBuffer();
+  const result = await processSkillshot(source);
+  assert.equal(result.width, 1600);
+  assert.ok(result.thumbnail.length > 0);
 });
