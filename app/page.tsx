@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
 import Link from 'next/link';
+import StaffDashboardLink from './components/staff-dashboard-link';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,7 @@ export default function Home() {
         <Link href="/search">Search</Link>
         <Link href="/my-posts">My posts</Link>
         <Link href="/profile">Profile</Link>
+        <StaffDashboardLink/>
         <Link className="upload" href="/upload">＋ Share a shot</Link>
       </div>
     </nav>
