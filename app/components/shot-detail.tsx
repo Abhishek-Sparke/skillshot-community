@@ -10,7 +10,7 @@ type Post = {
   id: string; title: string; description: string; tags: string[]; author: string; username: string;
   authorRole: UserRole;
   createdAt: number; reactionCount: number; commentCount: number; viewerLiked: boolean;
-  signedIn: boolean; imageUrl: string; downloadUrl: string;
+  signedIn: boolean; isOwner: boolean; imageUrl: string; downloadUrl: string;
 };
 type Comment = { id: string; body: string; author: string; username: string; authorRole: UserRole; createdAt: number; canDelete: boolean };
 
@@ -65,6 +65,13 @@ export default function ShotDetail({ id }: { id: string }) {
     }
   }
 
+  async function deletePost() {
+    if (!window.confirm('Delete this Skillshot? It will be hidden immediately and retained briefly for safety review.')) return;
+    const response = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+    if (!response.ok) { setStatus('Could not delete this Skillshot.'); return; }
+    window.location.assign('/my-posts');
+  }
+
   function startEditing(comment: Comment) {
     setEditingId(comment.id);
     setEditingText(comment.body);
@@ -94,7 +101,7 @@ export default function ShotDetail({ id }: { id: string }) {
       <img className="detailImage" src={post.imageUrl} alt={post.title}/>
       <div className="detailHeading">
         <div><Link className="eyebrow creatorLink" href={`/users/${encodeURIComponent(post.username)}`}>@{post.username}</Link><h1>{post.title}</h1><p>Shared by <Link className="authorLine creatorLink" href={`/users/${encodeURIComponent(post.username)}`}><b>{post.author}</b> <RoleBadge role={post.authorRole} /></Link></p></div>
-        <a className="downloadButton" href={post.downloadUrl}>↓ Download</a>
+        <div className="detailActions"><a className="downloadButton" href={post.downloadUrl}>↓ Download</a>{post.isOwner && <button className="reportButton" type="button" onClick={deletePost}>Delete</button>}</div>
       </div>
       {post.description && <p className="detailDescription">{post.description}</p>}
       <div className="detailTags">{post.tags.map(tag => <span key={tag}>{tag}</span>)}</div>

@@ -9,6 +9,8 @@ export type CommunityPost = {
   title: string;
   description: string;
   tags: string[];
+  skills: string[];
+  category: string;
   author: string;
   username: string;
   avatarUrl: string;
@@ -17,6 +19,7 @@ export type CommunityPost = {
   reactionCount: number;
   commentCount: number;
   imageUrl: string;
+  previewUrl: string;
   downloadUrl: string;
   isOwner: boolean;
 };
@@ -37,6 +40,8 @@ export default function CommunityFeed({ mine = false, username, likedBy, limit, 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [previewPost, setPreviewPost] = useState<CommunityPost | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -44,16 +49,27 @@ export default function CommunityFeed({ mine = false, username, likedBy, limit, 
     if (mine) search.set('mine', '1');
     if (username) search.set('username', username);
     if (likedBy) search.set('likedBy', likedBy);
-    fetch(`/api/posts${search.size ? `?${search}` : ''}`)
+    search.set('limit', String(limit || 18));
+    fetch(`/api/posts?${search}`)
       .then(async response => {
         if (!response.ok) throw new Error(response.status === 401 ? 'Please sign in to see your posts.' : 'Could not load posts.');
         return response.json();
       })
-      .then(data => { if (active) setPosts(data.posts ?? []); })
+      .then(data => { if (active) { setPosts(data.posts ?? []); setNextCursor(data.nextCursor ?? null); } })
       .catch(reason => { if (active) setError(reason.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [mine, username, likedBy]);
+  }, [mine, username, likedBy, limit]);
+
+  async function loadMore() {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    const search = new URLSearchParams({ cursor: nextCursor, limit: '18' });
+    if (mine) search.set('mine', '1'); if (username) search.set('username', username); if (likedBy) search.set('likedBy', likedBy);
+    try { const response = await fetch(`/api/posts?${search}`); if (!response.ok) throw new Error(); const data = await response.json(); setPosts(current => [...current, ...(data.posts ?? [])]); setNextCursor(data.nextCursor ?? null); }
+    catch { setError('Could not load more Skillshots.'); }
+    finally { setLoadingMore(false); }
+  }
 
   useEffect(() => {
     if (!previewPost) return;
@@ -71,7 +87,7 @@ export default function CommunityFeed({ mine = false, username, likedBy, limit, 
 
   const visible = useMemo(() => {
     const term = query.trim().toLowerCase();
-    const filtered = posts.filter(post => !term || [post.title, post.description, post.author, post.username, ...post.tags].join(' ').toLowerCase().includes(term));
+    const filtered = posts.filter(post => !term || [post.title, post.description, post.author, post.username, post.category, ...post.tags, ...post.skills].join(' ').toLowerCase().includes(term));
     filtered.sort((a, b) => sort === 'popular'
       ? (b.reactionCount + b.commentCount) - (a.reactionCount + a.commentCount)
       : b.createdAt - a.createdAt);
@@ -92,9 +108,9 @@ export default function CommunityFeed({ mine = false, username, likedBy, limit, 
 
     {visible.length === 0 ? <div className="emptyFeed">
       <span>✦</span>
-      <h3>{query ? 'No matching shots yet.' : emptyTitle ?? (mine ? 'Your first Skillshot starts here.' : 'Be the first creator here.')}</h3>
-      <p>{query ? 'Try another search term.' : emptyText ?? (mine ? 'Share something you are proud of and let the community discover it.' : 'Upload a screenshot and it will appear here.')}</p>
-      {!query && <a className="primary" href="/upload">Share a shot →</a>}
+      <h3>{query ? 'No matching Skillshots yet.' : emptyTitle ?? (mine ? 'Have something you’re proud of?' : 'Be the first creator here.')}</h3>
+      <p>{query ? 'Try another search term.' : emptyText ?? (mine ? 'Share it with the Skillshot community.' : 'Show something you created, built, captured, or discovered.')}</p>
+      {!query && <a className="primary" href="/upload">Create your first Skillshot →</a>}
     </div> : <div className="grid">
       {visible.map(post => <article className="post" key={post.id}>
         <div className="shot uploadedShot">
@@ -135,8 +151,9 @@ export default function CommunityFeed({ mine = false, username, likedBy, limit, 
           </div>
           <button type="button" onClick={() => setPreviewPost(null)} aria-label="Close image preview">×</button>
         </div>
-        <img src={previewPost.imageUrl} alt={previewPost.title}/>
+        <img src={previewPost.previewUrl || previewPost.imageUrl} alt={previewPost.title}/>
       </div>
     </div>}
+    {!limit && nextCursor && !query && <div className="loadMore"><button type="button" onClick={loadMore} disabled={loadingMore}>{loadingMore ? 'Loading…' : 'Load more Skillshots'}</button></div>}
   </>;
 }

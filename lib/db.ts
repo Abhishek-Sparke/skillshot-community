@@ -34,6 +34,15 @@ export async function getReadyDb() {
     await sql.query(`CREATE TABLE IF NOT EXISTS posts (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, title text NOT NULL, description text NOT NULL DEFAULT '', tags jsonb NOT NULL DEFAULT '[]'::jsonb, image_url text NOT NULL, image_type text NOT NULL, image_size integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'VISIBLE'`);
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS moderation_category text`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS display_url text`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS thumbnail_url text`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS display_size integer NOT NULL DEFAULT 0`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS thumbnail_size integer NOT NULL DEFAULT 0`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS image_width integer`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS image_height integer`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS skills jsonb NOT NULL DEFAULT '[]'::jsonb`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS category text NOT NULL DEFAULT 'Other'`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS deleted_at timestamptz`);
     await sql.query(`CREATE TABLE IF NOT EXISTS reactions (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(post_id, user_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS comments (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, body text NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`ALTER TABLE comments ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'VISIBLE'`);
@@ -44,9 +53,12 @@ export async function getReadyDb() {
     await sql.query(`CREATE TABLE IF NOT EXISTS audit_logs (id text PRIMARY KEY, actor_id text REFERENCES users(id), action text NOT NULL, target_type text NOT NULL, target_id text NOT NULL, metadata jsonb NOT NULL DEFAULT '{}'::jsonb, created_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`CREATE TABLE IF NOT EXISTS notifications (id text PRIMARY KEY, user_id text REFERENCES users(id), audience text NOT NULL DEFAULT 'USER', type text NOT NULL, title text NOT NULL, body text NOT NULL DEFAULT '', read_at timestamptz, created_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`CREATE TABLE IF NOT EXISTS rate_limits (key text PRIMARY KEY, count integer NOT NULL, window_start timestamptz NOT NULL)`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS upload_events (id text PRIMARY KEY, user_id text REFERENCES users(id) ON DELETE SET NULL, kind text NOT NULL, outcome text NOT NULL, bytes integer NOT NULL DEFAULT 0, reason text, created_at timestamptz NOT NULL DEFAULT now())`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS storage_cleanup_queue (id text PRIMARY KEY, post_id text, pathname text NOT NULL, reason text NOT NULL, cleanup_after timestamptz NOT NULL, reviewed_at timestamptz, deleted_at timestamptz, created_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`CREATE TABLE IF NOT EXISTS follows (follower_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, followed_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (follower_id, followed_id), CHECK (follower_id <> followed_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS featured_posts (user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, position smallint NOT NULL CHECK (position BETWEEN 1 AND 3), created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (user_id, post_id), UNIQUE (user_id, position))`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_visible_created ON posts(status, created_at DESC, id DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_comments_post_created ON comments(post_id, created_at)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_follows_followed_id ON follows(followed_id)`);
@@ -56,6 +68,8 @@ export async function getReadyDb() {
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_moderation_status_created ON moderation_queue(status, created_at)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_appeals_user_created ON appeals(user_id, created_at DESC)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_upload_events_created ON upload_events(created_at DESC)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_cleanup_due ON storage_cleanup_queue(cleanup_after) WHERE deleted_at IS NULL`);
   })();
   await initialization;
   return sql;
