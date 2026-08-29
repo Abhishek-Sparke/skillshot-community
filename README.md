@@ -1,6 +1,8 @@
 # Skillshot Community — Vercel edition
 
-A responsive full-stack screenshot-sharing community built with Next.js, Neon Postgres, Vercel Blob, and Google authentication through Auth.js.
+A responsive full-stack visual showcase community built with Next.js, Neon Postgres, Vercel Blob, and Google authentication through Auth.js.
+
+> **Show your skills. In one shot.** A Skillshot can showcase a gaming moment, coding project, website, UI/UX design, artwork, photograph, animation, creative build, discovery, or other visual work.
 
 ## Features
 
@@ -8,7 +10,9 @@ A responsive full-stack screenshot-sharing community built with Next.js, Neon Po
 - Verified-email profiles and protected routes
 - Public community feed, creator profiles, follows, and a private My Posts page
 - Global creator/Skillshot/tag search plus newest/popular sorting
-- Validated PNG, JPEG, WebP, and GIF uploads up to 10 MB
+- Validated PNG, JPEG, and WebP Skillshot uploads up to 10 MB
+- Server-side image decoding, dimension protection, WebP optimization, thumbnails, and original-file downloads
+- Profile image uploads up to 2 MB with automatic optimization
 - Durable profiles, posts, reactions, and comments in Neon Postgres
 - Screenshot storage and delivery through Vercel Blob
 - Correctly named image downloads, likes, comments, editing, and owner-only deletion
@@ -16,6 +20,8 @@ A responsive full-stack screenshot-sharing community built with Next.js, Neon Po
 - Private staff dashboards, moderation queue, reports, appeals, audit log, analytics, and user management
 - Notifications, community guidelines, reputation, and achievements (kept separate from roles)
 - Server-side rate limits, content moderation hooks, and status-aware public queries
+- Cursor-paginated community results, lazy-loaded thumbnails, and exactly three newest homepage Skillshots
+- Safe deleted-file retention and private live storage statistics for administrators
 
 ## Environment variables
 
@@ -44,6 +50,8 @@ Use these Google OAuth callback URLs:
 3. Create `.env.local` from `.env.example`.
 4. Run `pnpm dev` (or `npm run dev`).
 5. Open `http://localhost:3000`.
+
+For a full beginner setup, project explanation, submission checklist, demo script, architecture, and database overview, read [`SUBMISSION_GUIDE.md`](./SUBMISSION_GUIDE.md).
 
 The additive database tables, columns, and indexes are created automatically on the first request. Existing posts and profiles are preserved.
 
