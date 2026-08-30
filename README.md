@@ -21,7 +21,9 @@ A responsive full-stack visual showcase community built with Next.js, Neon Postg
 - Notifications, community guidelines, reputation, and achievements (kept separate from roles)
 - Server-side rate limits, content moderation hooks, and status-aware public queries
 - Cursor-paginated community results, lazy-loaded thumbnails, and exactly three newest homepage Skillshots
-- Safe deleted-file retention and private live storage statistics for administrators
+- Safe deleted-file retention, private upload statistics, and storage-scan snapshots for administrators
+- Private direct-to-Blob staging for 10 MB uploads without Vercel's 4.5 MB Function request limit
+- Review-first orphan scans, retention-aware cleanup, and appeal/legal-hold protection
 
 ## Environment variables
 
@@ -36,7 +38,7 @@ Copy `.env.example` to `.env.local` and configure:
 - `OWNER_EMAIL` — the protected Owner Google account
 - `ADMIN_EMAIL` — optional initial Admin Google account
 - `MODERATION_API_URL` / `MODERATION_API_KEY` — optional compatible moderation service
-- `MODERATION_STRICT` — set to `true` to hold images whenever the external scanner is unavailable
+- `MODERATION_STRICT` — keep `true` in production (the default when unset). Unscanned Skillshots wait for staff review; unapproved avatar changes leave the existing avatar intact. Explicit `false` permits unscanned images only when no provider is configured; a configured provider failure always holds content.
 
 Use these Google OAuth callback URLs:
 
@@ -54,6 +56,8 @@ Use these Google OAuth callback URLs:
 For a full beginner setup, project explanation, submission checklist, demo script, architecture, and database overview, read [`SUBMISSION_GUIDE.md`](./SUBMISSION_GUIDE.md).
 
 The additive database tables, columns, and indexes are created automatically on the first request. Existing posts and profiles are preserved.
+
+Read [STORAGE_OPERATIONS.md](./STORAGE_OPERATIONS.md) for upload transport, moderation configuration, storage review, cleanup, and the staging test checklist.
 
 ## Verify a release
 
