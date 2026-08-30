@@ -1,3 +1,5 @@
+import { moderateWithOpenAI } from './openai-moderation.ts';
+
 export type ModerationDecision = { level: 'SAFE'|'BORDERLINE'|'HIGH'; category?: string; providerRef?: string };
 const highRisk = /\b(child sexual|kill yourself|nazi extermination|credit card dump)\b/i;
 const borderline = /\b(nude|porn|hate|threat|scam|crypto giveaway|buy followers)\b/i;
@@ -9,6 +11,8 @@ function checkedDecision(value: unknown): ModerationDecision {
   return { level: row.level as ModerationDecision['level'], category: typeof row.category === 'string' ? row.category.slice(0, 80) : undefined, providerRef: typeof row.providerRef === 'string' ? row.providerRef.slice(0, 200) : undefined };
 }
 export async function moderateText(text: string): Promise<ModerationDecision> {
+  if (process.env.MODERATION_PROVIDER === 'openai') return moderateWithOpenAI('text', text);
+  if (process.env.MODERATION_PROVIDER && process.env.MODERATION_PROVIDER !== 'custom') return { level: 'BORDERLINE', category: 'INVALID_PROVIDER_CONFIGURATION' };
   const endpoint = process.env.MODERATION_API_URL;
   const key = process.env.MODERATION_API_KEY;
   if (endpoint && key) {
@@ -24,6 +28,8 @@ export async function moderateText(text: string): Promise<ModerationDecision> {
   return { level:'SAFE' };
 }
 export async function moderateImage(url: string): Promise<ModerationDecision> {
+  if (process.env.MODERATION_PROVIDER === 'openai') return moderateWithOpenAI('image', url);
+  if (process.env.MODERATION_PROVIDER && process.env.MODERATION_PROVIDER !== 'custom') return { level: 'BORDERLINE', category: 'INVALID_PROVIDER_CONFIGURATION' };
   const endpoint = process.env.MODERATION_API_URL;
   const key = process.env.MODERATION_API_KEY;
   // Unscanned images are held by default. An explicit false is a development

@@ -38,6 +38,8 @@ Copy `.env.example` to `.env.local` and configure:
 - `OWNER_EMAIL` — the protected Owner Google account
 - `ADMIN_EMAIL` — optional initial Admin Google account
 - `MODERATION_API_URL` / `MODERATION_API_KEY` — optional compatible moderation service
+- `MODERATION_PROVIDER` — `openai` for the built-in OpenAI adapter, or `custom` (the legacy default) for a compatible service
+- `OPENAI_API_KEY` — server-only key when using `openai`; see [moderation setup](MODERATION_SETUP.md). Never use a `NEXT_PUBLIC_` key.
 - `MODERATION_STRICT` — keep `true` in production (the default when unset). Unscanned Skillshots wait for staff review; unapproved avatar changes leave the existing avatar intact. Explicit `false` permits unscanned images only when no provider is configured; a configured provider failure always holds content.
 
 Use these Google OAuth callback URLs:

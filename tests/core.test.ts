@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { can, canChangeRole, canModerateUser, normalizeRole, panelForRole, permissionsFor } from '../lib/roles.ts';
 import { moderateImage, moderateText } from '../lib/moderation.ts';
+import { openAIDecision } from '../lib/openai-moderation.ts';
 import { normalizeSocialUrl } from '../lib/social-links.ts';
 import sharp from 'sharp';
 import { AVATAR_MAX_BYTES, moderationPreview, processAvatar, processSkillshot, SKILLSHOT_MAX_BYTES, uploadError } from '../lib/image-processing.ts';
@@ -137,6 +138,62 @@ test('configured moderation outages and invalid responses are held, not publishe
     for (const [key, value] of Object.entries({ MODERATION_API_URL: saved.url, MODERATION_API_KEY: saved.key, MODERATION_STRICT: saved.strict })) {
       if (value === undefined) delete process.env[key]; else process.env[key] = value;
     }
+  }
+});
+
+function scannerResult(category?: string, score = 0, flagged = false) {
+  const names = ['sexual', 'sexual/minors', 'harassment', 'harassment/threatening', 'hate', 'hate/threatening', 'illicit', 'illicit/violent', 'self-harm', 'self-harm/intent', 'self-harm/instructions', 'violence', 'violence/graphic'];
+  return { id: 'modr-synthetic', results: [{ flagged, categories: Object.fromEntries(names.map(name => [name, name === category && flagged])), category_scores: Object.fromEntries(names.map(name => [name, name === category ? score : 0])) }] };
+}
+
+test('OpenAI moderation maps safe, review, high risk, and invalid results without returning scores', () => {
+  assert.equal(openAIDecision(scannerResult()).level, 'SAFE');
+  assert.equal(openAIDecision(scannerResult('violence', 0.99, true)).level, 'BORDERLINE');
+  assert.equal(openAIDecision(scannerResult('sexual', 0.6)).level, 'BORDERLINE');
+  assert.equal(openAIDecision(scannerResult('sexual/minors', 0.99, true)).level, 'HIGH');
+  assert.equal(openAIDecision(scannerResult('sexual/minors', 0.9, true)).level, 'BORDERLINE');
+  for (const value of [null, {}, { results: [] }, { id: 'x', results: [{ flagged: false, categories: {}, category_scores: {} }] }, scannerResult('sexual', NaN)]) {
+    assert.equal(openAIDecision(value).level, 'BORDERLINE');
+  }
+  assert.deepEqual(Object.keys(openAIDecision(scannerResult())).sort(), ['level', 'providerRef']);
+});
+
+test('OpenAI adapter uses the moderation endpoint and holds key, network, and malformed response failures', async t => {
+  const keys = ['MODERATION_PROVIDER', 'OPENAI_API_KEY', 'MODERATION_STRICT'];
+  const saved = keys.map(key => process.env[key]);
+  process.env.MODERATION_PROVIDER = 'openai';
+  process.env.OPENAI_API_KEY = 'synthetic-test-key';
+  process.env.MODERATION_STRICT = 'false';
+  const requests: { url: string; body: Record<string, unknown> }[] = [];
+  const fetchMock = t.mock.method(globalThis, 'fetch', async (url: string | URL | Request, init?: RequestInit) => {
+    requests.push({ url: String(url), body: JSON.parse(String(init?.body)) });
+    assert.equal(init?.redirect, 'error');
+    assert.ok(init?.signal);
+    return Response.json(scannerResult());
+  });
+  try {
+    assert.equal((await moderateText('A clean interface')).level, 'SAFE');
+    assert.equal((await moderateImage('data:image/webp;base64,test')).level, 'SAFE');
+    assert.equal(requests[0].url, 'https://api.openai.com/v1/moderations');
+    assert.deepEqual(requests[0].body, { model: 'omni-moderation-latest', input: 'A clean interface' });
+    assert.deepEqual(requests[1].body.input, [{ type: 'image_url', image_url: { url: 'data:image/webp;base64,test' } }]);
+    assert.equal((await moderateImage('https://private-blob.example/image')).level, 'BORDERLINE');
+    for (const status of [401, 429, 500]) {
+      fetchMock.mock.mockImplementation(async () => new Response('', { status }));
+      assert.equal((await moderateText('test')).level, 'BORDERLINE');
+    }
+    fetchMock.mock.mockImplementation(async () => Response.json({}));
+    assert.equal((await moderateImage('data:image/webp;base64,test')).level, 'BORDERLINE');
+    fetchMock.mock.mockImplementation(async () => { throw new Error('timeout'); });
+    assert.equal((await moderateText('test')).level, 'BORDERLINE');
+    delete process.env.OPENAI_API_KEY;
+    const before = fetchMock.mock.callCount();
+    assert.equal((await moderateText('test')).category, 'PROVIDER_NOT_CONFIGURED');
+    assert.equal(fetchMock.mock.callCount(), before);
+    process.env.MODERATION_PROVIDER = 'typo';
+    assert.equal((await moderateImage('test')).level, 'BORDERLINE');
+  } finally {
+    keys.forEach((key, index) => { if (saved[index] === undefined) delete process.env[key]; else process.env[key] = saved[index]; });
   }
 });
 

@@ -16,7 +16,7 @@ Post creation allows 8 attempts/hour per account; token generation separately al
 
 ## Moderation
 
-Configure `MODERATION_API_URL` and `MODERATION_API_KEY` for a compatible service. It must accept authenticated JSON:
+For the built-in OpenAI option, follow [moderation setup](MODERATION_SETUP.md) and configure `MODERATION_PROVIDER=openai` plus `OPENAI_API_KEY`. For a custom service, set `MODERATION_PROVIDER=custom`, `MODERATION_API_URL`, and `MODERATION_API_KEY`. A custom service must accept authenticated JSON:
 
 - Text: `{ "type": "text", "text": "..." }`
 - Image: `{ "type": "image", "url": "data:image/webp;base64,..." }`
@@ -24,7 +24,7 @@ Configure `MODERATION_API_URL` and `MODERATION_API_KEY` for a compatible service
 
 The image value is a bounded, decoded preview, not an inaccessible private Blob URL. Internal decisions and provider references are not returned to normal users. Requests time out after 15 seconds. Invalid responses or configured-provider failures are held for human review. High-risk Skillshots are blocked. Unapproved avatar changes are rejected without replacing the existing image.
 
-**Keep `MODERATION_STRICT=true` in production.** No scanner is included or provisioned by this code change. Without a configured service, Skillshots will wait for staff review and avatars cannot be approved automatically. Do not describe fallback keyword checks as a complete image moderation service.
+**Keep `MODERATION_STRICT=true` in production.** An OpenAI adapter is included, but no service account or key is provisioned by this code change. Without a configured service, Skillshots will wait for staff review and avatars cannot be approved automatically. Do not describe fallback keyword checks as a complete image moderation service.
 
 ## Storage dashboard and cleanup
 
