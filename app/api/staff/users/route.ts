@@ -5,7 +5,7 @@ import { canModerateUser, normalizeRole, type Permission } from '../../../../lib
 export async function GET(request: Request) {
   const auth = await requirePrincipal('users.view');
   if ('error' in auth) return auth.error;
-  const q = (new URL(request.url).searchParams.get('q') || '').trim().slice(0, 50);
+  const q = (new URL(request.url).searchParams.get('q') || '').trim().replace(/^@/, '').slice(0, 50);
   const users = await (await getReadyDb()).query(`SELECT id,display_name,username,role,status,created_at FROM users WHERE $1='' OR username ILIKE $2 OR display_name ILIKE $2 ORDER BY created_at DESC LIMIT 60`, [q, `%${q}%`]);
   return Response.json({ users });
 }

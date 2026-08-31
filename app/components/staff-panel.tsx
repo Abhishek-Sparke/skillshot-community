@@ -1,77 +1,29 @@
 'use client';
-
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-
-type Item = { id: string; source: string; target_type: string; category: string; severity: string; username?: string; created_at: string };
+import { useEffect,useState } from 'react';
+import { formatBytes, staffLinks } from '../../lib/staff-ui';
+import { useStaff } from './staff-shell';
+import ModerationQueue from './moderation-queue';
+import { StaffEmpty,StaffError,StaffSkeleton } from './staff-states';
 type Application={id:string;username:string;display_name:string;reason:string;contribution:string;created_at:string};
-type Appeal={id:string;username:string;target_type:string;target_id:string;reason:string;created_at:string};
-type StaffData = { counts: Record<string, number>; queue: Item[]; applications:Application[]; appeals:Appeal[]; permissions: string[]; role:string };
-
-export default function StaffPanel({ title, focus = 'all' }: { title: string; focus?: 'all'|'moderation'|'reports'|'skillshots'|'comments'|'trusted' }) {
-  const [data, setData] = useState<StaffData | null>(null);
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    let active = true;
-    fetch('/api/staff/overview')
-      .then(response => response.ok ? response.json() : Promise.reject())
-      .then(value => { if (active) setData(value); })
-      .catch(() => { if (active) setMessage('Could not load staff data.'); });
-    return () => { active = false; };
-  }, []);
-
-  async function act(id: string, action: string) {
-    const response = await fetch('/api/staff/moderation', {
-      method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ queueId: id, action }),
-    });
-    if (response.ok) {
-      setData(current => current ? { ...current, queue: current.queue.filter(item => item.id !== id) } : current);
-      setMessage('Moderation action saved.');
-    } else setMessage('Action was not authorized.');
+type Appeal={id:string;username:string;target_type:string;reason:string;created_at:string};
+type Data={counts:Record<string,number>;applications:Application[];appeals:Appeal[]};
+export default function StaffPanel({focus='all'}:{title?:string;focus?:'all'|'moderation'|'reports'|'skillshots'|'comments'|'trusted'}) {
+  const user=useStaff();
+  const [data,setData]=useState<Data|null>(null),[error,setError]=useState(false),[revision,setRevision]=useState(0),[message,setMessage]=useState(''),[busy,setBusy]=useState('');
+  useEffect(()=>{const controller=new AbortController();fetch('/api/staff/overview',{signal:controller.signal}).then(r=>r.ok?r.json():Promise.reject()).then(value=>{setData(value);setError(false);}).catch(()=>{if(!controller.signal.aborted)setError(true);});return()=>controller.abort();},[revision]);
+  async function review(kind:'appeals'|'trusted-contributors',id:string,action:string) {
+    setBusy(id);setMessage('');
+    try {const response=await fetch(`/api/staff/${kind}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({id,applicationId:id,action})});if(!response.ok)throw new Error();setMessage('Review saved.');setRevision(v=>v+1);window.dispatchEvent(new Event('staff-updated'));}catch{setMessage('Could not save this review. Check your permissions and try again.');}finally{setBusy('');}
   }
-
-  async function reviewApplication(id:string,action:'APPROVE'|'REJECT'){
-    const response=await fetch('/api/staff/trusted-contributors',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({applicationId:id,action})});
-    if(response.ok){setData(current=>current?{...current,applications:current.applications.filter(item=>item.id!==id)}:current);setMessage(`Application ${action.toLowerCase()}d.`)}else setMessage((await response.json()).error||'Action was not authorized.');
-  }
-  async function reviewAppeal(id:string,action:'ACCEPT'|'REJECT'|'REVIEW'){
-    const response=await fetch('/api/staff/appeals',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({id,action})});
-    if(response.ok){setData(current=>current?{...current,appeals:action==='REVIEW'?current.appeals:current.appeals.filter(item=>item.id!==id)}:current);setMessage('Appeal updated.')}else setMessage((await response.json()).error||'Action was not authorized.');
-  }
-
-  const panelRoot=data?.role==='HEAD_MODERATOR'?'/head-mod':data?.role==='MODERATOR'?'/mod':'/admin';
-  const visibleQueue=data?.queue.filter(item=>focus==='skillshots'?item.target_type==='SKILLSHOT':focus==='comments'?item.target_type==='COMMENT':focus==='reports'?item.source==='REPORT':true)||[];
-  const showQueue=['all','moderation','reports','skillshots','comments'].includes(focus);
-  return <main className="staffPage shell">
-    <nav className="staffNav">
-      <Link className="brand" href="/"><span>S</span> Skillshot</Link>
-      <Link href="/community">Community</Link>
-      {data && <Link href={panelRoot}>Overview</Link>}
-      {data && <Link href={`${panelRoot}/moderation`}>Moderation</Link>}
-      {data && <Link href={`${panelRoot}/reports`}>Reports</Link>}
-      {data && <Link href={`${panelRoot}/skillshots`}>Skillshots</Link>}
-      {data && <Link href={`${panelRoot}/comments`}>Comments</Link>}
-      {data?.permissions.includes('team.view') && <Link href={data.role==='HEAD_MODERATOR'?'/head-mod/moderators':'/admin/team'}>{data.role==='HEAD_MODERATOR'?'Moderators':'Team & Roles'}</Link>}
-      {data?.permissions.includes('users.view') && data.role!=='HEAD_MODERATOR' && <Link href="/admin/users">Users</Link>}
-      {data?.permissions.includes('analytics.view') && <Link href="/admin/analytics">Analytics</Link>}
-      {data?.permissions.includes('analytics.view') && ['OWNER','ADMIN'].includes(data.role) && <Link href="/admin/storage">Storage</Link>}
-      {data?.permissions.includes('audit.view') && <Link href="/admin/audit">Audit log</Link>}
-      {data?.permissions.includes('trusted_contributor.review') && ['OWNER','ADMIN'].includes(data.role) && <Link href="/admin/trusted-contributors">Trusted Contributors</Link>}
-      {data?.permissions.includes('settings.manage') && <Link href="/admin/settings">Settings</Link>}
-    </nav>
-    <header><p className="eyebrow">PRIVATE STAFF AREA</p><h1>{title}</h1><p>Reports and automatic flags share one review workflow.</p></header>
-    {!data ? <div className="feedState">Loading moderation data…</div> : <>
-      <section className="staffStats">{Object.entries(data.counts).map(([key, value]) => <div key={key}><strong>{Number(value)}</strong><span>{key.replaceAll('_', ' ')}</span></div>)}</section>
-      {showQueue&&<section className="staffSection"><h2>{focus==='reports'?'Reported content':focus==='skillshots'?'Skillshots':focus==='comments'?'Comments':'Moderation queue'}</h2>
-        {visibleQueue.length === 0 ? <p>Nothing is waiting for review.</p> : <div className="staffTable">{visibleQueue.map(item => <article key={item.id}>
-          <div><b>{item.target_type}</b><span>{item.category} · {item.severity}</span><small>{item.username ? `@${item.username}` : 'Unknown creator'} · {new Date(item.created_at).toLocaleString()}</small></div>
-          <div>{['APPROVE', 'HIDE', 'DELETE', 'DISMISS'].map(action => <button key={action} onClick={() => act(item.id, action)}>{action.toLowerCase()}</button>)}</div>
-        </article>)}</div>}
-      </section>}
-      {(focus==='all'||focus==='trusted')&&data.permissions.includes('trusted_contributor.review')&&<section className="staffSection"><h2>Trusted Contributor applications</h2>{data.applications.length===0?<p>No applications waiting.</p>:<div className="staffTable">{data.applications.map(item=><article key={item.id}><div><b>{item.display_name} · @{item.username}</b><span>{item.reason}</span><small>{item.contribution}</small></div><div>{data.permissions.includes('trusted_contributor.approve')&&<button onClick={()=>reviewApplication(item.id,'APPROVE')}>approve</button>}{data.permissions.includes('trusted_contributor.reject')&&<button onClick={()=>reviewApplication(item.id,'REJECT')}>reject</button>}</div></article>)}</div>}</section>}
-      {(focus==='all'||focus==='reports')&&<section className="staffSection"><h2>Appeals</h2>{data.appeals.length===0?<p>No appeals waiting.</p>:<div className="staffTable">{data.appeals.map(item=><article key={item.id}><div><b>{item.reason}</b><span>{item.target_type} · {item.target_id}</span><small>@{item.username} · {new Date(item.created_at).toLocaleString()}</small></div><div><button onClick={()=>reviewAppeal(item.id,'ACCEPT')}>accept</button><button onClick={()=>reviewAppeal(item.id,'REJECT')}>reject</button></div></article>)}</div>}</section>}
-    </>}
+  const labels:Record<string,string>={flagged:'Pending moderation',reports:'Open reports',appeals:'Pending appeals',applications:'Contributor applications',active_staff:'Active staff',storage_used:'Tracked image storage'};
+  const links=staffLinks(user);
+  return <div className="staffPageBody">
+    {focus==='all'&&<>{error?<StaffError retry={()=>setRevision(v=>v+1)}/>:!data?<StaffSkeleton/>:<section className="staffStats" aria-label="Dashboard statistics">{Object.entries(data.counts).map(([key,value])=><div key={key}><span>{labels[key]||key}</span><strong>{key==='storage_used'?formatBytes(value):Number(value).toLocaleString()}</strong><small>{key==='storage_used'?'Current database references':'Live community data'}</small></div>)}</section>}
+      <section className="staffSection"><p className="eyebrow">YOUR WORKSPACE</p><h2>Make room for great work.</h2><p>Start with the items that need a human decision.</p><div className="staffQuickActions">{links.filter(l=>['Moderation','Reports','Trusted Contributors'].includes(l.label)).map(l=><Link href={l.href} key={l.href}>{l.label==='Moderation'?'Review moderation':l.label==='Reports'?'View reports':'Review applications'} <span aria-hidden="true">↗</span></Link>)}</div></section></>}
+    {['moderation','reports','skillshots','comments'].includes(focus)&&<ModerationQueue focus={focus}/>}
+    {(focus==='all'||focus==='trusted')&&user.permissions.includes('trusted_contributor.review')&&<section className="staffSection"><h2>Trusted Contributor applications</h2>{!data?(error?<StaffError retry={()=>setRevision(v=>v+1)}/>:<StaffSkeleton/>):!data.applications.length?<StaffEmpty title="No pending applications"/>:<div className="staffTable">{data.applications.map(item=><article key={item.id}><div><b>{item.display_name} · @{item.username}</b><span>{item.reason}</span><small>{item.contribution}</small></div><div>{user.permissions.includes('trusted_contributor.approve')&&<button className="staffPrimary" disabled={!!busy} onClick={()=>review('trusted-contributors',item.id,'APPROVE')}>Approve</button>}{user.permissions.includes('trusted_contributor.reject')&&<button disabled={!!busy} onClick={()=>review('trusted-contributors',item.id,'REJECT')}>Reject</button>}</div></article>)}</div>}<p className="staffHint">Showing up to 30 oldest pending applications.</p></section>}
+    {(focus==='all'||focus==='reports')&&<section className="staffSection"><h2>Pending appeals</h2>{!data?(error?<StaffError retry={()=>setRevision(v=>v+1)}/>:<StaffSkeleton/>):!data.appeals.length?<StaffEmpty title="No pending appeals"/>:<div className="staffTable">{data.appeals.map(item=><article key={item.id}><div><b>{item.reason}</b><span>@{item.username} · {item.target_type}</span><small>{new Date(item.created_at).toLocaleString()}</small></div>{user.permissions.includes('reports.resolve')&&<div>{(item.target_type!=='SKILLSHOT'||user.permissions.includes('skillshots.restore'))&&<button disabled={!!busy} onClick={()=>review('appeals',item.id,'ACCEPT')}>Accept</button>}<button disabled={!!busy} onClick={()=>review('appeals',item.id,'REJECT')}>Reject</button><button disabled={!!busy} onClick={()=>review('appeals',item.id,'REVIEW')}>Mark under review</button></div>}</article>)}</div>}</section>}
     <p role="status">{message}</p>
-  </main>;
+  </div>;
 }

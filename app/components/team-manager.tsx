@@ -1,58 +1,29 @@
 'use client';
-
-import Link from 'next/link';
 import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
-import type { UserRole } from '../../lib/roles';
+import { useEffect,useState } from 'react';
+import { canChangeRole,type UserRole } from '../../lib/roles';
+import { readable } from '../../lib/staff-ui';
 import RoleBadge from './role-badge';
-
-type Member = { id: string; display_name: string; username: string; role: UserRole; status: string; created_at: string; avatar_url?: string; custom_permissions: string[] };
-type TeamData = { members: Member[]; role: UserRole; assignableRoles: UserRole[] };
-const optionalPermissions = ['skillshots.delete','users.suspend','users.unsuspend','trusted_contributor.approve','trusted_contributor.reject','analytics.view'] as const;
-const roleLabel = (role: string) => role.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, value => value.toUpperCase());
-
-export default function TeamManager({ home = '/admin', moderatorsOnly = false }: { home?: string; moderatorsOnly?: boolean }) {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [query, setQuery] = useState('');
-  const [message, setMessage] = useState('');
-  const [selfRole, setSelfRole] = useState<UserRole>('USER');
-  const [assignableRoles, setAssignableRoles] = useState<UserRole[]>([]);
-
-  const apply = useCallback((data: TeamData) => {
-    setMembers(moderatorsOnly ? data.members.filter(member => ['MODERATOR','USER'].includes(member.role)) : data.members);
-    setSelfRole(data.role);
-    setAssignableRoles(data.assignableRoles);
-  }, [moderatorsOnly]);
-
-  async function load(search = '') {
-    const response = await fetch(`/api/staff/team?q=${encodeURIComponent(search)}`);
-    if (response.ok) apply(await response.json());
-    else setMessage('Could not load team members.');
+import { useStaff } from './staff-shell';
+import StaffDialog from './staff-dialog';
+import { StaffEmpty,StaffError,StaffSkeleton,StaffStatus } from './staff-states';
+type Member={id:string;display_name:string;username:string;role:UserRole;status:string;created_at:string;avatar_url?:string;custom_permissions:string[]};
+type Data={members:Member[];assignableRoles:UserRole[]};
+const optionalPermissions=['skillshots.delete','users.suspend','users.unsuspend','trusted_contributor.approve','trusted_contributor.reject','analytics.view'] as const;
+export default function TeamManager({moderatorsOnly=false}:{home?:string;moderatorsOnly?:boolean}) {
+  const user=useStaff();
+  const [data,setData]=useState<Data|null>(null),[query,setQuery]=useState(''),[search,setSearch]=useState(''),[revision,setRevision]=useState(0),[error,setError]=useState(false),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+  const [selected,setSelected]=useState<Member|null>(null),[role,setRole]=useState<UserRole>('USER'),[permissions,setPermissions]=useState<string[]>([]);
+  useEffect(()=>{const controller=new AbortController();fetch(`/api/staff/team?q=${encodeURIComponent(search)}`,{signal:controller.signal}).then(r=>r.ok?r.json():Promise.reject()).then(value=>{setData(value);setError(false);}).catch(()=>{if(!controller.signal.aborted)setError(true);});return()=>controller.abort();},[search,revision]);
+  const allowed=(member:Member,next:UserRole)=>member.id!==user.id&&canChangeRole(user.role,member.role,next)&&user.permissions.includes([member.role,next].includes('ADMIN')?'admins.manage':[member.role,next].includes('HEAD_MODERATOR')?'head_moderators.manage':'moderators.manage');
+  async function save() {
+    if(!selected)return;setBusy(true);setMessage('');
+    try {const response=await fetch('/api/staff/team',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({userId:selected.id,role,permissions})});if(!response.ok)throw new Error();setSelected(null);setRevision(v=>v+1);setMessage('Staff role updated.');window.dispatchEvent(new Event('staff-updated'));}catch{setMessage('Could not save this role. Check your permissions and try again.');}finally{setBusy(false);}
   }
-
-  useEffect(() => {
-    let active = true;
-    fetch('/api/staff/team').then(response => response.ok ? response.json() : Promise.reject()).then(data => { if (active) apply(data); }).catch(() => { if (active) setMessage('Could not load team members.'); });
-    return () => { active = false; };
-  }, [apply]);
-
-  async function change(member: Member, role: UserRole, permissions: string[] = []) {
-    if (!confirm(`${member.role === 'USER' ? 'Promote' : 'Change'} @${member.username} to ${roleLabel(role)}?`)) return;
-    const response = await fetch('/api/staff/team', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ userId: member.id, role, permissions }) });
-    const data = await response.json();
-    setMessage(response.ok ? `@${member.username} is now ${roleLabel(role)}.` : data.error || 'Not authorized.');
-    if (response.ok) await load(query);
-  }
-
-  return <main className="staffPage shell">
-    <nav className="staffNav"><Link className="brand" href="/"><span>S</span> Skillshot</Link><Link href={home}>Dashboard</Link></nav>
-    <header><p className="eyebrow">{moderatorsOnly ? 'MODERATION TEAM' : 'TEAM & ROLES'}</p><h1>{moderatorsOnly ? 'Manage moderators.' : 'Manage the Skillshot team.'}</h1><p>Every role change follows the staff hierarchy and is recorded in the audit log.</p></header>
-    <form className="teamSearch" onSubmit={event => { event.preventDefault(); load(query); }}><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search @username to add a team member"/><button className="primary">Search</button></form>
-    <div className="staffTable teamTable">{members.map(member => <article key={member.id}>
-      <div className="teamIdentity"><span className="teamAvatar">{member.avatar_url ? <Image src={`/api/avatars/${encodeURIComponent(member.username)}`} alt="" width={42} height={42}/> : member.display_name.slice(0, 1).toUpperCase()}</span><span><b>{member.display_name} <RoleBadge role={member.role}/></b><small>@{member.username}</small><small>{member.status} · Joined {new Date(member.created_at).toLocaleDateString()}</small></span></div>
-      <div className="roleActions">{member.role !== 'OWNER' && assignableRoles.map(role => role !== member.role && (!moderatorsOnly || ['MODERATOR','USER'].includes(role)) ? <button type="button" key={role} onClick={() => change(member, role, member.custom_permissions || [])}>{role === 'USER' ? 'Remove role' : roleLabel(role)}</button> : null)}</div>
-      {!moderatorsOnly && ['OWNER','ADMIN'].includes(selfRole) && ['HEAD_MODERATOR','MODERATOR'].includes(member.role) && <fieldset className="permissionEditor"><legend>Optional permissions</legend>{optionalPermissions.map(permission => <label key={permission}><input type="checkbox" checked={(member.custom_permissions || []).includes(permission)} onChange={event => setMembers(current => current.map(item => item.id === member.id ? { ...item, custom_permissions: event.target.checked ? [...(item.custom_permissions || []), permission] : (item.custom_permissions || []).filter(value => value !== permission) } : item))}/><span>{permission.replaceAll('.', ' · ')}</span></label>)}<button type="button" onClick={() => change(member, member.role, member.custom_permissions || [])}>Save permissions</button></fieldset>}
-    </article>)}</div>
-    {!members.length && <p className="feedState">No matching team members.</p>}<p role="status">{message}</p>
-  </main>;
+  const members=data?.members.filter(m=>!moderatorsOnly||['MODERATOR','USER'].includes(m.role))||[];
+  return <section className="staffSection"><form className="teamSearch" onSubmit={e=>{e.preventDefault();setData(null);setSearch(query);setRevision(v=>v+1);}}><label className="staffSearchLabel">Find staff or add a member<input value={query} maxLength={50} onChange={e=>setQuery(e.target.value)} placeholder="Search @username or display name"/></label><button className="staffPrimary">Search</button></form>
+    {error?<StaffError retry={()=>setRevision(v=>v+1)}/>:!data?<StaffSkeleton rows={4}/>:!members.length?<StaffEmpty title="No matching team members">Search for a community member to assign an eligible role.</StaffEmpty>:<table className="staffDataTable"><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody>{members.map(member=><tr key={member.id}><td><div className="teamIdentity"><span className="teamAvatar">{member.avatar_url?<Image unoptimized src={`/api/avatars/${encodeURIComponent(member.username)}`} width={42} height={42} alt=""/>:member.display_name.slice(0,1)}</span><span><b>{member.display_name}</b><small>@{member.username}</small></span></div></td><td data-label="Role">{member.role==='USER'?'User':<RoleBadge role={member.role} variant="profile"/>}</td><td data-label="Status"><StaffStatus value={member.status}/></td><td data-label="Joined">{new Date(member.created_at).toLocaleDateString()}</td><td>{(data.assignableRoles.some(next=>allowed(member,next))||allowed(member,member.role))?<button onClick={()=>{setSelected(member);setRole(member.role);setPermissions(member.custom_permissions||[]);setMessage('');}}>Manage</button>:<small>{member.id===user.id?'You':'View only'}</small>}</td></tr>)}</tbody></table>}
+    <p className="staffHint">Showing up to 80 staff and matching users. Every change is checked by the server and recorded.</p><p role="status">{message}</p>
+    {selected&&<StaffDialog title={`Manage @${selected.username}`} onClose={()=>{if(!busy)setSelected(null);}}><div className="staffManageFields"><p>Current role: <b>{readable(selected.role)}</b></p><label>New role<select value={role} onChange={e=>setRole(e.target.value as UserRole)}><option value={selected.role}>{readable(selected.role)} (current)</option>{data?.assignableRoles.filter(next=>next!==selected.role&&allowed(selected,next)).map(next=><option key={next} value={next}>{next==='USER'?'User — remove staff role':readable(next)}</option>)}</select></label>{['OWNER','ADMIN'].includes(user.role)&&['HEAD_MODERATOR','MODERATOR'].includes(role)&&<fieldset><legend>Optional permissions</legend>{optionalPermissions.filter(p=>user.permissions.includes(p)).map(p=><label key={p}><input type="checkbox" checked={permissions.includes(p)} onChange={e=>setPermissions(current=>e.target.checked?[...current,p]:current.filter(v=>v!==p))}/>{p.replaceAll('.',' · ')}</label>)}</fieldset>}<p className="staffHint">Saving applies this role to the account immediately. You cannot change your own role or a role outside your authority.</p><div className="staffActions"><button disabled={busy} onClick={()=>setSelected(null)}>Cancel</button><button className="staffPrimary" disabled={busy||!allowed(selected,role)} onClick={save}>{busy?'Saving…':'Save role'}</button></div><p role="status">{message}</p></div></StaffDialog>}
+  </section>;
 }

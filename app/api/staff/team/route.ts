@@ -9,11 +9,12 @@ export async function GET(request: Request) {
   const rows = await (await getReadyDb()).query(
     `SELECT id,display_name,username,role,status,custom_permissions,created_at,avatar_url
      FROM users
-     WHERE role IN ('OWNER','ADMIN','HEAD_MODERATOR','MODERATOR')
-       OR ($1<>'' AND (username ILIKE $2 OR display_name ILIKE $2))
+     WHERE (role IN ('OWNER','ADMIN','HEAD_MODERATOR','MODERATOR')
+       OR ($1<>'' AND (username ILIKE $2 OR display_name ILIKE $2)))
+       AND (NOT $3 OR role IN ('MODERATOR','USER'))
      ORDER BY CASE role WHEN 'OWNER' THEN 1 WHEN 'ADMIN' THEN 2 WHEN 'HEAD_MODERATOR' THEN 3 WHEN 'MODERATOR' THEN 4 ELSE 5 END,created_at
      LIMIT 80`,
-    [q, `%${q.slice(0, 50)}%`],
+    [q.replace(/^@/, ''), `%${q.replace(/^@/, '').slice(0, 50)}%`, auth.principal.role === 'HEAD_MODERATOR'],
   );
   return Response.json({ members: rows, selfId: auth.principal.id, role: auth.principal.role, permissions: auth.principal.permissions, assignableRoles: assignableRoles(auth.principal.role) });
 }
