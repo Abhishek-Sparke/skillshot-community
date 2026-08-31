@@ -71,6 +71,7 @@ export default function ResponsiveNavbar({ children }: { children: ReactNode }) 
       <span/><span/><span/>
     </button>
     <div ref={links} id={id} className="publicNavLinks" inert={menu.compact && !menu.open}
+      onSubmit={close}
       onClick={event => { if ((event.target as Element).closest('a')) close(); }}>
       {children}
     </div>

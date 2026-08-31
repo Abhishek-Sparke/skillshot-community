@@ -10,7 +10,7 @@ import { readBoundedImage, stagingType } from '../lib/upload-policy.ts';
 import { managedStoragePath } from '../lib/storage-policy.ts';
 import { decodeCursor, encodeCursor, pageSize } from '../lib/pagination.ts';
 import { imageDelivery } from '../lib/image-delivery.ts';
-import { safeReturnPath, signInPath } from '../lib/auth-path.ts';
+import { safeReturnPath, signInPath, signUpPath } from '../lib/auth-path.ts';
 import { staffLinks, moderationActions, formatBytes } from '../lib/staff-ui.ts';
 import { queueFilters } from '../lib/staff-query.ts';
 import { publicNavigation } from '../lib/public-navigation.ts';
@@ -19,7 +19,8 @@ test('public navigation uses active viewer roles and preserves sign-in return pa
   const guest = publicNavigation(null, '/shots/example');
   assert.equal(guest.some(link => link.href === '/profile'), false);
   assert.equal(guest.find(link => link.label === 'Sign in')?.href, '/signin?callbackUrl=%2Fshots%2Fexample');
-  assert.equal(guest.filter(link => !link.className?.includes('publicNavGuestShare')).length, 3);
+  assert.deepEqual(guest.map(link => link.label), ['Community', 'Search', 'Sign in', 'Sign up']);
+  assert.equal(guest.find(link => link.label === 'Sign up')?.href, signUpPath('/profile/edit'));
   for (const role of ['USER', 'TRUSTED_CONTRIBUTOR', 'MODERATOR', 'HEAD_MODERATOR', 'ADMIN', 'OWNER'] as const) {
     const links = publicNavigation({ role, status: 'ACTIVE' }, '/');
     assert.equal(links.some(link => link.href === '/profile'), true);
@@ -27,6 +28,15 @@ test('public navigation uses active viewer roles and preserves sign-in return pa
     const dashboard = links.find(link => link.label === '◆ Dashboard');
     assert.equal(dashboard?.href, ['USER', 'TRUSTED_CONTRIBUTOR'].includes(role) ? undefined : panelForRole(role));
     assert.equal(publicNavigation({ role, status: 'SUSPENDED' }, '/').some(link => link.label === '◆ Dashboard'), false);
+  }
+});
+
+test('sign-up paths keep local destinations and reject external or malformed redirects', () => {
+  assert.equal(signUpPath(), '/signup?callbackUrl=%2Fprofile%2Fedit');
+  assert.equal(signUpPath('/upload'), '/signup?callbackUrl=%2Fupload');
+  for (const path of ['https://example.com', '//example.com', '/\\example.com', '/\n/example.com']) {
+    assert.equal(safeReturnPath(path), '/');
+    assert.equal(signUpPath(path), '/signup?callbackUrl=%2F');
   }
 });
 

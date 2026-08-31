@@ -1,4 +1,4 @@
-import { chatGPTSignOutPath, requireChatGPTUser } from '../../chatgpt-auth';
+import { requireChatGPTUser } from '../../chatgpt-auth';
 import { ensureUser, getReadyDb } from '../../../lib/db';
 import Link from 'next/link';
 import ProfileEditor from '../../components/profile-editor';
@@ -45,7 +45,7 @@ export default async function EditProfile({ searchParams }: { searchParams: Prom
         socialLinks: profile.social_links && typeof profile.social_links === 'object' ? profile.social_links as Record<string, string> : {},
         avatarUrl: profile.avatar_url ? `/api/avatars/${encodeURIComponent(String(profile.username))}?v=${encodeURIComponent(String(profile.avatar_url))}` : '',
       }} posts={posts.map(post => ({ id: String(post.id), title: String(post.title), featured: Boolean(post.featured) }))}/>
-      <div className="profileLinks"><Link className="backHome" href="/">← Back to home</Link><a className="quietLink" href={chatGPTSignOutPath('/')}>Sign out</a></div>
+      <div className="profileLinks"><Link className="backHome" href="/">← Back to home</Link></div>
     </section>
   </main>;
 }

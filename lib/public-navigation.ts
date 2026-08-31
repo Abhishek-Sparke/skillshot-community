@@ -1,4 +1,4 @@
-import { signInPath } from './auth-path.ts';
+import { signInPath, signUpPath } from './auth-path.ts';
 import { isStaffRole, panelForRole, type UserRole } from './roles.ts';
 
 export type PublicNavLink = { href: string; label: string; className?: string };
@@ -11,7 +11,7 @@ export function publicNavigation(viewer: { role: UserRole; status: string } | nu
   ];
   if (!viewer || viewer.status !== 'ACTIVE') return [...links,
     { href: signInPath(returnTo), label: 'Sign in', className: 'authEntry' },
-    { href: signInPath('/upload', 'Sign in to create a Skillshot'), label: '＋ Share a shot', className: 'upload publicNavGuestShare' },
+    { href: signUpPath(), label: 'Sign up', className: 'upload' },
   ];
   links.push({ href: '/my-posts', label: 'My posts' }, { href: '/profile', label: 'Profile' });
   if (isStaffRole(viewer.role)) links.push({ href: panelForRole(viewer.role), label: '◆ Dashboard', className: 'staffDashboardLink' });

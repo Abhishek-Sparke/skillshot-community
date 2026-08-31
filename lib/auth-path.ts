@@ -1,5 +1,9 @@
 export function safeReturnPath(value: string) {
-  return value.startsWith('/') && !value.startsWith('//') ? value : '/';
+  return value.startsWith('/') && !value.startsWith('//') && !/[\\\u0000-\u001f\u007f]/.test(value) ? value : '/';
+}
+
+export function signUpPath(returnTo = '/profile/edit') {
+  return `/signup?${new URLSearchParams({ callbackUrl: safeReturnPath(returnTo) })}`;
 }
 
 export function signInPath(returnTo: string, reason?: string) {
