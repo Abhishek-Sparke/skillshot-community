@@ -15,7 +15,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
       (SELECT COUNT(*) FROM follows f WHERE f.follower_id=u.id) AS following_count,
       (SELECT COUNT(*) FROM comments c WHERE c.user_id=u.id AND c.status='VISIBLE') AS comment_count,
       EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=$1 AND f.followed_id=u.id) AS viewer_follows
-    FROM users u WHERE lower(u.username)=lower($2) LIMIT 1
+    FROM users u WHERE lower(u.username)=lower($2) AND (u.status='ACTIVE' OR u.id=$1) LIMIT 1
   `, [viewer?.userId ?? '', username]);
 
   if (!rows.length) return Response.json({ error: 'Creator not found' }, { status: 404 });
@@ -25,7 +25,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.id) AS reaction_count,
       (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id) AS comment_count
     FROM featured_posts fp JOIN posts p ON p.id=fp.post_id
-    WHERE fp.user_id=$1 ORDER BY fp.position ASC LIMIT 3
+    WHERE fp.user_id=$1 AND p.status='VISIBLE' ORDER BY fp.position ASC LIMIT 3
   `, [row.id]);
   const storedWebsite = String(row.website || '');
   let website = '';
@@ -66,7 +66,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     featuredPosts: featuredRows.map(post => ({
       id: String(post.id), title: String(post.title), description: String(post.description || ''),
       createdAt: new Date(post.created_at as string).getTime(), reactionCount: Number(post.reaction_count),
-      commentCount: Number(post.comment_count), imageUrl: `/api/images/${post.id}`,
+      commentCount: Number(post.comment_count), imageUrl: `/api/images/${post.id}?variant=thumbnail`,
     })),
   } });
 }

@@ -5,6 +5,7 @@ import RoleBadge from './role-badge';
 import type { UserRole } from '../../lib/roles';
 import Link from 'next/link';
 import ReportButton from './report-button';
+import { requireClientAuth, signInPath } from '../../lib/auth-path';
 
 type Post = {
   id: string; title: string; description: string; tags: string[]; author: string; username: string;
@@ -36,8 +37,9 @@ export default function ShotDetail({ id }: { id: string }) {
 
   async function toggleLike() {
     if (!post) return;
+    if (!requireClientAuth(post.signedIn, `/shots/${id}`, 'Sign in to like this Skillshot')) return;
     const response = await fetch(`/api/posts/${id}/react`, { method: 'POST' });
-    if (response.status === 401) { setStatus('Please sign in from your profile before reacting.'); return; }
+    if (response.status === 401) { window.location.assign(signInPath(`/shots/${id}`, 'Sign in to like this Skillshot')); return; }
     if (!response.ok) { setStatus('Could not update your reaction.'); return; }
     const data = await response.json();
     setPost({ ...post, viewerLiked: data.liked, reactionCount: post.reactionCount + (data.liked ? 1 : -1) });
@@ -46,8 +48,9 @@ export default function ShotDetail({ id }: { id: string }) {
 
   async function addComment(event: FormEvent) {
     event.preventDefault();
+    if (!requireClientAuth(Boolean(post?.signedIn), `/shots/${id}#comments`, 'Sign in to join the conversation')) return;
     const response = await fetch(`/api/posts/${id}/comments`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: text }) });
-    if (response.status === 401) { setStatus('Please sign in from your profile before commenting.'); return; }
+    if (response.status === 401) { window.location.assign(signInPath(`/shots/${id}#comments`, 'Sign in to join the conversation')); return; }
     const comment = await response.json();
     if (!response.ok || comment.held) { setStatus(comment.message || comment.error || 'Could not add your comment.'); if(comment.held)setText(''); return; }
     setComments(current => [...current, comment]);
@@ -96,7 +99,15 @@ export default function ShotDetail({ id }: { id: string }) {
   if (!post) return <main className="formPage"><section className="detail"><h1>Post not found</h1><p>{status}</p><Link className="backHome" href="/community">← Back to community</Link></section></main>;
 
   return <main className="formPage">
-    <nav className="detailNav"><Link className="brand" href="/"><span>S</span> Skillshot</Link><Link className="backHome" href="/community">← Community</Link></nav>
+    <nav className="detailNav">
+      <Link className="brand" href="/"><span>S</span> Skillshot</Link>
+      <div className="navlinks">
+        <Link className="backHome" href="/community">← Community</Link>
+        {post.signedIn
+          ? <Link href="/profile">Profile</Link>
+          : <Link className="authEntry" href={signInPath(`/shots/${id}`)}>Sign in</Link>}
+      </div>
+    </nav>
     <section className="detail">
       <img className="detailImage" src={post.imageUrl} alt={post.title}/>
       <div className="detailHeading">
@@ -107,10 +118,10 @@ export default function ShotDetail({ id }: { id: string }) {
       <div className="detailTags">{post.tags.map(tag => <span key={tag}>{tag}</span>)}</div>
       <div className="detailActions"><button className={`likeButton ${post.viewerLiked ? 'liked' : ''}`} onClick={toggleLike}>♥ {post.viewerLiked ? 'Liked' : 'Like'} · {post.reactionCount}</button><ReportButton targetType="SKILLSHOT" targetId={post.id}/></div>
 
-      <section className="commentsSection">
+      <section className="commentsSection" id="comments">
         <h2>Comments <span>{comments.length}</span></h2>
         <form className="commentForm" onSubmit={addComment}>
-          <input value={text} onChange={event => setText(event.target.value)} maxLength={1000} placeholder="Add a thoughtful comment" required/>
+          <input value={text} onFocus={() => requireClientAuth(post.signedIn, `/shots/${id}#comments`, 'Sign in to join the conversation')} onChange={event => setText(event.target.value)} maxLength={1000} placeholder={post.signedIn ? 'Add a thoughtful comment' : 'Sign in to add a comment'} required/>
           <button className="primary">Post</button>
         </form>
         <p className="actionStatus" role="status">{status}</p>

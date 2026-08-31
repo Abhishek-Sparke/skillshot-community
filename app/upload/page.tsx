@@ -2,9 +2,10 @@
 
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { upload } from '@vercel/blob/client';
+import { requireClientAuth } from '../../lib/auth-path';
+import { IMAGE_TYPES, SKILLSHOT_MAX_BYTES as MAX_IMAGE_SIZE } from '../../lib/upload-policy';
 
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const CATEGORIES = ['Gaming', 'Development', 'Design', 'Photography', 'Art', 'Creative', 'Projects', 'Other'];
 
 export default function Upload() {
@@ -37,21 +38,33 @@ export default function Upload() {
       return;
     }
 
+    if (busy) return;
     setBusy(true);
     setProgress(0); setStatus('Uploading…');
-    const request = new XMLHttpRequest();
-    request.open('POST', '/api/posts');
-    request.upload.onprogress = event => { if (event.lengthComputable) { const value = Math.round(event.loaded / event.total * 100); setProgress(value); if (value >= 100) setStatus('Optimizing image…'); } };
-    request.onerror = () => { setStatus('Network error. Check your connection and try again.'); setBusy(false); };
-    request.onload = () => {
-      let result: { id?: string; status?: string; error?: string } = {};
-      try { result = JSON.parse(request.responseText); } catch {}
-      if (request.status >= 200 && request.status < 300 && result.id) {
-        setProgress(100); setStatus(result.status === 'VISIBLE' ? '✓ Upload complete' : '✓ Uploaded and awaiting a quick safety review');
-        window.setTimeout(() => window.location.assign(`/shots/${result.id}`), 500);
-      } else { setStatus(request.status === 401 ? 'Please sign in before publishing your Skillshot.' : result.error || 'Upload failed. Please try again.'); setBusy(false); }
-    };
-    request.send(new FormData(form));
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 300_000);
+    try {
+      const extension = image.type === 'image/png' ? 'png' : image.type === 'image/jpeg' ? 'jpg' : 'webp';
+      const staged = await upload(`staging/${crypto.randomUUID()}.${extension}`, image, {
+        access: 'private', handleUploadUrl: '/api/uploads', contentType: image.type,
+        abortSignal: controller.signal,
+        onUploadProgress: event => { setProgress(Math.round(event.percentage)); },
+      });
+      setStatus('Checking and optimizing image…');
+      const values = new FormData(form);
+      const response = await fetch('/api/posts', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, signal: controller.signal,
+        body: JSON.stringify({ pathname: staged.pathname, title: values.get('title'), description: values.get('description'), skills: values.get('skills'), tags: values.get('tags'), category: values.get('category') }),
+      });
+      if (response.status === 401) { requireClientAuth(false, '/upload', 'Sign in to publish your Skillshot'); return; }
+      const result = await response.json();
+      if (!response.ok || !result.id) { setStatus(result.error || 'Upload failed. Please try again.'); return; }
+      setProgress(100);
+      setStatus(result.status === 'VISIBLE' ? '✓ Upload complete' : '✓ Uploaded and awaiting a safety review');
+      window.setTimeout(() => window.location.assign(`/shots/${result.id}`), 500);
+    } catch {
+      setStatus(controller.signal.aborted ? 'The upload timed out. Check your connection and try again.' : !navigator.onLine ? 'Network error. Check your connection and try again.' : 'Upload failed. Check your sign-in and connection, then try again.');
+    } finally { window.clearTimeout(timeout); setBusy(false); }
   }
 
   return <main className="formPage">
@@ -71,7 +84,7 @@ export default function Upload() {
         <label>Tags<input name="tags" maxLength={300} placeholder="Add tags..."/></label>
         <label>Category <small>(optional)</small><select name="category" value={category} onChange={event => setCategory(event.target.value)}><option value="">Choose a category</option>{CATEGORIES.map(value => <option key={value}>{value}</option>)}</select></label>
         <button className="primary" type="submit" disabled={busy}>{busy ? 'Publishing…' : 'Publish shot →'}</button>
-        {busy && <div className="uploadProgress" aria-label={`Upload ${progress}%`}><span style={{ width: `${progress}%` }}/></div>}
+        {busy && <div className="uploadProgress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={`Upload ${progress}%`}><span style={{ width: `${progress}%` }}/></div>}
         <p role="status" aria-live="polite">{status}{busy && status === 'Uploading…' ? ` ${progress}%` : ''}</p>
       </form><aside className="livePreview"><p className="eyebrow">LIVE PREVIEW</p><article><div className="previewImage">{preview ? <img src={preview} alt="Skillshot card preview"/> : <span>Your image preview</span>}</div><div><h2>{title || 'Your Skillshot title'}</h2><p>{description || 'Tell the community what makes this worth sharing.'}</p>{skills && <div className="previewSkills">{skills.split(',').filter(Boolean).slice(0,3).map(item => <span key={item}>{item.trim()}</span>)}</div>}</div></article></aside></div>
       <Link className="backHome" href="/">← Back to home</Link>

@@ -1,20 +1,16 @@
-import { del, put } from '@vercel/blob';
+import { del, get, put } from '@vercel/blob';
 import { getChatGPTUser } from '../../chatgpt-auth';
 import { getReadyDb } from '../../../lib/db';
 import { normalizeRole } from '../../../lib/roles';
 import { rateLimit } from '../../../lib/rate-limit';
 import { moderateImage, moderateText } from '../../../lib/moderation';
 import { requirePrincipal } from '../../../lib/authz';
-import { processSkillshot, publicUploadMessage, SKILLSHOT_MAX_BYTES, uploadError } from '../../../lib/image-processing';
+import { moderationPreview, processSkillshot, publicUploadMessage, SKILLSHOT_MAX_BYTES, uploadError } from '../../../lib/image-processing';
+import { readBoundedImage, stagingType } from '../../../lib/upload-policy';
+import { decodeCursor, encodeCursor, pageSize } from '../../../lib/pagination';
 
 const categories = new Set(['Gaming','Development','Design','Photography','Art','Creative','Projects','Other']);
 
-function encodeCursor(row: Record<string, unknown>) { return Buffer.from(`${new Date(row.created_at as string).toISOString()}|${row.id}`).toString('base64url'); }
-function decodeCursor(value: string | null) {
-  if (!value) return { date: null, id: null };
-  try { const [date,id]=Buffer.from(value,'base64url').toString('utf8').split('|');if(!date||!id||Number.isNaN(Date.parse(date)))throw new Error();return {date,id}; }
-  catch { return { date: null, id: null }; }
-}
 async function recordUpload(userId:string,outcome:string,bytes:number,reason?:string){try{await(await getReadyDb()).query(`INSERT INTO upload_events(id,user_id,kind,outcome,bytes,reason)VALUES($1,$2,'SKILLSHOT',$3,$4,$5)`,[crypto.randomUUID(),userId,outcome,bytes,reason||null])}catch{}}
 function errorResponse(code:string,status:number){return Response.json({error:publicUploadMessage(code),code},{status})}
 
@@ -24,7 +20,7 @@ export async function GET(request: Request) {
   const mine = url.searchParams.get('mine') === '1';
   const requestedUsername = url.searchParams.get('username')?.trim().toLowerCase().slice(0, 30) || null;
   const likedByUsername = url.searchParams.get('likedBy')?.trim().toLowerCase().slice(0, 30) || null;
-  const limit = Math.min(30, Math.max(1, Number(url.searchParams.get('limit')) || 18));
+  const limit = pageSize(url.searchParams.get('limit'));
   const cursor = decodeCursor(url.searchParams.get('cursor'));
   if (mine && !user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const sql = await getReadyDb();
@@ -60,6 +56,22 @@ export async function GET(request: Request) {
   })), nextCursor: hasMore ? encodeCursor(visibleRows[visibleRows.length - 1]) : null });
 }
 
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+async function discardPaths(paths: string[]) {
+  for (const pathname of [...new Set(paths)]) {
+    try {
+      const referenced = await (await getReadyDb()).query(`SELECT 1 FROM posts WHERE image_url=$1 OR display_url=$1 OR thumbnail_url=$1 UNION SELECT 1 FROM users WHERE avatar_url=$1 LIMIT 1`, [pathname]);
+      if (!referenced.length) await del(pathname);
+    }
+    catch {
+      // A failed rollback must remain discoverable rather than silently orphaned.
+      await (await getReadyDb()).query(`INSERT INTO storage_cleanup_queue(id,pathname,reason,cleanup_after) VALUES($1,$2,'FAILED_UPLOAD',now()+interval '1 day')`, [crypto.randomUUID(), pathname]).catch(() => undefined);
+    }
+  }
+}
+
 export async function POST(request: Request) {
   const auth = await requirePrincipal();
   if ('error' in auth) return auth.error;
@@ -67,61 +79,90 @@ export async function POST(request: Request) {
   if (!await rateLimit(`post:${userId}`, 8, 3600)) return Response.json({ error: 'You have uploaded several Skillshots recently. Please try again later.', code: 'RATE_LIMITED' }, { status: 429 });
 
   let sourceBytes = 0;
+  let stagingPath = '';
+  let committed = false;
   const uploaded: string[] = [];
+  const sql = await getReadyDb();
   try {
-    const data = await request.formData();
-    const image = data.get('image');
-    if (!(image instanceof File)) return errorResponse('INVALID_IMAGE', 400);
+    let data: FormData;
+    let image: File;
+    if (request.headers.get('content-type')?.includes('application/json')) {
+      const body = await request.json() as Record<string, unknown>;
+      const pathname = typeof body.pathname === 'string' ? body.pathname : '';
+      if (!stagingType(pathname)) return errorResponse('INVALID_IMAGE', 400);
+      const claimed = await sql.query(`UPDATE upload_sessions SET state='PROCESSING' WHERE pathname=$1 AND user_id=$2 AND state='PENDING' AND expires_at>now() RETURNING pathname`, [pathname, userId]);
+      if (!claimed.length) {
+        const completed = await sql.query(`SELECT s.post_id,p.status FROM upload_sessions s JOIN posts p ON p.id=s.post_id WHERE s.pathname=$1 AND s.user_id=$2 AND s.state='COMPLETE'`, [pathname, userId]);
+        return completed.length ? Response.json({ id: completed[0].post_id, status: completed[0].status }) : Response.json({ error: 'This upload expired or is already processing. Please try again.', code: 'UPLOAD_EXPIRED' }, { status: 409 });
+      }
+      stagingPath = pathname;
+      const staged = await get(pathname, { access: 'private' });
+      if (!staged || staged.statusCode !== 200) throw new Error('STORAGE_UNAVAILABLE');
+      sourceBytes = staged.blob.size;
+      if (sourceBytes > SKILLSHOT_MAX_BYTES) throw new Error('FILE_TOO_LARGE');
+      if (staged.blob.contentType !== stagingType(pathname)) throw new Error('INVALID_IMAGE');
+      const bytes = await readBoundedImage(staged.stream, SKILLSHOT_MAX_BYTES);
+      image = new File([new Uint8Array(bytes)], pathname.split('/').pop()!, { type: staged.blob.contentType });
+      data = new FormData();
+      for (const key of ['title', 'description', 'tags', 'skills', 'category']) data.set(key, typeof body[key] === 'string' ? body[key] as string : '');
+    } else {
+      // Compatibility for existing clients; the website now stages directly in
+      // private Blob storage so 10 MB uploads do not cross the Function body cap.
+      if (Number(request.headers.get('content-length')) > SKILLSHOT_MAX_BYTES + 64 * 1024) throw new Error('FILE_TOO_LARGE');
+      data = await request.formData();
+      const file = data.get('image');
+      if (!(file instanceof File)) throw new Error('INVALID_IMAGE');
+      image = file;
+    }
     sourceBytes = image.size;
     const validation = uploadError(image, SKILLSHOT_MAX_BYTES);
-    if (validation) return errorResponse(validation, 400);
+    if (validation) throw new Error(validation);
     const title = String(data.get('title') || '').trim().slice(0, 100);
     if (!title) return Response.json({ error: 'Please add a title.', code: 'TITLE_REQUIRED' }, { status: 400 });
     const description = String(data.get('description') || '').trim().slice(0, 1000);
-    const tags = String(data.get('tags') || '').split(',').map(value => value.trim()).filter(Boolean).slice(0, 8);
-    const skills = String(data.get('skills') || '').split(',').map(value => value.trim()).filter(Boolean).slice(0, 8);
+    const tags = String(data.get('tags') || '').split(',').map(value => value.trim().slice(0, 40)).filter(Boolean).slice(0, 8);
+    const skills = String(data.get('skills') || '').split(',').map(value => value.trim().slice(0, 40)).filter(Boolean).slice(0, 8);
     const requestedCategory = String(data.get('category') || 'Other');
     const category = categories.has(requestedCategory) ? requestedCategory : 'Other';
-    const textDecision = await moderateText(`${title}\n${description}\n${skills.join(' ')}\n${tags.join(' ')}`);
-    if (textDecision.level === 'HIGH') {
-      await recordUpload(userId, 'BLOCKED', sourceBytes, 'MODERATION_FAILED');
-      return errorResponse('MODERATION_FAILED', 422);
-    }
-
     const sourceBuffer = Buffer.from(await image.arrayBuffer());
-    let processed;
-    try { processed = await processSkillshot(sourceBuffer); }
-    catch (error) { return errorResponse(error instanceof Error && error.message === 'HUGE_DIMENSIONS' ? 'HUGE_DIMENSIONS' : 'INVALID_IMAGE', 400); }
-
+    let preview: string;
+    try { preview = await moderationPreview(sourceBuffer, image.type); }
+    catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      throw new Error(message === 'HUGE_DIMENSIONS' || /pixel limit/i.test(message) ? 'HUGE_DIMENSIONS' : 'INVALID_IMAGE');
+    }
+    const [textDecision, imageDecision] = await Promise.all([
+      moderateText(`${title}\n${description}\n${skills.join(' ')}\n${tags.join(' ')}`),
+      moderateImage(preview),
+    ]);
+    if (textDecision.level === 'HIGH' || imageDecision.level === 'HIGH') throw new Error('MODERATION_FAILED');
+    const processed = await processSkillshot(sourceBuffer, image.type);
     const id = crypto.randomUUID();
     const extension = image.type === 'image/png' ? 'png' : image.type === 'image/webp' ? 'webp' : 'jpg';
     const original = await put(`shots/${userId}/${id}/original.${extension}`, sourceBuffer, { access: 'private', addRandomSuffix: false, contentType: image.type });
     uploaded.push(original.pathname);
-    let imageDecision;
-    try { imageDecision = await moderateImage(original.url); }
-    catch { await recordUpload(userId, 'FAILED', sourceBytes, 'MODERATION_FAILED'); return errorResponse('MODERATION_FAILED', 503); }
-    if (imageDecision.level === 'HIGH') {
-      await recordUpload(userId, 'BLOCKED', sourceBytes, 'MODERATION_FAILED');
-      await del(uploaded);
-      return errorResponse('MODERATION_FAILED', 422);
-    }
-    const [display, thumbnail] = await Promise.all([
-      put(`shots/${userId}/${id}/display.webp`, processed.display, { access: 'private', addRandomSuffix: false, contentType: 'image/webp' }),
-      put(`shots/${userId}/${id}/thumbnail.webp`, processed.thumbnail, { access: 'private', addRandomSuffix: false, contentType: 'image/webp' }),
-    ]);
-    uploaded.push(display.pathname, thumbnail.pathname);
+    const display = await put(`shots/${userId}/${id}/display.webp`, processed.display, { access: 'private', addRandomSuffix: false, contentType: 'image/webp' });
+    uploaded.push(display.pathname);
+    const thumbnail = await put(`shots/${userId}/${id}/thumbnail.webp`, processed.thumbnail, { access: 'private', addRandomSuffix: false, contentType: 'image/webp' });
+    uploaded.push(thumbnail.pathname);
     const held = textDecision.level !== 'SAFE' || imageDecision.level !== 'SAFE';
-    const sql = await getReadyDb();
-    await sql.query(`INSERT INTO posts (id,user_id,title,description,tags,skills,category,image_url,display_url,thumbnail_url,image_type,image_size,display_size,thumbnail_size,image_width,image_height,status,moderation_category) VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`, [
+    const writes = [sql.query(`INSERT INTO posts (id,user_id,title,description,tags,skills,category,image_url,display_url,thumbnail_url,image_type,image_size,display_size,thumbnail_size,image_width,image_height,status,moderation_category) VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`, [
       id, userId, title, description, JSON.stringify(tags), JSON.stringify(skills), category, original.pathname, display.pathname, thumbnail.pathname, image.type, image.size, processed.display.length, processed.thumbnail.length, processed.width, processed.height, held ? 'PENDING_MODERATION' : 'VISIBLE', textDecision.category ?? imageDecision.category ?? null,
-    ]);
-    if (held) await sql.query(`INSERT INTO moderation_queue(id,source,target_type,target_id,creator_id,category,severity,provider_ref) VALUES($1,'AUTOMATIC','SKILLSHOT',$2,$3,$4,$5,$6)`, [crypto.randomUUID(), id, userId, textDecision.category ?? imageDecision.category ?? 'REVIEW', 'BORDERLINE', textDecision.providerRef ?? imageDecision.providerRef ?? null]);
+    ])];
+    if (held) writes.push(sql.query(`INSERT INTO moderation_queue(id,source,target_type,target_id,creator_id,category,severity,provider_ref) VALUES($1,'AUTOMATIC','SKILLSHOT',$2,$3,$4,$5,$6)`, [crypto.randomUUID(), id, userId, textDecision.category ?? imageDecision.category ?? 'REVIEW', 'BORDERLINE', textDecision.providerRef ?? imageDecision.providerRef ?? null]));
+    if (stagingPath) writes.push(sql.query(`UPDATE upload_sessions SET state='COMPLETE',post_id=$2 WHERE pathname=$1`, [stagingPath, id]));
+    await sql.transaction(writes);
+    committed = true;
     await recordUpload(userId, held ? 'HELD' : 'SUCCESS', sourceBytes);
     return Response.json({ id, status: held ? 'PENDING_MODERATION' : 'VISIBLE' }, { status: 201 });
   } catch (error) {
-    if (uploaded.length) await del(uploaded).catch(() => undefined);
-    await recordUpload(userId, 'FAILED', sourceBytes, 'STORAGE_UNAVAILABLE');
-    console.error('Skillshot upload failed', error);
-    return errorResponse('STORAGE_UNAVAILABLE', 503);
+    const known = ['FILE_TOO_LARGE', 'UNSUPPORTED_FORMAT', 'INVALID_IMAGE', 'HUGE_DIMENSIONS', 'MODERATION_FAILED'];
+    const code = error instanceof Error && known.includes(error.message) ? error.message : 'STORAGE_UNAVAILABLE';
+    await recordUpload(userId, code === 'MODERATION_FAILED' ? 'BLOCKED' : 'FAILED', sourceBytes, code);
+    return errorResponse(code, code === 'STORAGE_UNAVAILABLE' ? 503 : code === 'MODERATION_FAILED' ? 422 : 400);
+  } finally {
+    // Never roll back committed image references if later logging/cleanup fails.
+    await discardPaths([...(committed ? [] : uploaded), ...(stagingPath ? [stagingPath] : [])]).catch(() => undefined);
+    if (stagingPath && !committed) await sql.query(`UPDATE upload_sessions SET state='FAILED' WHERE pathname=$1 AND state='PROCESSING'`, [stagingPath]).catch(() => undefined);
   }
 }

@@ -6,16 +6,23 @@ import { normalizeSocialUrl, SOCIAL_PLATFORMS } from '../../../lib/social-links'
 import { requirePrincipal } from '../../../lib/authz';
 import { AVATAR_MAX_BYTES, processAvatar, uploadError } from '../../../lib/image-processing';
 import { rateLimit } from '../../../lib/rate-limit';
+import { signInPath } from '../../../lib/auth-path';
+import { moderateImage } from '../../../lib/moderation';
 
 function redirectError(request: Request, error: string) {
   return NextResponse.redirect(new URL(`/profile/edit?error=${encodeURIComponent(error)}`, request.url), 303);
 }
 
+async function recordAvatarUpload(userId: string, outcome: string, bytes: number, reason?: string) {
+  try { await (await getReadyDb()).query(`INSERT INTO upload_events(id,user_id,kind,outcome,bytes,reason) VALUES($1,$2,'AVATAR',$3,$4,$5)`, [crypto.randomUUID(), userId, outcome, bytes, reason || null]); }
+  catch { /* metrics must never block profile updates */ }
+}
+
 export async function POST(request: Request) {
   const auth=await requirePrincipal();
-  if('error'in auth){const denied=auth.error!;return denied.status===401?NextResponse.redirect(new URL('/signin?callbackUrl=/profile',request.url),303):denied;}
+  if('error'in auth){const denied=auth.error!;return denied.status===401?NextResponse.redirect(new URL(signInPath('/profile'),request.url),303):denied;}
   const session=await getChatGPTUser();
-  if(!session)return NextResponse.redirect(new URL('/signin?callbackUrl=/profile',request.url),303);
+  if(!session)return NextResponse.redirect(new URL(signInPath('/profile'),request.url),303);
   const user=session;
   await ensureUser(user);
   const form = await request.formData();
@@ -27,7 +34,10 @@ export async function POST(request: Request) {
   const profileSkills = String(form.get('skills') || '').split(',').map(value => value.trim()).filter(Boolean).slice(0, 12).map(value => value.slice(0, 40));
   const avatar = form.get('avatar');
   const removeAvatar = form.get('removeAvatar') === '1';
-  if ((removeAvatar || (avatar instanceof File && avatar.size > 0)) && !await rateLimit(`avatar:${user.userId}`, 12, 86400)) return redirectError(request, 'avatar-rate');
+  if ((removeAvatar || (avatar instanceof File && avatar.size > 0)) && !await rateLimit(`avatar:${user.userId}`, 12, 86400)) {
+    if (avatar instanceof File) await recordAvatarUpload(user.userId, 'FAILED', avatar.size, 'RATE_LIMITED');
+    return redirectError(request, 'avatar-rate');
+  }
   const requestedFeatured = [...new Set(form.getAll('featuredPost').map(String).filter(Boolean))].slice(0, 3);
   if (!username) return redirectError(request, 'username');
   const sql = await getReadyDb();
@@ -62,6 +72,7 @@ export async function POST(request: Request) {
   }
   if (!removeAvatar && avatar instanceof File && avatar.size > 0) {
     const validation = uploadError(avatar, AVATAR_MAX_BYTES);
+    if (validation) await recordAvatarUpload(user.userId, 'FAILED', avatar.size, validation);
     if (validation === 'UNSUPPORTED_FORMAT') return redirectError(request, 'avatar-type');
     if (validation === 'FILE_TOO_LARGE') return redirectError(request, 'avatar-size');
     if (validation) return redirectError(request, 'avatar-invalid');
@@ -73,34 +84,54 @@ export async function POST(request: Request) {
   let avatarSize = removeAvatar ? null : current[0]?.avatar_size ?? null;
   let newlyUploadedAvatar: string | null = null;
   if (!removeAvatar && avatar instanceof File && avatar.size > 0) {
+    let optimized: Buffer;
     try {
-      const optimized = await processAvatar(Buffer.from(await avatar.arrayBuffer()));
+      optimized = await processAvatar(Buffer.from(await avatar.arrayBuffer()), avatar.type);
+    } catch {
+      await recordAvatarUpload(user.userId, 'FAILED', avatar.size, 'INVALID_IMAGE');
+      return redirectError(request, 'avatar-invalid');
+    }
+    const moderation = await moderateImage(`data:image/webp;base64,${optimized.toString('base64')}`);
+    if (moderation.level !== 'SAFE') {
+      await recordAvatarUpload(user.userId, 'BLOCKED', avatar.size, 'MODERATION_FAILED');
+      return redirectError(request, 'avatar-moderation');
+    }
+    try {
       const blob = await put(`avatars/${user.userId}/${crypto.randomUUID()}.webp`, optimized, { access: 'private', addRandomSuffix: false, contentType: 'image/webp' });
       avatarUrl = blob.pathname;
       avatarType = 'image/webp';
       avatarSize = optimized.length;
       newlyUploadedAvatar = blob.pathname;
     } catch {
-      return redirectError(request, 'avatar-invalid');
+      await recordAvatarUpload(user.userId, 'FAILED', avatar.size, 'STORAGE_UNAVAILABLE');
+      return redirectError(request, 'avatar-upload');
     }
   }
   try {
-    await sql.query(`UPDATE users SET display_name=$1,username=$2,bio=$3,website=$4,location=$5,skills=$6::jsonb,social_links=$7::jsonb,avatar_url=$8,avatar_type=$9,avatar_size=$10 WHERE id=$11`, [
+    const writes = [sql.query(`UPDATE users SET display_name=$1,username=$2,bio=$3,website=$4,location=$5,skills=$6::jsonb,social_links=$7::jsonb,avatar_url=$8,avatar_type=$9,avatar_size=$10 WHERE id=$11`, [
       displayName, username, bio, safeWebsite, location, JSON.stringify(profileSkills), JSON.stringify(socialLinks), avatarUrl, avatarType, avatarSize, user.userId,
-    ]);
+    ])];
     const ownedFeatured = requestedFeatured.length ? await sql.query(`SELECT id FROM posts WHERE user_id=$1 AND id=ANY($2::text[])`, [user.userId, requestedFeatured]) : [];
     const allowedFeatured = new Set(ownedFeatured.map(row => String(row.id)));
-    await sql.query(`DELETE FROM featured_posts WHERE user_id=$1`, [user.userId]);
+    writes.push(sql.query(`DELETE FROM featured_posts WHERE user_id=$1`, [user.userId]));
     let position = 1;
     for (const postId of requestedFeatured) {
       if (!allowedFeatured.has(postId)) continue;
-      await sql.query(`INSERT INTO featured_posts (user_id,post_id,position) VALUES ($1,$2,$3)`, [user.userId, postId, position++]);
+      writes.push(sql.query(`INSERT INTO featured_posts (user_id,post_id,position) VALUES ($1,$2,$3)`, [user.userId, postId, position++]));
     }
+    await sql.transaction(writes);
   } catch {
-    if (newlyUploadedAvatar) await del(newlyUploadedAvatar).catch(() => undefined);
+    if (newlyUploadedAvatar) {
+      const referenced = await sql.query(`SELECT 1 FROM users WHERE avatar_url=$1`, [newlyUploadedAvatar]).catch(() => null);
+      if (referenced && !referenced.length) await del(newlyUploadedAvatar).catch(() => undefined);
+    }
+    if (avatar instanceof File && avatar.size > 0) await recordAvatarUpload(user.userId, 'FAILED', avatar.size, 'SAVE_FAILED');
     return redirectError(request, 'save');
   }
   const previousAvatar = current[0]?.avatar_url ? String(current[0].avatar_url) : null;
-  if (previousAvatar && previousAvatar !== avatarUrl) await del(previousAvatar).catch(() => undefined);
+  if (previousAvatar && previousAvatar !== avatarUrl) {
+    await sql.query(`INSERT INTO storage_cleanup_queue(id,post_id,pathname,reason,cleanup_after) VALUES($1,NULL,$2,'AVATAR_REPLACED',now()+interval '7 days')`, [crypto.randomUUID(), previousAvatar]).catch(() => undefined);
+  }
+  if (avatar instanceof File && avatar.size > 0) await recordAvatarUpload(user.userId, 'SUCCESS', avatar.size);
   return NextResponse.redirect(new URL('/profile?saved=1', request.url), 303);
 }

@@ -23,7 +23,13 @@ export async function POST(request: Request) {
   const duplicate = await sql.query(`SELECT id FROM appeals WHERE user_id=$1 AND target_type=$2 AND target_id=$3 AND status IN ('PENDING','UNDER_REVIEW') LIMIT 1`, [auth.principal.id,targetType,targetId]);
   if (duplicate.length) return Response.json({ error: 'An appeal for this item is already being reviewed.' }, { status: 409 });
   const id = crypto.randomUUID();
-  await sql.query(`INSERT INTO appeals(id,user_id,target_type,target_id,reason,explanation) VALUES($1,$2,$3,$4,$5,$6)`, [id,auth.principal.id,targetType,targetId,reason,explanation]);
+  if (targetType === 'SKILLSHOT') {
+    const inserted = await sql.query(`WITH target AS (
+      UPDATE posts SET appeal_hold=true WHERE id=$4 AND user_id=$2 AND status NOT IN ('PURGING','PURGED') RETURNING id
+    ) INSERT INTO appeals(id,user_id,target_type,target_id,reason,explanation)
+      SELECT $1,$2,$3,$4,$5,$6 FROM target RETURNING id`, [id,auth.principal.id,targetType,targetId,reason,explanation]);
+    if (!inserted.length) return Response.json({ error:'This Skillshot is unavailable for appeal.' }, { status:409 });
+  } else await sql.query(`INSERT INTO appeals(id,user_id,target_type,target_id,reason,explanation) VALUES($1,$2,$3,$4,$5,$6)`, [id,auth.principal.id,targetType,targetId,reason,explanation]);
   await sql.query(`INSERT INTO notifications(id,audience,type,title,body) VALUES($1,'STAFF','NEW_APPEAL','New appeal awaiting review',$2)`, [crypto.randomUUID(),`${targetType}: ${reason}`]);
   return Response.json({ id }, { status: 201 });
 }

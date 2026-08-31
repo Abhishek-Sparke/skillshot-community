@@ -21,51 +21,15 @@ function SocialIcon({ platform }: { platform: SocialPlatformKey }) {
 }
 
 const MAX_SOURCE_AVATAR_SIZE = 2 * 1024 * 1024;
-const MAX_AVATAR_SIZE = 2 * 1024 * 1024;
-const TARGET_AVATAR_SIZE = 500 * 1024;
 const AVATAR_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
-function canvasBlob(canvas: HTMLCanvasElement, quality: number) {
-  return new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/webp', quality));
-}
-
-async function optimizeAvatar(file: File) {
+async function validateAvatar(file: File) {
   const bitmap = await createImageBitmap(file);
   try {
-    if (!bitmap.width || !bitmap.height) throw new Error('Invalid image');
-    if (bitmap.width === bitmap.height && bitmap.width <= 1024 && file.size <= TARGET_AVATAR_SIZE) return file;
-
-    const sourceSize = Math.min(bitmap.width, bitmap.height);
-    const outputSize = Math.min(1024, sourceSize);
-    const canvas = document.createElement('canvas');
-    canvas.width = outputSize;
-    canvas.height = outputSize;
-    const context = canvas.getContext('2d');
-    if (!context) throw new Error('Image optimization unavailable');
-    context.drawImage(
-      bitmap,
-      Math.floor((bitmap.width - sourceSize) / 2),
-      Math.floor((bitmap.height - sourceSize) / 2),
-      sourceSize,
-      sourceSize,
-      0,
-      0,
-      outputSize,
-      outputSize,
-    );
-
-    let quality = 0.9;
-    let blob = await canvasBlob(canvas, quality);
-    while (blob && blob.size > TARGET_AVATAR_SIZE && quality > 0.66) {
-      quality -= 0.08;
-      blob = await canvasBlob(canvas, quality);
-    }
-    if (!blob) throw new Error('Image optimization failed');
-    const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9_-]/gi, '-') || 'avatar';
-    return new File([blob], `${baseName}.webp`, { type: 'image/webp', lastModified: Date.now() });
-  } finally {
-    bitmap.close();
-  }
+    if (!bitmap.width || !bitmap.height || bitmap.width > 8000 || bitmap.height > 8000 || bitmap.width * bitmap.height > 20_000_000) throw new Error('Invalid dimensions');
+    // Keep the original bytes: the server performs the single final crop/encode.
+    return file;
+  } finally { bitmap.close(); }
 }
 
 export default function ProfileEditor({ profile, posts }: { profile: EditorProfile; posts: EditorPost[] }) {
@@ -80,6 +44,7 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
   const [socialErrors, setSocialErrors] = useState<Partial<Record<SocialPlatformKey, string>>>({});
   const [feedback, setFeedback] = useState('');
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const avatarSelection = useRef(0);
 
   useEffect(() => () => { if (avatarPreview.startsWith('blob:')) URL.revokeObjectURL(avatarPreview); }, [avatarPreview]);
@@ -106,19 +71,12 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
     setAvatarBusy(true);
     setFeedback('Preparing your profile picture…');
     try {
-      const optimized = await optimizeAvatar(file);
+      await validateAvatar(file);
       if (selection !== avatarSelection.current) return;
-      if (optimized.size > MAX_AVATAR_SIZE) {
-        event.target.value = '';
-        setAvatarFile(null);
-        setAvatarPreview(profile.avatarUrl);
-        setFeedback("We couldn't optimize that photo below the 2 MB maximum. Please choose another image.");
-        return;
-      }
-      setAvatarFile(optimized);
+      setAvatarFile(file);
       setRemoveAvatar(false);
-      setAvatarPreview(URL.createObjectURL(optimized));
-      setFeedback(optimized === file ? 'Profile picture ready.' : 'Profile picture optimized and ready.');
+      setAvatarPreview(URL.createObjectURL(file));
+      setFeedback('Profile picture ready. It will be optimized automatically when saved.');
     } catch {
       if (selection !== avatarSelection.current) return;
       event.target.value = '';
@@ -165,13 +123,28 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
     const normalizedSocialLinks = validateSocialLinks();
     if (!normalizedSocialLinks) { setFeedback('Check the highlighted social links and try again.'); return; }
     setBusy(true);
+    setUploadProgress(0);
     setFeedback(avatarFile ? 'Uploading your profile picture…' : 'Saving your profile…');
     const data = new FormData(form);
     for (const platform of SOCIAL_PLATFORMS) data.set(platform.key, normalizedSocialLinks[platform.key]);
     data.delete('avatar');
     if (avatarFile && !removeAvatar) data.set('avatar', avatarFile);
     try {
-      const response = await fetch('/api/profile', { method: 'POST', body: data });
+      const response = await new Promise<{ url: string; ok: boolean }>((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.open('POST', '/api/profile');
+        request.timeout = 120_000;
+        request.upload.onprogress = event => {
+          if (!event.lengthComputable) return;
+          const progress = Math.round(event.loaded / event.total * 100);
+          setUploadProgress(progress);
+          if (avatarFile) setFeedback(progress < 100 ? `Uploading your profile picture… ${progress}%` : 'Optimizing and saving your profile picture…');
+        };
+        request.onload = () => resolve({ url: request.responseURL, ok: request.status >= 200 && request.status < 300 });
+        request.onerror = () => reject(new Error('Network error'));
+        request.ontimeout = () => reject(new Error('Upload timeout'));
+        request.send(data);
+      });
       const destination = new URL(response.url, window.location.origin);
       const error = destination.searchParams.get('error');
       if (error) {
@@ -181,6 +154,7 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
           'avatar-rate': 'You have changed your profile picture several times today. Please try again later.',
           'avatar-invalid': "That image couldn't be read. Please choose another PNG, JPG, or WebP image.",
           'avatar-upload': "Couldn't upload your profile picture. Please try again.",
+          'avatar-moderation': 'This profile image could not be approved. Try another image or contact the Skillshot team.',
         };
         setFeedback(messages[error] || 'Your profile could not be saved. Please check the fields and try again.');
         setBusy(false);
@@ -226,6 +200,7 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
       {posts.length ? <div className="featuredChoices">{posts.map(post => <label key={post.id} className={selectedFeatured.includes(post.id) ? 'selected' : ''}><input type="checkbox" name="featuredPost" value={post.id} checked={selectedFeatured.includes(post.id)} onChange={() => toggleFeatured(post.id)}/><span>✓</span><b>{post.title}</b></label>)}</div> : <p>Publish your first Skillshot, then return here to feature your best work.</p>}
     </fieldset>
     <p className="editorFeedback" role="status" aria-live="polite">{feedback}</p>
+    {busy && avatarFile && <div className="uploadProgress" role="progressbar" aria-label="Profile image upload" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}><span style={{ width: `${uploadProgress}%` }}/></div>}
     <div className="editorActions"><button className="primary" disabled={busy || avatarBusy}>{busy ? (avatarFile ? 'Uploading…' : 'Saving…') : avatarBusy ? 'Preparing image…' : 'Save changes'}</button><Link className="quietButton" href="/profile">Cancel</Link></div>
   </form>;
 }
