@@ -13,6 +13,22 @@ import { imageDelivery } from '../lib/image-delivery.ts';
 import { safeReturnPath, signInPath } from '../lib/auth-path.ts';
 import { staffLinks, moderationActions, formatBytes } from '../lib/staff-ui.ts';
 import { queueFilters } from '../lib/staff-query.ts';
+import { publicNavigation } from '../lib/public-navigation.ts';
+
+test('public navigation uses active viewer roles and preserves sign-in return paths', () => {
+  const guest = publicNavigation(null, '/shots/example');
+  assert.equal(guest.some(link => link.href === '/profile'), false);
+  assert.equal(guest.find(link => link.label === 'Sign in')?.href, '/signin?callbackUrl=%2Fshots%2Fexample');
+  assert.equal(guest.filter(link => !link.className?.includes('publicNavGuestShare')).length, 3);
+  for (const role of ['USER', 'TRUSTED_CONTRIBUTOR', 'MODERATOR', 'HEAD_MODERATOR', 'ADMIN', 'OWNER'] as const) {
+    const links = publicNavigation({ role, status: 'ACTIVE' }, '/');
+    assert.equal(links.some(link => link.href === '/profile'), true);
+    assert.equal(links.some(link => link.label === 'Sign in'), false);
+    const dashboard = links.find(link => link.label === '◆ Dashboard');
+    assert.equal(dashboard?.href, ['USER', 'TRUSTED_CONTRIBUTOR'].includes(role) ? undefined : panelForRole(role));
+    assert.equal(publicNavigation({ role, status: 'SUSPENDED' }, '/').some(link => link.label === '◆ Dashboard'), false);
+  }
+});
 
 test('staff navigation follows role and permission boundaries', () => {
   const links = (role: Parameters<typeof permissionsFor>[0], custom: string[] = []) => staffLinks({id:'staff',username:'staff',role,permissions:permissionsFor(role,custom)});

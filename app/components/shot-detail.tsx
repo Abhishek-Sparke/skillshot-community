@@ -99,15 +99,6 @@ export default function ShotDetail({ id }: { id: string }) {
   if (!post) return <main className="formPage"><section className="detail"><h1>Post not found</h1><p>{status}</p><Link className="backHome" href="/community">← Back to community</Link></section></main>;
 
   return <main className="formPage">
-    <nav className="detailNav">
-      <Link className="brand" href="/"><span>S</span> Skillshot</Link>
-      <div className="navlinks">
-        <Link className="backHome" href="/community">← Community</Link>
-        {post.signedIn
-          ? <Link href="/profile">Profile</Link>
-          : <Link className="authEntry" href={signInPath(`/shots/${id}`)}>Sign in</Link>}
-      </div>
-    </nav>
     <section className="detail">
       <img className="detailImage" src={post.imageUrl} alt={post.title}/>
       <div className="detailHeading">

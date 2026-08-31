@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
 import Link from 'next/link';
-import AuthNavItems from './components/auth-nav-items';
+import PublicNavbar from './components/public-navbar';
 import { getChatGPTUser } from './chatgpt-auth';
 import { signInPath } from '../lib/auth-path';
 
@@ -10,14 +10,7 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   const signedIn = Boolean(await getChatGPTUser());
   return <main>
-    <nav className="nav shell">
-      <Link className="brand" href="/"><span>S</span> Skillshot</Link>
-      <div className="navlinks">
-        <Link href="/community">Community</Link>
-        <Link href="/search">Search</Link>
-        <AuthNavItems returnTo="/" notifications={false}/>
-      </div>
-    </nav>
+    <PublicNavbar returnTo="/"/>
 
     <section className="hero shell">
       <div>

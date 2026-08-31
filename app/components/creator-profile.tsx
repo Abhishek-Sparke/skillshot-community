@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import CommunityFeed from './community-feed';
 import RoleBadge from './role-badge';
-import { isStaffRole, panelForRole, type UserRole } from '../../lib/roles';
+import type { UserRole } from '../../lib/roles';
 import ReportButton from './report-button';
 import { requireClientAuth, signInPath } from '../../lib/auth-path';
 
@@ -71,10 +71,6 @@ export default function CreatorProfile({ username, saved = false }: { username: 
 
   const joined = new Date(profile.joinedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
   return <main className="profilePage">
-    <nav className="nav shell">
-      <Link className="brand" href="/"><span>S</span> Skillshot</Link>
-      <div className="navlinks"><Link href="/community">Community</Link><Link href="/search">Search</Link>{profile.signedIn ? <><Link href="/notifications">Notifications</Link><Link href="/my-posts">My posts</Link><Link href="/profile">Profile</Link>{profile.isSelf && isStaffRole(profile.role) && <Link className="staffDashboardLink" href={panelForRole(profile.role)}>◆ Dashboard</Link>}<Link className="upload" href="/upload">＋ Share a shot</Link></> : <><Link className="authEntry" href={signInPath(`/users/${profile.username}`)}>Sign in</Link><Link className="upload" href={signInPath('/upload', 'Sign in to create a Skillshot')}>＋ Share a shot</Link></>}</div>
-    </nav>
     {saved && <div className="saveToast" role="status">✓ Profile updated</div>}
     <section className="profileHero shell">
       <div className="profileCover"><span>SKILLSHOT CREATOR</span></div>

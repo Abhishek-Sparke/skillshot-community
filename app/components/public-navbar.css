@@ -1,0 +1,26 @@
+.publicNavbar{position:relative;z-index:40;display:flex;align-items:center;gap:28px;height:78px;min-width:0;border-bottom:1px solid var(--line);background:var(--paper)}
+.publicNavbar>.brand{flex:none;white-space:nowrap}
+.publicNavLinks{display:flex;align-items:center;gap:24px;margin-left:auto;flex:none}
+.publicNavLinks>a{display:inline-flex;align-items:center;min-height:44px;white-space:nowrap;text-decoration:none;color:inherit;font-size:14px;font-weight:700}
+.publicNavLinks>a:hover{color:var(--red)}
+.publicNavbar a:focus-visible,.publicNavToggle:focus-visible{outline:3px solid var(--red);outline-offset:4px}
+.publicNavToggle{display:none;flex:none;position:relative;width:44px;height:44px;margin-left:auto;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);cursor:pointer}
+.publicNavToggle span{position:absolute;left:11px;width:20px;height:2px;border-radius:2px;background:currentColor;transition:transform .16s ease,opacity .16s ease;pointer-events:none}
+.publicNavToggle span:nth-child(1){top:14px}.publicNavToggle span:nth-child(2){top:20px}.publicNavToggle span:nth-child(3){top:26px}
+.publicNavbar[data-compact=true]>.publicNavToggle{display:block}
+.publicNavbar[data-compact=true]>.publicNavLinks{position:absolute;top:calc(100% + 8px);right:clamp(18px,3vw,28px);width:min(320px,calc(100% - 36px));max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--paper);box-shadow:0 14px 34px #20201d20;visibility:hidden;opacity:0;transform:translateY(-6px);transition:opacity .16s ease,transform .16s ease,visibility .16s}
+.publicNavbar[data-compact=true]>.publicNavLinks>a{padding:12px 14px;border-radius:9px;white-space:normal;overflow-wrap:anywhere}
+.publicNavbar[data-compact=true]>.publicNavLinks>a:hover{background:#ebe7df;color:var(--ink)}
+.publicNavbar[data-compact=true]>.publicNavLinks>.upload{margin:5px 3px 3px 0}
+.publicNavbar[data-compact=true]>.publicNavLinks>.publicNavGuestShare{display:none}
+.publicNavbar[data-compact=true][data-open=true]>.publicNavLinks{visibility:visible;opacity:1;transform:translateY(0)}
+.publicNavbar[data-open=true]>.publicNavToggle span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.publicNavbar[data-open=true]>.publicNavToggle span:nth-child(2){opacity:0}
+.publicNavbar[data-open=true]>.publicNavToggle span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+/* Synchronous measurement restores the same list before paint. Never visible or focusable. */
+.publicNavbar>.publicNavLinks[data-measuring=true]{position:fixed!important;top:0!important;left:0!important;right:auto!important;width:max-content!important;max-height:none!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:24px!important;padding:0!important;border:0!important;margin:0!important;visibility:hidden!important;transform:none!important;transition:none!important}
+.publicNavbar>.publicNavLinks[data-measuring=true]>a{display:inline-flex!important;padding:0!important;margin:0!important;white-space:nowrap!important}
+.publicNavbar>.publicNavLinks[data-measuring=true]>.upload{padding:12px 18px!important}
+.publicNavbar>.publicNavLinks[data-measuring=true]>.staffDashboardLink{padding:10px 14px!important}
+@media(max-width:600px){.publicNavbar{height:74px}}
+@media(prefers-reduced-motion:reduce){.publicNavbar .publicNavLinks,.publicNavToggle span{transition:none!important}}

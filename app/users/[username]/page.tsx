@@ -1,4 +1,5 @@
 import CreatorProfile from '../../components/creator-profile';
+import PublicNavbar from '../../components/public-navbar';
 import type { Metadata } from 'next';
 import { getReadyDb } from '../../../lib/db';
 
@@ -25,5 +26,5 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 
 export default async function PublicProfile({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-  return <CreatorProfile username={username} />;
+  return <><PublicNavbar returnTo={`/users/${encodeURIComponent(username)}`}/><CreatorProfile username={username} /></>;
 }

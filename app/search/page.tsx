@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getReadyDb } from '../../lib/db';
 import RoleBadge from '../components/role-badge';
 import { normalizeRole } from '../../lib/roles';
-import AuthNavItems from '../components/auth-nav-items';
+import PublicNavbar from '../components/public-navbar';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ q
   ]);
   const returnTo = q ? `/search?q=${encodeURIComponent(q)}` : tag ? `/search?tag=${encodeURIComponent(tag)}` : '/search';
   return <main>
-    <nav className="nav shell"><Link className="brand" href="/"><span>S</span> Skillshot</Link><div className="navlinks"><Link href="/community">Community</Link><AuthNavItems returnTo={returnTo} notifications={false}/></div></nav>
+    <PublicNavbar returnTo={returnTo}/>
     <section className="searchPage shell"><header><p className="eyebrow">DISCOVER</p><h1>Search Skillshot</h1><form><input name="q" defaultValue={q} placeholder="Search creators, titles, descriptions, or tags"/><button className="primary">Search</button></form></header>
       {users.length > 0 && <section><h2>Creators</h2><div className="creatorResults">{users.map(user => <Link href={`/users/${user.username}`} key={user.username}><span>{String(user.display_name).slice(0, 1).toUpperCase()}</span><div><b>{user.display_name} <RoleBadge role={normalizeRole(user.role)}/></b><small>@{user.username}</small></div></Link>)}</div></section>}
       <section><h2>{tag ? `#${tag}` : q ? 'Skillshots' : 'Newest Skillshots'}</h2><div className="searchResults">{posts.map(post => <article key={post.id}><Link className="searchImage" href={`/shots/${post.id}`}><img src={`/api/images/${post.id}?variant=thumbnail`} loading="lazy" width="640" height="360" alt={post.title}/></Link><div><h3><Link href={`/shots/${post.id}`}>{post.title}</Link></h3><p><Link href={`/users/${post.username}`}>{post.display_name}</Link> <RoleBadge role={normalizeRole(post.role)}/></p><div className="detailTags">{(Array.isArray(post.tags) ? post.tags : []).map((value: string) => <Link key={value} href={`/search?tag=${encodeURIComponent(value)}`}>#{value}</Link>)}</div></div></article>)}</div>{posts.length === 0 && <div className="profileEmpty"><h3>No matching Skillshots.</h3><p>Try a broader word or browse the full community.</p><Link className="primary" href="/community">Browse community</Link></div>}</section>
