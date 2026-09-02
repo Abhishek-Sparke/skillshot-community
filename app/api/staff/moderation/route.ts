@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const items = await sql.query(`SELECT q.id,q.source,q.target_type,q.target_id,q.category,q.severity,q.status,q.created_at,q.reviewed_at,
       u.username,u.display_name,left(u.bio,500) bio,(u.avatar_url IS NOT NULL AND u.status='ACTIVE') has_avatar,
       p.title,left(p.description,1000) description,p.status content_status,
-      left(c.body,2000) comment_body,c.post_id,context.title context_title,
+      left(c.body,2000) comment_body,c.post_id,c.parent_id,context.title context_title,
       (SELECT count(*) FROM reports r WHERE r.target_type=q.target_type AND r.target_id=q.target_id) report_count,
       (SELECT coalesce(jsonb_agg(x),'[]'::jsonb) FROM (SELECT r.category,r.details,r.created_at,r.status,reporter.username reporter
         FROM reports r LEFT JOIN users reporter ON reporter.id=r.reporter_id WHERE r.target_type=q.target_type AND r.target_id=q.target_id ORDER BY r.created_at DESC LIMIT 10) x) reports,
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       FROM moderation_queue q LEFT JOIN users u ON u.id=q.creator_id
       LEFT JOIN posts p ON q.target_type='SKILLSHOT' AND p.id=q.target_id
       LEFT JOIN comments c ON q.target_type='COMMENT' AND c.id=q.target_id LEFT JOIN posts context ON context.id=c.post_id
-      WHERE ($1='ALL' OR q.target_type=$1 OR ($1='IMAGE' AND q.target_type='SKILLSHOT'))
+      WHERE ($1='ALL' OR q.target_type=$1 OR ($1='IMAGE' AND q.target_type='SKILLSHOT') OR ($1='REPLY' AND q.target_type='COMMENT' AND c.parent_id IS NOT NULL))
         AND ($2='ALL' OR ($2='REPORT' AND q.source='REPORT') OR ($2='AUTO' AND q.source<>'REPORT'))
         AND ($3='ALL' OR q.status=$3) AND ($4='ALL' OR q.severity=$4) AND ($5='' OR q.category ILIKE $5)
         AND (q.source<>'REPORT' OR $7) AND (q.target_type<>'SKILLSHOT' OR $8) AND (q.target_type<>'COMMENT' OR $9)
