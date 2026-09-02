@@ -10,7 +10,67 @@ import { readBoundedImage, stagingType } from '../lib/upload-policy.ts';
 import { managedStoragePath } from '../lib/storage-policy.ts';
 import { decodeCursor, encodeCursor, pageSize } from '../lib/pagination.ts';
 import { imageDelivery } from '../lib/image-delivery.ts';
-import { safeReturnPath, signInPath } from '../lib/auth-path.ts';
+import { safeReturnPath, signInPath, signUpPath } from '../lib/auth-path.ts';
+import { staffLinks, moderationActions, formatBytes } from '../lib/staff-ui.ts';
+import { queueFilters } from '../lib/staff-query.ts';
+import { publicNavigation } from '../lib/public-navigation.ts';
+
+test('public navigation uses active viewer roles and preserves sign-in return paths', () => {
+  const guest = publicNavigation(null, '/shots/example');
+  assert.equal(guest.some(link => link.href === '/profile'), false);
+  assert.equal(guest.find(link => link.label === 'Sign in')?.href, '/signin?callbackUrl=%2Fshots%2Fexample');
+  assert.deepEqual(guest.map(link => link.label), ['Community', 'Search', 'Sign in', 'Sign up']);
+  assert.equal(guest.find(link => link.label === 'Sign up')?.href, signUpPath('/profile/edit'));
+  for (const role of ['USER', 'TRUSTED_CONTRIBUTOR', 'MODERATOR', 'HEAD_MODERATOR', 'ADMIN', 'OWNER'] as const) {
+    const links = publicNavigation({ role, status: 'ACTIVE' }, '/');
+    assert.equal(links.some(link => link.href === '/profile'), true);
+    assert.equal(links.some(link => link.label === 'Sign in'), false);
+    const dashboard = links.find(link => link.label === '◆ Dashboard');
+    assert.equal(dashboard?.href, ['USER', 'TRUSTED_CONTRIBUTOR'].includes(role) ? undefined : panelForRole(role));
+    assert.equal(publicNavigation({ role, status: 'SUSPENDED' }, '/').some(link => link.label === '◆ Dashboard'), false);
+  }
+});
+
+test('sign-up paths keep local destinations and reject external or malformed redirects', () => {
+  assert.equal(signUpPath(), '/signup?callbackUrl=%2Fprofile%2Fedit');
+  assert.equal(signUpPath('/upload'), '/signup?callbackUrl=%2Fupload');
+  for (const path of ['https://example.com', '//example.com', '/\\example.com', '/\n/example.com']) {
+    assert.equal(safeReturnPath(path), '/');
+    assert.equal(signUpPath(path), '/signup?callbackUrl=%2F');
+  }
+});
+
+test('staff navigation follows role and permission boundaries', () => {
+  const links = (role: Parameters<typeof permissionsFor>[0], custom: string[] = []) => staffLinks({id:'staff',username:'staff',role,permissions:permissionsFor(role,custom)});
+  assert.equal(links('USER').length,0);
+  assert.equal(links('TRUSTED_CONTRIBUTOR').length,0);
+  assert.equal(links('OWNER').some(l=>l.label==='Settings'),true);
+  assert.equal(links('ADMIN').some(l=>l.label==='Settings'),false);
+  assert.equal(links('ADMIN',['settings.manage']).some(l=>l.label==='Settings'),true);
+  for(const role of ['HEAD_MODERATOR','MODERATOR'] as const) {
+    assert.equal(links(role,['storage.view','settings.manage','users.view']).some(l=>l.href.startsWith('/admin')),false);
+  }
+  assert.equal(links('HEAD_MODERATOR').some(l=>l.label==='Moderators'),true);
+  assert.equal(links('HEAD_MODERATOR').some(l=>l.label==='Moderation History'),true);
+  assert.equal(links('MODERATOR').some(l=>l.label==='Moderation History'),false);
+  assert.equal(links('MODERATOR',['audit.view']).some(l=>l.href==='/mod/history'),true);
+  assert.deepEqual(staffLinks({id:'x',username:'x',role:'MODERATOR',permissions:[]}).map(l=>l.label),['Dashboard']);
+});
+test('moderation buttons never advertise actions rejected by existing permission checks',()=>{
+  assert.deepEqual(moderationActions('PROFILE',permissionsFor('OWNER')),[]);
+  assert.deepEqual(moderationActions('SKILLSHOT',[]),[]);
+  assert.equal(moderationActions('SKILLSHOT',permissionsFor('MODERATOR')).includes('DELETE'),false);
+  assert.equal(moderationActions('COMMENT',permissionsFor('MODERATOR')).includes('DELETE'),true);
+  assert.equal(moderationActions('SKILLSHOT',permissionsFor('ADMIN')).includes('DELETE'),true);
+});
+test('staff query input is bounded and defaults safely',()=>{
+  assert.deepEqual(queueFilters(new URLSearchParams()),{type:'ALL',source:'ALL',status:'PENDING',severity:'ALL',reason:'',page:1});
+  const filtered=queueFilters(new URLSearchParams({page:'Infinity',reason:'x'.repeat(500),status:'INVALID',type:'PROFILE',source:'REPORT'}));
+  assert.equal(filtered.page,10000);assert.equal(filtered.reason.length,100);assert.equal(filtered.status,'PENDING');assert.equal(filtered.type,'PROFILE');
+  assert.equal(queueFilters(new URLSearchParams('page=-8')).page,1);
+  assert.equal(queueFilters(new URLSearchParams('page=2.8')).page,2);
+  assert.equal(formatBytes(1024**3),'1.0 GB');assert.equal(formatBytes(NaN),'0 B');
+});
 
 test('sign-in links preserve the requested page and reject external redirects', () => {
   assert.equal(safeReturnPath('/shots/abc?view=full#comments'), '/shots/abc?view=full#comments');

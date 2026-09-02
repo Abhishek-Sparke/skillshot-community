@@ -1,5 +1,6 @@
 import { chatGPTSignInPath, getChatGPTUser } from '../chatgpt-auth';
 import CreatorProfile from '../components/creator-profile';
+import PublicNavbar from '../components/public-navbar';
 import { ensureUser } from '../../lib/db';
 import { redirect } from 'next/navigation';
 
@@ -10,5 +11,5 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
   if (!user) redirect(chatGPTSignInPath('/profile'));
   const profile = await ensureUser(user);
   const { saved } = await searchParams;
-  return <CreatorProfile username={String(profile.username)} saved={saved === '1'} />;
+  return <><PublicNavbar returnTo="/profile"/><CreatorProfile username={String(profile.username)} saved={saved === '1'} /></>;
 }

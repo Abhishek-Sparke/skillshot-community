@@ -1,15 +1,11 @@
 import CommunityFeed from '../components/community-feed';
-import Link from 'next/link';
-import AuthNavItems from '../components/auth-nav-items';
+import PublicNavbar from '../components/public-navbar';
 
 export const dynamic = 'force-dynamic';
 
 export default function CommunityPage() {
   return <main>
-    <nav className="nav shell">
-      <Link className="brand" href="/"><span>S</span> Skillshot</Link>
-      <div className="navlinks"><Link href="/search">Search</Link><AuthNavItems returnTo="/community"/></div>
-    </nav>
+    <PublicNavbar returnTo="/community"/>
     <section className="communityHero shell">
       <p className="eyebrow">EXPLORE SKILLSHOT</p>
       <h1>See what the community is making.</h1>

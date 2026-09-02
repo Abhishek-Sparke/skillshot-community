@@ -1,2 +1,8 @@
-import Link from 'next/link';import { requireChatGPTUser } from '../chatgpt-auth';import AccountCenter from '../components/account-center';import StaffDashboardLink from '../components/staff-dashboard-link';
-export default async function Page(){await requireChatGPTUser('/notifications');return <main className="accountPage shell"><nav className="staffNav"><Link className="brand" href="/"><span>S</span> Skillshot</Link><Link href="/profile">Profile</Link><Link href="/community">Community</Link><StaffDashboardLink/></nav><AccountCenter section="notifications"/></main>}
+import { requireChatGPTUser } from '../chatgpt-auth';
+import AccountCenter from '../components/account-center';
+import PublicNavbar from '../components/public-navbar';
+
+export default async function Page() {
+  await requireChatGPTUser('/notifications');
+  return <><PublicNavbar returnTo="/notifications"/><main className="accountPage shell"><AccountCenter section="notifications"/></main></>;
+}

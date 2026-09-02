@@ -21,6 +21,7 @@ export async function requirePrincipal(permission?: Permission) {
 export async function requirePanel(kind: 'admin' | 'head-mod' | 'mod') {
   const principal = await getPrincipal();
   if (!principal) redirect(`/signin?callbackUrl=/${kind}`);
+  if (principal.status !== 'ACTIVE') redirect('/signin?reason=Your%20account%20is%20unavailable');
   const allowed = kind === 'admin'
     ? ['OWNER','ADMIN'].includes(principal.role)
     : kind === 'head-mod'

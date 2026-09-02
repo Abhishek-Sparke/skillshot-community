@@ -20,15 +20,23 @@ export async function GET(request: Request) {
   const mine = url.searchParams.get('mine') === '1';
   const requestedUsername = url.searchParams.get('username')?.trim().toLowerCase().slice(0, 30) || null;
   const likedByUsername = url.searchParams.get('likedBy')?.trim().toLowerCase().slice(0, 30) || null;
+  const sort = url.searchParams.get('sort') === 'trending' ? 'trending' : 'latest';
+  const following = url.searchParams.get('following') === '1';
+  const category = categories.has(String(url.searchParams.get('category'))) ? String(url.searchParams.get('category')) : null;
   const limit = pageSize(url.searchParams.get('limit'));
   const cursor = decodeCursor(url.searchParams.get('cursor'));
   if (mine && !user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (following && !user) return Response.json({ error: 'Sign in to see creators you follow.' }, { status: 401 });
   const sql = await getReadyDb();
   const rows = await sql.query(`
-    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,
+    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,p.image_width,p.image_height,
       u.display_name, u.username, u.email, u.role, u.avatar_url,
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS reaction_count,
-      (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
+      (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.status='VISIBLE') AS comment_count,
+      EXISTS(SELECT 1 FROM reactions mine WHERE mine.post_id=p.id AND mine.user_id=$11) AS viewer_liked,
+      ((SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.id)*3 +
+       (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE')*5 +
+       GREATEST(0,14-EXTRACT(EPOCH FROM (now()-p.created_at))/86400.0)) AS trend_score
     FROM posts p JOIN users u ON u.id = p.user_id
     WHERE p.status='VISIBLE' AND u.status='ACTIVE' AND ($1::text IS NULL OR p.user_id = $1)
       AND ($2::text IS NULL OR lower(u.username) = $2)
@@ -37,9 +45,13 @@ export async function GET(request: Request) {
         JOIN users liker ON liker.id=liked.user_id
         WHERE liked.post_id=p.id AND lower(liker.username)=$3
       ))
-      AND ($4::timestamptz IS NULL OR (p.created_at, p.id) < ($4::timestamptz, $5::text))
-    ORDER BY p.created_at DESC, p.id DESC LIMIT $6
-  `, [mine ? user!.userId : null, requestedUsername, likedByUsername, cursor.date, cursor.id, limit + 1]);
+      AND ($4::boolean=false OR EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=$5 AND f.followed_id=p.user_id))
+      AND ($6::text IS NULL OR p.category=$6)
+      AND ($7::timestamptz IS NULL OR (p.created_at, p.id) < ($7::timestamptz, $8::text))
+      AND ($9::text='latest' OR p.created_at>=now()-interval '45 days')
+    ORDER BY CASE WHEN $9='trending' THEN ((SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.id)*3 + (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE')*5 + GREATEST(0,14-EXTRACT(EPOCH FROM (now()-p.created_at))/86400.0)) END DESC,
+      p.created_at DESC,p.id DESC LIMIT $10
+  `, [mine ? user!.userId : null, requestedUsername, likedByUsername, following, user?.userId ?? '', category, sort === 'trending' ? null : cursor.date, sort === 'trending' ? '' : cursor.id, sort, limit + 1, user?.userId ?? '']);
   const hasMore = rows.length > limit;
   const visibleRows = hasMore ? rows.slice(0, limit) : rows;
   return Response.json({ posts: visibleRows.map(row => ({
@@ -51,9 +63,11 @@ export async function GET(request: Request) {
     avatarUrl: row.avatar_url ? `/api/avatars/${encodeURIComponent(String(row.username))}?v=${encodeURIComponent(String(row.avatar_url))}` : '',
     createdAt: new Date(row.created_at as string).getTime(),
     reactionCount: Number(row.reaction_count), commentCount: Number(row.comment_count),
+    imageWidth: Number(row.image_width) || 4, imageHeight: Number(row.image_height) || 3,
     imageUrl: `/api/images/${row.id}?variant=thumbnail`, previewUrl: `/api/images/${row.id}?variant=display`, downloadUrl: `/api/images/${row.id}?download=1`,
-    isOwner: user?.userId === row.user_id,
-  })), nextCursor: hasMore ? encodeCursor(visibleRows[visibleRows.length - 1]) : null });
+    isOwner: user?.userId === row.user_id, viewerLiked: Boolean(row.viewer_liked),
+  })), nextCursor: sort === 'latest' && hasMore ? encodeCursor(visibleRows[visibleRows.length - 1]) : null,
+    signedIn: Boolean(user) });
 }
 
 export const runtime = 'nodejs';

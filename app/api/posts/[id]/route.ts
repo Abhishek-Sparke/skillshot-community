@@ -8,10 +8,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const user = await getChatGPTUser();
   const sql = await getReadyDb();
   const rows = await sql.query(`
-    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,
-      u.display_name, u.username, u.email, u.role,
+    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,p.image_width,p.image_height,
+      u.display_name, u.username, u.email, u.role,u.avatar_url,
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.id) AS reaction_count,
-      (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id) AS comment_count,
+      (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE') AS comment_count,
       (SELECT COUNT(*) FROM reactions vr WHERE vr.post_id=p.id AND vr.user_id=$1) AS viewer_liked
     FROM posts p JOIN users u ON u.id=p.user_id WHERE p.id=$2 AND p.status NOT IN ('PURGING','PURGED') AND ((p.status='VISIBLE' AND u.status='ACTIVE') OR p.user_id=$1) LIMIT 1
   `, [user?.userId ?? '', id]);
@@ -26,6 +26,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     reactionCount: Number(row.reaction_count), commentCount: Number(row.comment_count),
     viewerLiked: Boolean(Number(row.viewer_liked)), signedIn: Boolean(user),
     isOwner: user?.userId === row.user_id, imageUrl: `/api/images/${row.id}?variant=display`,
+    previewUrl: `/api/images/${row.id}?variant=display`, imageWidth:Number(row.image_width)||4,imageHeight:Number(row.image_height)||3,
+    avatarUrl: row.avatar_url ? `/api/avatars/${encodeURIComponent(String(row.username))}?v=${encodeURIComponent(String(row.avatar_url))}` : '',
     downloadUrl: `/api/images/${row.id}?download=1`,
   } });
 }
