@@ -48,6 +48,8 @@ export async function getReadyDb() {
     await sql.query(`CREATE TABLE IF NOT EXISTS reactions (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(post_id, user_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS comments (id text PRIMARY KEY, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, body text NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`ALTER TABLE comments ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'VISIBLE'`);
+    await sql.query(`ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id text REFERENCES comments(id) ON DELETE CASCADE`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS comment_reactions (comment_id text NOT NULL REFERENCES comments(id) ON DELETE CASCADE, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(comment_id,user_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS reports (id text PRIMARY KEY, reporter_id text NOT NULL REFERENCES users(id), target_type text NOT NULL, target_id text NOT NULL, category text NOT NULL, details text NOT NULL DEFAULT '', status text NOT NULL DEFAULT 'PENDING', created_at timestamptz NOT NULL DEFAULT now(), resolved_at timestamptz, resolved_by text REFERENCES users(id), UNIQUE(reporter_id,target_type,target_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS moderation_queue (id text PRIMARY KEY, source text NOT NULL, target_type text NOT NULL, target_id text NOT NULL, creator_id text REFERENCES users(id), category text NOT NULL, severity text NOT NULL, status text NOT NULL DEFAULT 'PENDING', provider_ref text, created_at timestamptz NOT NULL DEFAULT now(), reviewed_at timestamptz, reviewed_by text REFERENCES users(id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS appeals (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id), target_type text NOT NULL, target_id text NOT NULL, reason text NOT NULL, explanation text NOT NULL DEFAULT '', status text NOT NULL DEFAULT 'PENDING', created_at timestamptz NOT NULL DEFAULT now(), reviewed_at timestamptz, reviewed_by text REFERENCES users(id))`);
@@ -67,6 +69,8 @@ export async function getReadyDb() {
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_visible_created ON posts(status, created_at DESC, id DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_comments_post_created ON comments(post_id, created_at)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_comments_parent_created ON comments(parent_id, created_at)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_comment_reactions_comment ON comment_reactions(comment_id)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_follows_followed_id ON follows(followed_id)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_follows_follower_id ON follows(follower_id)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_featured_posts_user ON featured_posts(user_id, position)`);
