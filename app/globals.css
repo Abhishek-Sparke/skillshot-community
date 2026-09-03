@@ -1,16 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&family=Inter:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 .relatedSkillshots{padding-top:30px;padding-bottom:60px;border-top:1px solid var(--line)}.relatedCard{break-inside:avoid;margin-bottom:20px}.relatedImage{display:block}.relatedImage img{width:100%;height:auto;max-height:800px;object-fit:contain;display:block}.relatedMeta{padding:14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}.relatedCreator{display:flex;align-items:center;gap:8px;font-size:13px;text-decoration:none;color:inherit}.relatedCreator img,.relatedCreator>span{width:28px;height:28px;border-radius:50%;object-fit:cover}.relatedMeta h3{width:100%;margin:3px 0;font-size:15px}.relatedMeta h3 a{color:inherit;text-decoration:none}
 .conversation .conversationComment{display:flex;gap:12px;border:0;border-radius:0;background:transparent;padding:18px 0;min-width:0}.conversationAvatar{flex:none;width:34px;height:34px;border-radius:50%;background:var(--surface-soft);display:grid;place-items:center;color:var(--ink);text-decoration:none}.conversationAvatar img{width:100%;height:100%;border-radius:inherit;object-fit:cover}.conversationBody{flex:1;min-width:0}.conversationBody>header{display:flex;align-items:center;gap:6px}.conversationBody>header>a{font-weight:700;text-decoration:none;color:inherit;font-size:14px}.conversationBody p{white-space:pre-wrap;overflow-wrap:anywhere;margin:7px 0;font-size:14px;line-height:1.6}.conversationBody small,.conversationActions time{font-size:11px;color:var(--muted)}.conversationActions{display:flex;gap:12px;align-items:center}.conversationActions button,.viewReplies,.conversationMenu>button{border:0;background:transparent;color:var(--muted);cursor:pointer;min-height:36px;padding:4px;font-size:12px}.conversationActions button[aria-pressed=true]{color:var(--red)}.conversationReply{padding-bottom:0!important}.conversationMenu{position:relative;margin-left:auto}.conversationMenu>div{position:absolute;right:0;top:100%;z-index:10;display:grid;min-width:150px;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}.conversationMenu>div button{padding:9px;border:0;background:transparent;text-align:left;color:var(--ink);cursor:pointer}.conversation textarea{width:100%;max-width:100%;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;scroll-margin-bottom:120px}.conversation .commentForm{margin-top:25px}.mentionSuggestions{display:grid;gap:4px;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}.mentionSuggestions button{text-align:left;padding:10px;background:transparent;color:var(--ink);border:0;cursor:pointer}.conversation :focus-visible{outline:2px solid var(--red);outline-offset:3px}.conversation .commentsHeading{flex-wrap:wrap;gap:12px}.conversation select{max-width:100%;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
 @media(max-width:500px){.conversation .conversationComment{gap:8px}.conversationReply{margin-left:-15px}.relatedSkillshots .sectionHead{align-items:start;gap:15px;flex-direction:column}}
 
-:root { --ink:#20201d; --paper:#f7f4ed; --red:#ff5b42; --line:#d9d4ca; }
+:root { --ink:#1c1b18; --paper:#f8f6f0; --red:#ff5b42; --red-hover:#fa482d; --red-glow:rgba(255,91,66,0.25); --line:#ded9cf; --surface:#ffffff; --surface-soft:#f1ede3; --muted:#6e6b63; }
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; }
-body { margin:0; background:var(--paper); color:var(--ink); font-family:Arial,sans-serif; }
+body { margin:0; background:var(--paper); color:var(--ink); font-family:'Plus Jakarta Sans', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility; }
 .shell { width:100%; max-width:1180px; margin:auto; padding-left:clamp(18px,3vw,28px); padding-right:clamp(18px,3vw,28px); }
 .nav { height:78px; display:flex; align-items:center; border-bottom:1px solid var(--line); gap:28px; }
-.brand { display:flex; align-items:center; gap:9px; font-weight:800; font-size:20px; text-decoration:none; color:inherit; }
+.brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:21px; letter-spacing:-.5px; text-decoration:none; color:inherit; transition:transform .15s ease; }
+.brand:hover { transform:scale(1.02); }
 .brand span { display:grid; place-items:center; background:var(--ink); color:white; width:31px; height:31px; border-radius:9px; transform:rotate(-5deg); }
 .navlinks { display:flex; gap:24px; align-items:center; margin-left:auto; }
 .navlinks a,.heroActions a { text-decoration:none; color:inherit; font-weight:700; font-size:14px; }
@@ -539,7 +541,10 @@ footer a { color:inherit; text-decoration:none; }
 .homeFreshFooter>div{display:flex;gap:12px;flex-shrink:0}
 .homeFreshFooter a{display:inline-flex;align-items:center;min-height:36px}
 .homeFreshCard a:focus-visible{outline:2px solid var(--red);outline-offset:3px}
-@media(hover:hover) and (prefers-reduced-motion:no-preference){.homeFreshCard:hover{transform:translateY(-3px);box-shadow:0 8px 24px #29231b0b}.homeFreshCard:hover .homeFreshImage img{transform:scale(1.015)}}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){.homeFreshCard{box-shadow:0 4px 16px rgba(32,32,29,0.04);transition:transform .22s cubic-bezier(0.16,1,0.3,1),box-shadow .22s cubic-bezier(0.16,1,0.3,1),border-color .22s ease}
+.homeFreshCard:hover{transform:translateY(-5px);box-shadow:0 16px 36px rgba(32,32,29,0.09);border-color:#c8c2b5}
+.homeFreshCard:hover .homeFreshImage img{transform:scale(1.035)}
+.homeFreshImage img{transition:transform .4s cubic-bezier(0.16,1,0.3,1)}}
 @media(max-width:900px){.homeFreshGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}}
 @media(max-width:600px){.homeFreshGrid{grid-template-columns:minmax(0,1fr)}.homeFreshMeta{padding-left:18px;padding-right:18px}}
 .discoveryCard button.shotMediaLink{position:relative;display:block;padding:0;border:0;background:#ece8df;cursor:zoom-in;color:var(--ink);text-align:center}
@@ -563,3 +568,20 @@ footer a { color:inherit; text-decoration:none; }
 .notificationCardMeta{display:flex;align-items:center;gap:10px;flex:none}
 .notificationCardArrow{font-size:16px;color:#a09c95;transition:transform .15s ease,color .15s ease}
 .notificationCardLink:hover .notificationCardArrow{transform:translateX(3px);color:var(--red)}
+
+
+/* Visual excellence polish */
+.homeFreshFooter a{display:inline-flex;align-items:center;gap:4px;color:inherit;text-decoration:none;transition:color .15s ease,transform .15s ease}
+.homeFreshFooter a:hover{color:var(--red);transform:scale(1.08)}
+.hero{position:relative}
+.hero::before{content:'';position:absolute;top:-40px;right:8%;width:380px;height:380px;background:radial-gradient(circle,rgba(255,91,66,0.09) 0%,rgba(215,243,109,0.05) 50%,transparent 70%);filter:blur(40px);pointer-events:none;z-index:0}
+.heroCard{transition:transform .3s cubic-bezier(0.16,1,0.3,1),box-shadow .3s ease}
+.heroCard:hover{transform:rotate(1deg) translateY(-4px);box-shadow:18px 20px 0 #ded8ca}
+.detail{box-shadow:0 16px 48px rgba(32,32,29,0.08),8px 10px 0 #ded8ca;border-radius:24px}
+.detailImage{border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05)}
+@media(max-width:600px){
+  main{padding-bottom:env(safe-area-inset-bottom,28px)}
+  .hero{padding-top:20px}
+  .heroCard{transform:none;box-shadow:8px 9px 0 #ded8ca}
+  .heroCard:hover{transform:none}
+}
