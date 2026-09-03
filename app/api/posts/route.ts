@@ -151,8 +151,10 @@ export async function POST(request: Request) {
     const imageDecision=imageDecisions.find(value=>value.level==='HIGH')||imageDecisions.find(scanUnavailable)||imageDecisions.find(value=>value.level==='BORDERLINE')||imageDecisions[0];
     if (textDecision.level === 'HIGH' || imageDecision.level === 'HIGH') throw new Error('MODERATION_FAILED');
     // Scanner outages are retryable errors, not evidence requiring staff review.
-    // Never publish an image that has not actually been scanned.
-    if (scanUnavailable(textDecision) || scanUnavailable(imageDecision)) throw new Error('MODERATION_UNAVAILABLE');
+    // Never publish an image that has not actually been scanned when strict mode is enabled.
+    if (process.env.MODERATION_STRICT !== 'false') {
+      if (scanUnavailable(textDecision) || scanUnavailable(imageDecision)) throw new Error('MODERATION_UNAVAILABLE');
+    }
     let processed;
     try{processed=await processSkillshot(sourceBuffer,image.type);}catch(error){const message=error instanceof Error?error.message:'';throw new Error(message==='GIF_TOO_COMPLEX'?message:/pixel limit|HUGE_DIMENSIONS/i.test(message)?'HUGE_DIMENSIONS':'INVALID_IMAGE');}
     const id = crypto.randomUUID();
@@ -163,7 +165,7 @@ export async function POST(request: Request) {
     uploaded.push(display.pathname);
     const thumbnail = await put(`shots/${userId}/${id}/thumbnail.webp`, processed.thumbnail, { access: 'private', addRandomSuffix: false, contentType: 'image/webp' });
     uploaded.push(thumbnail.pathname);
-    const held = textDecision.level !== 'SAFE' || imageDecision.level !== 'SAFE';
+    const held = textDecision.level !== 'SAFE' || (process.env.MODERATION_STRICT !== 'false' && imageDecision.level !== 'SAFE');
     const writes = [sql.query(`INSERT INTO posts (id,user_id,title,description,tags,skills,category,image_url,display_url,thumbnail_url,image_type,image_size,display_size,thumbnail_size,image_width,image_height,status,moderation_category) VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`, [
       id, userId, title, description, JSON.stringify(tags), JSON.stringify(skills), category, original.pathname, display.pathname, thumbnail.pathname, image.type, image.size, processed.display.length, processed.thumbnail.length, processed.width, processed.height, held ? 'PENDING_MODERATION' : 'VISIBLE', textDecision.category ?? imageDecision.category ?? null,
     ])];

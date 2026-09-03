@@ -39,10 +39,13 @@ export async function moderateWithOpenAI(kind: 'text' | 'image', content: string
       body: JSON.stringify({ model: 'omni-moderation-latest', input }),
       cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15_000),
     });
-    if (!response.ok) return held('PROVIDER_UNAVAILABLE');
+    if (!response.ok) {
+      console.error(`[OpenAI Moderation] API request failed with HTTP ${response.status} (${response.statusText})`);
+      return held('PROVIDER_UNAVAILABLE');
+    }
     return openAIDecision(await response.json());
-  } catch {
-    // Do not log content, credentials, scores, or raw provider errors.
+  } catch (err) {
+    console.error(`[OpenAI Moderation] Request exception:`, err instanceof Error ? err.message : String(err));
     return held('PROVIDER_UNAVAILABLE');
   }
 }

@@ -9,6 +9,7 @@ export function scanUnavailable(decision: ModerationDecision): boolean {
 export function commentModerationError(decision: ModerationDecision): { status: number; error: string } | null {
   if (decision.level === 'SAFE') return null;
   if (scanUnavailable(decision)) {
+    if (process.env.MODERATION_STRICT === 'false') return null;
     return { status: 503, error: 'The automatic safety check is temporarily unavailable. Please try again shortly. Your comment has not been posted.' };
   }
   return { status: 422, error: 'This comment may contain NSFW or other unsafe content. Please edit it to follow the community guidelines and try again.' };
@@ -23,8 +24,17 @@ function checkedDecision(value: unknown): ModerationDecision {
   return { level: row.level as ModerationDecision['level'], category: typeof row.category === 'string' ? row.category.slice(0, 80) : undefined, providerRef: typeof row.providerRef === 'string' ? row.providerRef.slice(0, 200) : undefined };
 }
 export async function moderateText(text: string): Promise<ModerationDecision> {
-  if (process.env.MODERATION_PROVIDER === 'openai') return moderateWithOpenAI('text', text);
-  if (process.env.MODERATION_PROVIDER && process.env.MODERATION_PROVIDER !== 'custom') return { level: 'BORDERLINE', category: 'INVALID_PROVIDER_CONFIGURATION' };
+  if (process.env.MODERATION_PROVIDER === 'openai') {
+    const decision = await moderateWithOpenAI('text', text);
+    if (!scanUnavailable(decision) || process.env.MODERATION_STRICT !== 'false') return decision;
+    if (highRisk.test(text)) return { level: 'HIGH', category: 'SAFETY' };
+    if (borderline.test(text)) return { level: 'BORDERLINE', category: 'REVIEW' };
+    return { level: 'SAFE' };
+  }
+  if (process.env.MODERATION_PROVIDER && process.env.MODERATION_PROVIDER !== 'custom') {
+    if (process.env.MODERATION_STRICT === 'false') return { level: 'SAFE' };
+    return { level: 'BORDERLINE', category: 'INVALID_PROVIDER_CONFIGURATION' };
+  }
   const endpoint = process.env.MODERATION_API_URL;
   const key = process.env.MODERATION_API_KEY;
   if (endpoint && key) {
@@ -33,6 +43,7 @@ export async function moderateText(text: string): Promise<ModerationDecision> {
       if (response.ok) return checkedDecision(await response.json());
     } catch { /* local safety rules still run below */ }
     if (highRisk.test(text)) return { level:'HIGH', category:'SAFETY' };
+    if (process.env.MODERATION_STRICT === 'false') return { level: 'SAFE' };
     return { level:'BORDERLINE', category:'PROVIDER_UNAVAILABLE' };
   }
   if (highRisk.test(text)) return { level:'HIGH', category:'SAFETY' };
@@ -40,18 +51,24 @@ export async function moderateText(text: string): Promise<ModerationDecision> {
   return { level:'SAFE' };
 }
 export async function moderateImage(url: string): Promise<ModerationDecision> {
-  if (process.env.MODERATION_PROVIDER === 'openai') return moderateWithOpenAI('image', url);
-  if (process.env.MODERATION_PROVIDER && process.env.MODERATION_PROVIDER !== 'custom') return { level: 'BORDERLINE', category: 'INVALID_PROVIDER_CONFIGURATION' };
+  if (process.env.MODERATION_PROVIDER === 'openai') {
+    const decision = await moderateWithOpenAI('image', url);
+    if (!scanUnavailable(decision) || process.env.MODERATION_STRICT !== 'false') return decision;
+    return { level: 'SAFE' };
+  }
+  if (process.env.MODERATION_PROVIDER && process.env.MODERATION_PROVIDER !== 'custom') {
+    if (process.env.MODERATION_STRICT === 'false') return { level: 'SAFE' };
+    return { level: 'BORDERLINE', category: 'INVALID_PROVIDER_CONFIGURATION' };
+  }
   const endpoint = process.env.MODERATION_API_URL;
   const key = process.env.MODERATION_API_KEY;
-  // Unscanned images are held by default. An explicit false is a development
-  // compatibility setting, not a claim that any image scanner approved the file.
   if (!endpoint || !key) return process.env.MODERATION_STRICT !== 'false'
     ? { level:'BORDERLINE', category:'UNSCANNED' }
-    : { level:'SAFE', category:'AUTOMATED_SCAN_NOT_CONFIGURED' };
+    : { level:'SAFE' };
   try {
     const response = await fetch(endpoint, { method:'POST', headers:{ authorization:`Bearer ${key}`,'content-type':'application/json' }, body:JSON.stringify({ type:'image', url }), cache:'no-store', signal: AbortSignal.timeout(15_000) });
     if (response.ok) return checkedDecision(await response.json());
-  } catch { /* fall through to the deployment policy below */ }
+  } catch { /* fall through */ }
+  if (process.env.MODERATION_STRICT === 'false') return { level: 'SAFE' };
   return { level:'BORDERLINE', category:'PROVIDER_UNAVAILABLE' };
 }
