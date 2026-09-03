@@ -67,6 +67,6 @@ test('viewer and responsive discovery affordances remain keyboard and mobile acc
   const [viewer,css,feed]=await Promise.all([read('app/components/image-viewer.tsx'),read('app/globals.css'),read('app/components/community-feed.tsx')]);
   assert.match(viewer,/Escape/); assert.match(viewer,/ArrowLeft/); assert.match(viewer,/aria-modal="true"/); assert.match(viewer,/event\.key === 'Tab'/);
   assert.match(css,/@media\(max-width:600px\)/); assert.match(css,/columns:1/); assert.match(css,/100dvh/);
+  assert.match(css,/\.discoveryCard \.shot\{width:100%;height:auto;min-height:0;/, 'wide images must stay within their card instead of deriving width from a minimum height');
   assert.match(feed,/loading="lazy"/); assert.match(feed,/sizes="/); assert.match(feed,/Following/); assert.match(feed,/categoryFilters/);
 });
-
