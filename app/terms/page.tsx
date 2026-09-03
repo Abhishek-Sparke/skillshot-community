@@ -1,0 +1,2 @@
+import PublicNavbar from '../components/public-navbar';
+export default function Page(){return <><PublicNavbar returnTo="/terms"/><main className="settingsPage shell"><h1>Terms of Service</h1><section className="settingsSection"><h2>Policy publication pending</h2><p>The site operator has not yet supplied approved Terms of Service. This is a placeholder, not a finalized legal agreement.</p><p>Until the policy is published, follow the Community Guidelines and only share content you have permission to publish.</p></section></main></>;}

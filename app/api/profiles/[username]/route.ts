@@ -15,7 +15,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
       (SELECT COUNT(*) FROM follows f WHERE f.follower_id=u.id) AS following_count,
       (SELECT COUNT(*) FROM comments c WHERE c.user_id=u.id AND c.status='VISIBLE') AS comment_count,
       EXISTS(SELECT 1 FROM follows f WHERE f.follower_id=$1 AND f.followed_id=u.id) AS viewer_follows
-    FROM users u WHERE lower(u.username)=lower($2) AND (u.status='ACTIVE' OR u.id=$1) LIMIT 1
+    FROM users u WHERE lower(u.username)=lower($2) AND ((u.status='ACTIVE' AND u.profile_status='VISIBLE') OR u.id=$1) LIMIT 1
   `, [viewer?.userId ?? '', username]);
 
   if (!rows.length) return Response.json({ error: 'Creator not found' }, { status: 404 });

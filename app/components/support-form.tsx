@@ -1,0 +1,12 @@
+'use client';
+import { useState } from 'react';
+export default function SupportForm({mode='report'}:{mode?:'report'|'contact'|'deletion'}){
+  const [open,setOpen]=useState(mode!=='deletion'),[busy,setBusy]=useState(false),[status,setStatus]=useState(''),[sent,setSent]=useState(false);
+  if(!open)return <button className="settingsDanger" onClick={()=>setOpen(true)}>Request account deletion</button>;
+  if(sent)return <p role="status">{status}</p>;
+  return <form className="settingsForm" onSubmit={async event=>{
+    event.preventDefault();const values=new FormData(event.currentTarget);setBusy(true);setStatus('Submitting…');
+    try{const response=await fetch('/api/support',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(values))});const data=await response.json();if(!response.ok)throw Error(data.error||'Submission failed.');setSent(true);setStatus(`Thanks — your report has been submitted. Reference: ${data.id}`);}catch(error){setStatus(error instanceof Error?error.message:'Network error. Please try again.');}finally{setBusy(false);}
+  }}><fieldset disabled={busy}>{mode==='deletion'?<><p>Delete your Skillshot account? This cannot be easily undone. Support will review your request before deletion.</p><input type="hidden" name="category" value="Account deletion"/><input type="hidden" name="subject" value="Request account deletion"/><input type="hidden" name="message" value="I request deletion of my Skillshot account and associated personal data, subject to required retention."/><label>Type DELETE MY ACCOUNT<input name="confirmation" required pattern="DELETE MY ACCOUNT" autoComplete="off"/></label></>:<><label>Category<select name="category">{['Bug','Upload problem','Profile problem','Comment problem','Login/account problem','Report/moderation problem','Other'].map(item=><option key={item}>{item}</option>)}</select></label><label>Subject<input name="subject" required minLength={4} maxLength={100}/></label><label>{mode==='contact'?'Message':'Description'}<textarea name="message" required minLength={20} maxLength={1500} rows={5}/></label><p className="settingsHint">Do not include passwords, API keys, or other secrets.</p></>}
+  <div className="settingsActions">{mode==='deletion'&&<button type="button" onClick={()=>setOpen(false)}>Cancel</button>}<button className={mode==='deletion'?'settingsDanger':'primary'}>{busy?'Submitting…':mode==='deletion'?'Confirm deletion request':mode==='contact'?'Send message':'Submit report'}</button></div></fieldset><p role="status">{status}</p></form>;
+}

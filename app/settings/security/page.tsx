@@ -1,0 +1,4 @@
+import { requireSettingsUser } from '../../../lib/authz';
+import { signOut } from '../../../auth';
+import AuthSubmitButton from '../../components/auth-submit-button';
+export default async function Page(){const user=await requireSettingsUser('/settings/security');return <><h1>Account & Security</h1><section className="settingsSection"><h2>Sign-in account</h2><p>{user?.email}</p><p>You sign in with Google. Skillshot does not store a Google password. Manage your password and two-step verification in your Google Account.</p><a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer">Google Account security ↗</a><p>Remote session management is not currently available in Skillshot.</p><form action={async()=>{'use server';await signOut({redirectTo:'/'});}}><AuthSubmitButton className="publicNavLogoutButton" pendingText="Signing out…">Log out of this session</AuthSubmitButton></form></section></>;}

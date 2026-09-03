@@ -19,7 +19,8 @@ The server sends post/comment/profile text that already flows through the modera
 - Clear results: continue through the existing upload pipeline.
 - Flagged results or category scores at least 0.5: admin review. Gaming violence is not automatically blocked.
 - Flagged severe categories with scores at least 0.98: block. These categories are sexual/minors, hate/threatening, harassment/threatening, illicit/violent, and self-harm/instructions.
-- Provider errors or missing configuration: hold Skillshots; reject avatar replacement while preserving the current avatar.
+- Skillshot scanner errors or missing configuration: return a friendly retry response without publishing or adding manual approval work. Avatar replacement still fails safely while preserving the current avatar.
+- Safe comments and replies publish immediately. Flagged comments are rejected with an edit-and-retry message; scanner failures return a temporary retry response. Existing staff-held comments are not automatically released by editing.
 
 These thresholds are initial Skillshot policy choices, not measured probabilities or a guarantee of accuracy. Evaluate them against representative gaming, artwork, and photography examples before public rollout. Model behavior can change; review false positives/negatives regularly. Only internal category/reference information is retained by the adapter; scores and provider errors are not shown to normal users. Human moderation, reports, and appeals remain necessary.
 

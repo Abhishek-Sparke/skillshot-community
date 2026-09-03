@@ -1,22 +1,28 @@
 import { redirect } from 'next/navigation';
+import { cache } from 'react';
 import { getChatGPTUser } from '../app/chatgpt-auth';
 import { ensureUser } from './db';
 import { can, normalizeRole, panelForRole, permissionsFor, type Permission, type UserRole } from './roles';
 
 export type Principal = { id: string; email: string; role: UserRole; status: string; permissions: Permission[]; profile: Record<string, unknown> };
-export async function getPrincipal(): Promise<Principal | null> {
+export const getPrincipal=cache(async (): Promise<Principal | null> => {
   const sessionUser = await getChatGPTUser();
   if (!sessionUser) return null;
   const profile = await ensureUser(sessionUser);
   const role = normalizeRole(profile.role);
   return { id: sessionUser.userId, email: sessionUser.email, role, status: String(profile.status || 'ACTIVE'), permissions: permissionsFor(role, profile.custom_permissions), profile };
-}
+});
 export async function requirePrincipal(permission?: Permission) {
   const principal = await getPrincipal();
   if (!principal) return { error: Response.json({ error: 'Unauthorized' }, { status: 401 }) } as const;
   if (principal.status !== 'ACTIVE') return { error: Response.json({ error: 'Account unavailable' }, { status: 403 }) } as const;
   if (permission && !can(principal.role, permission, principal.profile.custom_permissions)) return { error: Response.json({ error: 'Forbidden' }, { status: 403 }) } as const;
   return { principal } as const;
+}
+export async function requireSettingsUser(returnTo='/settings') {
+  const principal=await getPrincipal();
+  if(!principal||principal.status!=='ACTIVE')redirect(`/signin?callbackUrl=${encodeURIComponent(returnTo)}`);
+  return principal;
 }
 export async function requirePanel(kind: 'admin' | 'head-mod' | 'mod') {
   const principal = await getPrincipal();

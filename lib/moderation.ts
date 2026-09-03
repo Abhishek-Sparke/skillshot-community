@@ -1,6 +1,18 @@
 import { moderateWithOpenAI } from './openai-moderation.ts';
 
 export type ModerationDecision = { level: 'SAFE'|'BORDERLINE'|'HIGH'; category?: string; providerRef?: string };
+export function scanUnavailable(decision: ModerationDecision): boolean {
+  return ['PROVIDER_UNAVAILABLE', 'PROVIDER_NOT_CONFIGURED', 'INVALID_PROVIDER_CONFIGURATION', 'INVALID_PROVIDER_RESPONSE', 'UNSCANNED', 'AUTOMATED_SCAN_NOT_CONFIGURED'].includes(decision.category || '');
+}
+// Replies are automatically accepted or rejected; scanner failures are not
+// evidence of unsafe content and must not create manual approval work.
+export function commentModerationError(decision: ModerationDecision): { status: number; error: string } | null {
+  if (decision.level === 'SAFE') return null;
+  if (scanUnavailable(decision)) {
+    return { status: 503, error: 'The automatic safety check is temporarily unavailable. Please try again shortly. Your comment has not been posted.' };
+  }
+  return { status: 422, error: 'This comment may contain NSFW or other unsafe content. Please edit it to follow the community guidelines and try again.' };
+}
 const highRisk = /\b(child sexual|kill yourself|nazi extermination|credit card dump)\b/i;
 const borderline = /\b(nude|porn|hate|threat|scam|crypto giveaway|buy followers)\b/i;
 function checkedDecision(value: unknown): ModerationDecision {

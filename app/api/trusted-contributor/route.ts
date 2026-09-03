@@ -1,36 +1,38 @@
 import { requirePrincipal } from '../../../lib/authz';
 import { getReadyDb } from '../../../lib/db';
 import { rateLimit } from '../../../lib/rate-limit';
-
-export async function GET() {
-  const auth = await requirePrincipal();
-  if ('error' in auth) return auth.error;
-  const sql = await getReadyDb();
-  const [stats, latest] = await Promise.all([
-    sql.query(`SELECT (SELECT count(*) FROM posts WHERE user_id=$1 AND status='VISIBLE') posts,(SELECT count(*) FROM reactions r JOIN posts p ON p.id=r.post_id WHERE p.user_id=$1) likes,created_at FROM users WHERE id=$1`, [auth.principal.id]),
-    sql.query(`SELECT id,status,created_at,review_note FROM trusted_contributor_applications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1`, [auth.principal.id]),
-  ]);
-  const accountDays = stats.length ? Math.floor((Date.now()-new Date(stats[0].created_at).getTime())/86400000) : 0;
-  const eligible = Number(stats[0]?.posts || 0) >= 3 && accountDays >= 7 && auth.principal.role === 'USER';
-  return Response.json({ role:auth.principal.role, eligible, requirements:{ posts:Number(stats[0]?.posts||0), accountDays }, application:latest[0] || null });
+import { trustedProgress } from '../../../lib/trusted-data';
+export async function GET(){const auth=await requirePrincipal();if('error'in auth)return auth.error;return Response.json(await trustedProgress(auth.principal.id),{headers:{'Cache-Control':'private, no-store'}});}
+export async function POST(request:Request){
+  const auth=await requirePrincipal();if('error'in auth)return auth.error;
+  if(!await rateLimit(`trusted:${auth.principal.id}`,4,86400))return Response.json({error:'Please wait before submitting another request.'},{status:429});
+  let body;try{body=await request.json();}catch{return Response.json({error:'Invalid application.'},{status:400});}
+  if(!body||typeof body!=='object'||Array.isArray(body))return Response.json({error:'Invalid application.'},{status:400});
+  if(['role','status','eligible','approvalStatus'].some(key=>key in body))return Response.json({error:'Role and review fields cannot be submitted.'},{status:400});
+  const progress=await trustedProgress(auth.principal.id),appeal=body.kind==='APPEAL';
+  if(!(appeal?progress.appealEligible:progress.eligible))return Response.json({error:'Your account is not currently eligible, or a request is already open.'},{status:409});
+  const reason=String(body.reason||'').trim(),contribution=String(body.contribution||'').trim(),contentTypes=String(body.contentTypes||'').trim(),portfolio=String(body.portfolioUrl||'').trim();
+  if(reason.length<30||reason.length>1500||contribution.length<30||contribution.length>1500||(!appeal&&(contentTypes.length<3||contentTypes.length>500||body.confirmed!==true)))return Response.json({error:'Complete the answers and confirm the Community Guidelines.'},{status:400});
+  if(portfolio){try{const url=new URL(portfolio);if(portfolio.length>300||!['http:','https:'].includes(url.protocol))throw Error();}catch{return Response.json({error:'Enter a valid website URL.'},{status:400});}}
+  try{
+    const sql=await getReadyDb(),id=crypto.randomUUID();
+    const rows=await sql.query(`WITH inserted AS (
+      INSERT INTO trusted_contributor_applications(id,user_id,reason,contribution,content_types,portfolio_url,kind,parent_id,workflow_v2)
+      SELECT $1,u.id,$3,$4,$5,$6,$7,$8,true FROM users u WHERE u.id=$2 AND u.role='USER' AND u.status='ACTIVE'
+      AND NOT EXISTS(SELECT 1 FROM trusted_contributor_applications a WHERE a.user_id=u.id AND a.status IN ('PENDING','UNDER_REVIEW','MORE_INFO','SUSPENDED')) RETURNING id
+    ), audit AS(INSERT INTO audit_logs(id,actor_id,action,target_type,target_id)SELECT $9,$2,$10,'TRUSTED_APPLICATION',id FROM inserted),
+    notice AS(INSERT INTO notifications(id,audience,type,title,body)SELECT $11,'STAFF','TRUSTED_APPLICATION','Trusted Contributor request','A new request is ready for review.' FROM inserted)
+    SELECT id FROM inserted`,[id,auth.principal.id,reason,contribution,contentTypes,portfolio,appeal?'APPEAL':'APPLICATION',appeal?progress.application?.id||null:null,crypto.randomUUID(),appeal?'TRUSTED_APPEAL_SUBMITTED':'TRUSTED_APPLICATION_SUBMITTED',crypto.randomUUID()]);
+    if(!rows.length)return Response.json({error:'Your application is already under review.'},{status:409});
+    return Response.json({id},{status:201});
+  }catch(error){return Response.json({error:'Could not submit. You may already have an open application.'},{status:(error as {code?:string}).code==='23505'?409:503});}
 }
-
-export async function POST(request: Request) {
-  const auth = await requirePrincipal();
-  if ('error' in auth) return auth.error;
-  if (auth.principal.role !== 'USER') return Response.json({ error: 'This account already has a special role.' }, { status: 409 });
-  if (!await rateLimit(`trusted-application:${auth.principal.id}`, 2, 2592000)) return Response.json({ error: 'Please wait before applying again.' }, { status: 429 });
-  const body = await request.json();
-  const reason = String(body.reason||'').trim().slice(0,1000), contribution=String(body.contribution||'').trim().slice(0,1000), portfolio=String(body.portfolioUrl||'').trim().slice(0,300);
-  if (reason.length<30 || contribution.length<30) return Response.json({ error:'Please give a little more detail in both answers.' },{status:400});
-  if (portfolio) { try { const url=new URL(portfolio); if (!['http:','https:'].includes(url.protocol)) throw new Error(); } catch { return Response.json({error:'Enter a valid portfolio URL.'},{status:400}); } }
-  const sql=await getReadyDb();
-  const stats=await sql.query(`SELECT count(*) posts FROM posts WHERE user_id=$1 AND status='VISIBLE'`,[auth.principal.id]);
-  const user=await sql.query(`SELECT created_at FROM users WHERE id=$1`,[auth.principal.id]);
-  if (Number(stats[0]?.posts||0)<3 || !user.length || Date.now()-new Date(user[0].created_at).getTime()<7*86400000) return Response.json({error:'Publish at least 3 Skillshots and keep your account active for 7 days before applying.'},{status:403});
-  const pending=await sql.query(`SELECT id FROM trusted_contributor_applications WHERE user_id=$1 AND status='PENDING' LIMIT 1`,[auth.principal.id]);
-  if(pending.length)return Response.json({error:'Your application is already under review.'},{status:409});
-  const id=crypto.randomUUID(); await sql.query(`INSERT INTO trusted_contributor_applications(id,user_id,reason,contribution,portfolio_url)VALUES($1,$2,$3,$4,$5)`,[id,auth.principal.id,reason,contribution,portfolio]);
-  await sql.query(`INSERT INTO notifications(id,audience,type,title,body)VALUES($1,'STAFF','TRUSTED_APPLICATION','Trusted Contributor application','A new application is ready for review.')`,[crypto.randomUUID()]);
-  return Response.json({id},{status:201});
+export async function PATCH(request:Request){
+  const auth=await requirePrincipal();if('error'in auth)return auth.error;
+  let body;try{body=await request.json();}catch{return Response.json({error:'Invalid request.'},{status:400});}
+  if(!body||typeof body!=='object'||Array.isArray(body))return Response.json({error:'Invalid request.'},{status:400});
+  const response=String(body.response||'').trim(),withdraw=body.action==='WITHDRAW';
+  if(!withdraw&&(body.action!=='RESPOND'||response.length<30||response.length>1500))return Response.json({error:'Add 30–1,500 characters of additional information.'},{status:400});
+  const sql=await getReadyDb();const rows=await sql.query(`WITH changed AS(UPDATE trusted_contributor_applications SET status=$4,contribution=CASE WHEN $5::text='' THEN contribution ELSE $5 END,version=version+1 WHERE id=$1 AND user_id=$2 AND version=$3 AND status=ANY($6::text[]) RETURNING id),audit AS(INSERT INTO audit_logs(id,actor_id,action,target_type,target_id)SELECT $7,$2,$8,'TRUSTED_APPLICATION',id FROM changed) SELECT id FROM changed`,[String(body.id||''),auth.principal.id,Number.isInteger(body.version)?body.version:-1,withdraw?'WITHDRAWN':'PENDING',withdraw?'':response,withdraw?['PENDING','UNDER_REVIEW','MORE_INFO','SUSPENDED']:['MORE_INFO'],crypto.randomUUID(),withdraw?'TRUSTED_APPLICATION_WITHDRAWN':'TRUSTED_INFORMATION_ADDED']);
+  return rows.length?Response.json({ok:true}):Response.json({error:'The application has changed. Refresh and try again.'},{status:409});
 }

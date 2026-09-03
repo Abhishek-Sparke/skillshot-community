@@ -1,5 +1,10 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import { OWNER_EMAIL, PRIMARY_ADMIN_EMAIL, normalizeRole, roleForEmail } from './roles';
+import { REPORT_CASE_MIGRATION } from './report-case-schema';
+import { SEARCH_MIGRATION } from './search-schema';
+import { SETTINGS_MIGRATION } from './settings-schema';
+import { TRUSTED_MIGRATION } from './trusted-schema';
+import { COMMENT_MIGRATION } from './comment-schema';
 
 let client: NeonQueryFunction<false, false> | null = null;
 let initialization: Promise<unknown> | null = null;
@@ -81,6 +86,11 @@ export async function getReadyDb() {
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_upload_events_created ON upload_events(created_at DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_cleanup_due ON storage_cleanup_queue(cleanup_after) WHERE deleted_at IS NULL`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_orphan_reviews_status ON storage_orphan_reviews(status,last_seen_at DESC)`);
+    await sql.transaction(REPORT_CASE_MIGRATION.map(statement=>sql.query(statement)));
+    await sql.transaction(SEARCH_MIGRATION.map(statement=>sql.query(statement)));
+    await sql.transaction(SETTINGS_MIGRATION.map(statement=>sql.query(statement)));
+    await sql.transaction(TRUSTED_MIGRATION.map(statement=>sql.query(statement)));
+    await sql.transaction(COMMENT_MIGRATION.map(statement=>sql.query(statement)));
   })();
   await initialization;
   return sql;

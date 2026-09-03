@@ -10,7 +10,7 @@ export async function GET() {
         (SELECT count(*) FROM moderation_queue WHERE status='PENDING' AND source<>'REPORT') flagged,
         (SELECT count(*) FROM appeals WHERE status IN ('PENDING','UNDER_REVIEW')) appeals`),
       permissions.includes('trusted_contributor.review') ? sql.query(`SELECT a.id,a.reason,a.contribution,a.created_at,u.username,u.display_name FROM trusted_contributor_applications a JOIN users u ON u.id=a.user_id WHERE a.status='PENDING' ORDER BY a.created_at LIMIT 30`) : [],
-      sql.query(`SELECT a.id,a.target_type,a.target_id,a.reason,a.status,a.created_at,u.username FROM appeals a JOIN users u ON u.id=a.user_id WHERE a.status IN ('PENDING','UNDER_REVIEW') ORDER BY a.created_at LIMIT 30`),
+      sql.query(`SELECT a.id,a.target_type,a.target_id,a.reason,a.explanation,a.status,a.created_at,u.username FROM appeals a JOIN users u ON u.id=a.user_id WHERE a.status IN ('PENDING','UNDER_REVIEW') ORDER BY a.created_at LIMIT 30`),
     ]);
     const counts = Object.fromEntries(Object.entries(rows[0]).map(([key, value]) => [key, Number(value)]));
     if (permissions.includes('trusted_contributor.review')) counts.applications = Number((await sql.query(`SELECT count(*) n FROM trusted_contributor_applications WHERE status='PENDING'`))[0].n);

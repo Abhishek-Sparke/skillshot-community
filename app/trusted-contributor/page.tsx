@@ -1,2 +1,2 @@
-import Link from 'next/link';import { requireChatGPTUser } from '../chatgpt-auth';import AccountCenter from '../components/account-center';
-export default async function Page(){await requireChatGPTUser('/trusted-contributor');return <main className="accountPage shell"><nav className="staffNav"><Link className="brand" href="/"><span>S</span> Skillshot</Link><Link href="/profile">Profile</Link><Link href="/guidelines">Guidelines</Link></nav><AccountCenter section="trusted"/></main>}
+import { redirect } from 'next/navigation';
+export default function Page(){redirect('/settings/trusted-contributor');}

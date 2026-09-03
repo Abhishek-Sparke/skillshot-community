@@ -17,6 +17,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   `, [user?.userId ?? '', id]);
   if (!rows.length) return Response.json({ error: 'Post not found' }, { status: 404 });
   const row = rows[0];
+  const viewer=user?await requirePrincipal():null;
+  const viewerPrincipal=viewer&&'principal'in viewer?viewer.principal:null;
   return Response.json({ post: {
     id: row.id, title: row.title, description: row.description,
     tags: Array.isArray(row.tags) ? row.tags : [], skills: Array.isArray(row.skills) ? row.skills : [], category: row.category || 'Other', author: row.display_name,
@@ -25,6 +27,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     createdAt: new Date(row.created_at as string).getTime(),
     reactionCount: Number(row.reaction_count), commentCount: Number(row.comment_count),
     viewerLiked: Boolean(Number(row.viewer_liked)), signedIn: Boolean(user),
+    canPin: user?.userId===row.user_id || Boolean(viewerPrincipal?.permissions.includes('moderation.approve')),
+    commentReview: viewerPrincipal?.permissions.includes('reports.view')
+      ? { hide:viewerPrincipal.permissions.includes('moderation.hide'), delete:viewerPrincipal.permissions.includes('comments.delete') }
+      : null,
     isOwner: user?.userId === row.user_id, imageUrl: `/api/images/${row.id}?variant=display`,
     previewUrl: `/api/images/${row.id}?variant=display`, imageWidth:Number(row.image_width)||4,imageHeight:Number(row.image_height)||3,
     avatarUrl: row.avatar_url ? `/api/avatars/${encodeURIComponent(String(row.username))}?v=${encodeURIComponent(String(row.avatar_url))}` : '',

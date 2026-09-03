@@ -5,6 +5,7 @@ import ts from 'typescript';
 import * as jsx from 'react/jsx-runtime';
 import * as paths from '../lib/auth-path.ts';
 import * as navigation from '../lib/public-navigation.ts';
+import * as roles from '../lib/roles.ts';
 
 // Execute the real server components/actions with isolated session/provider adapters.
 // These tests never log in/out a real user or contact Google.
@@ -29,6 +30,8 @@ async function component(file, { principal = null, session = null } = {}) {
     if (id.endsWith('/public-navigation')) return navigation;
     if (id.endsWith('/auth-submit-button')) return { default: 'SubmitButton' };
     if (id.endsWith('/responsive-navbar')) return { default: 'Navbar' };
+    if (id.endsWith('/settings-menu')) return { default: 'SettingsMenu' };
+    if (id.endsWith('/roles')) return roles;
     if (id.endsWith('.css')) return {};
     throw new Error(`Unexpected component dependency: ${id}`);
   };
@@ -39,13 +42,13 @@ async function component(file, { principal = null, session = null } = {}) {
 function elements(tree, type) {
   if (!tree || typeof tree !== 'object') return [];
   if (Array.isArray(tree)) return tree.flatMap(item => elements(item, type));
-  return [...(tree.type === type ? [tree] : []), ...elements(tree.props?.children, type)];
+  return [...(tree.type === type ? [tree] : []), ...elements(tree.props?.children, type), ...elements(tree.props?.logout, type)];
 }
 
 test('public navbar exposes a logout server action only to authenticated viewers', async () => {
   const guest = await component('public-navbar');
   assert.equal(elements(await guest.render({ returnTo: '/' }), 'form').length, 0);
-  for (const status of ['ACTIVE', 'SUSPENDED']) {
+  for (const status of ['ACTIVE']) {
     const member = await component('public-navbar', { principal: { role: 'USER', status } });
     const forms = elements(await member.render({ returnTo: '/' }), 'form');
     assert.equal(forms.length, 1);

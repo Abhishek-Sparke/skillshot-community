@@ -28,7 +28,7 @@ test('threaded comments use cascading parents and persisted reactions', async ()
   assert.match(schema, /parent_id text REFERENCES comments\(id\) ON DELETE CASCADE/);
   assert.match(schema, /CREATE TABLE IF NOT EXISTS comment_reactions/);
   assert.match(route, /parentId/);
-  assert.match(route, /COMMENT_REPLY/);
+  assert.match(route, /notifyComment/);
   assert.match(route, /c\.status='VISIBLE'/);
 });
 
@@ -39,7 +39,7 @@ async function reactionRoute(authenticated) {
   const routeModule={exports:{}};
   const require=id=>{
     if(id.endsWith('/authz'))return {requirePrincipal:async()=>authenticated?{principal:{id:'user'}}:{error:Response.json({error:'Unauthorized'},{status:401})}};
-    if(id.endsWith('/db'))return {getReadyDb:async()=>({query:async(sql,values)=>{calls.push({sql,values});if(/SELECT id FROM comments/.test(sql))return [{id:'comment'}];if(/DELETE FROM comment_reactions/.test(sql))return [];return [];}})};
+    if(id.endsWith('/db'))return {getReadyDb:async()=>({query:async(sql,values)=>{calls.push({sql,values});if(/SELECT c.id,c.user_id FROM comments/.test(sql))return [{id:'comment'}];if(/DELETE FROM comment_reactions/.test(sql))return [];return [];}})};
     if(id.endsWith('/rate-limit'))return {rateLimit:async()=>true};
     throw new Error('Unexpected dependency '+id);
   };
@@ -68,5 +68,5 @@ test('viewer and responsive discovery affordances remain keyboard and mobile acc
   assert.match(viewer,/Escape/); assert.match(viewer,/ArrowLeft/); assert.match(viewer,/aria-modal="true"/); assert.match(viewer,/event\.key === 'Tab'/);
   assert.match(css,/@media\(max-width:600px\)/); assert.match(css,/columns:1/); assert.match(css,/100dvh/);
   assert.match(css,/\.discoveryCard \.shot\{width:100%;height:auto;min-height:0;/, 'wide images must stay within their card instead of deriving width from a minimum height');
-  assert.match(feed,/loading="lazy"/); assert.match(feed,/sizes="/); assert.match(feed,/Following/); assert.match(feed,/categoryFilters/);
+  assert.match(feed,/loading="lazy"/); assert.match(await read('app/components/shot-thumbnail.tsx'),/sizes="/); assert.match(feed,/Following/); assert.match(feed,/categoryFilters/);
 });

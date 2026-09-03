@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 
 export async function GET(request: Request, { params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-  const rows = await (await getReadyDb()).query(`SELECT avatar_url,avatar_type FROM users WHERE lower(username)=lower($1) AND status='ACTIVE' LIMIT 1`, [username]);
+  const rows = await (await getReadyDb()).query(`SELECT avatar_url,avatar_type FROM users WHERE lower(username)=lower($1) AND status='ACTIVE' AND profile_status='VISIBLE' LIMIT 1`, [username]);
   if (!rows.length || !rows[0].avatar_url) return new Response('Avatar not found', { status: 404 });
   const etag = '"' + createHash('sha256').update(String(rows[0].avatar_url)).digest('hex') + '"';
   if (request.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers: { ETag: etag, 'Cache-Control': 'private, no-cache' } });

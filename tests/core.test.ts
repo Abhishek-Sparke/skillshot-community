@@ -210,6 +210,7 @@ test('OpenAI moderation maps safe, review, high risk, and invalid results withou
   assert.equal(openAIDecision(scannerResult()).level, 'SAFE');
   assert.equal(openAIDecision(scannerResult('violence', 0.99, true)).level, 'BORDERLINE');
   assert.equal(openAIDecision(scannerResult('sexual', 0.6)).level, 'BORDERLINE');
+  assert.equal(openAIDecision(scannerResult('sexual', 0.99,true)).level, 'HIGH');
   assert.equal(openAIDecision(scannerResult('sexual/minors', 0.99, true)).level, 'HIGH');
   assert.equal(openAIDecision(scannerResult('sexual/minors', 0.9, true)).level, 'BORDERLINE');
   for (const value of [null, {}, { results: [] }, { id: 'x', results: [{ flagged: false, categories: {}, category_scores: {} }] }, scannerResult('sexual', NaN)]) {

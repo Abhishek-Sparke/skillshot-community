@@ -28,3 +28,19 @@
 @media(max-width:900px){.staffWorkspace{display:block}.staffSidebar{display:none}.staffMenu{display:block}.staffTopLabel>span{display:none}.staffDialog:has(nav[aria-label="Staff navigation"]){margin:0 auto 0 0;border-radius:0 18px 18px 0;max-height:100dvh;min-height:100dvh;width:min(310px,calc(100% - 40px))}.staffSkeletons{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.staffContent{padding:22px 16px 50px}.staffHeader{margin-bottom:24px}.staffHeader nav{margin-bottom:20px}.staffTopbar{padding:12px 16px;gap:8px;min-height:66px}.staffHeaderActions{gap:5px}.staffHeaderActions a{font-size:11px;padding:8px}.staffTopLabel{font-size:12px}.staffWorkspace .staffMenu{padding:5px 10px}.staffWorkspace .staffStats{gap:10px}.staffWorkspace .staffStats div{padding:16px;gap:12px}.staffWorkspace .staffStats strong{font-size:29px}.staffWorkspace .staffSection{padding:18px}.moderationGrid{grid-template-columns:1fr}.moderationCardBody{padding:18px}.staffFilters{padding:12px}.staffFilterFields{gap:10px}.staffFilterFields label{min-width:115px}.staffFilterFields label:last-child{flex-basis:100%}.staffWorkspace .staffTabs button{padding:8px 10px;font-size:11px}.staffSkeletons{grid-template-columns:1fr}.staffSkeleton{padding:18px}.staffDataTable,.staffDataTable tbody,.staffDataTable tr,.staffDataTable td{display:block;width:100%}.staffDataTable thead{display:none}.staffDataTable tr{padding:16px 0;border-top:1px solid var(--line)}.staffDataTable td{border:0;padding:7px 0}.staffDataTable td[data-label]::before{content:attr(data-label);display:inline-block;color:#82796c;width:65px;font-size:11px}.staffDataTable .teamAvatar{display:grid}.staffAuditCard .staffFacts{grid-template-columns:repeat(2,minmax(0,1fr))}.staffDialog{padding:18px}.staffActions button{flex:1 0 auto}.staffWorkspace .sectionHeading{align-items:flex-start;flex-wrap:wrap;gap:15px}.staffWorkspace .metricRow{gap:14px;overflow-wrap:anywhere}.staffWorkspace .metricRow>*{min-width:0}.staffWorkspace .teamSearch{flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.staffWorkspace *,.staffDialog *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+.caseWorkspace{display:grid;gap:20px;min-width:0}
+.caseWorkspace h1{font-size:clamp(24px,4vw,34px)}
+.caseWorkspace .staffSection{min-width:0;margin:0;overflow-wrap:anywhere}
+.caseImage{display:block;width:100%;height:auto;max-height:75vh;object-fit:contain;background:#eeeae3;border-radius:12px}
+.caseAvatar{width:120px;height:120px;object-fit:cover;border-radius:20px}
+.caseRecent{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.caseRecent a{min-width:0}.caseRecent img{width:100%;height:140px;object-fit:contain;background:#eeeae3;border-radius:10px}
+.caseConversation>div{padding:16px;border-left:2px solid #ddd;margin:14px 0;white-space:pre-wrap}
+.caseConversation .caseReported{border:2px solid #ff5b42;border-radius:12px;background:#fff6f2}
+.caseFlag{padding:14px;border-radius:12px;border:1px solid #e8c492;background:#fff9ed;margin:16px 0}
+.caseTimeline{padding-left:22px}.caseTimeline li{padding:0 0 18px 10px;border-left:1px solid #ddd}
+.caseTimeline small{display:block;margin-top:6px;color:#6e6b65}
+.caseWorkspace textarea,.caseWorkspace select{display:block;width:100%;max-width:100%;margin:8px 0 14px;padding:12px;border:1px solid #d9d4ca;border-radius:8px;background:#fff;color:#24231f}
+.caseWorkspace textarea{min-height:100px;resize:vertical}
+.caseDecision .staffActions{flex-wrap:wrap;gap:12px}
+@media(max-width:600px){.caseWorkspace{gap:14px}.caseWorkspace>.staffCardTop{align-items:flex-start;flex-direction:column;gap:16px}.caseRecent{grid-template-columns:minmax(0,1fr)}.caseDecision .staffActions>button{flex:1 1 42%;min-height:44px}.caseWorkspace .staffFacts{grid-template-columns:minmax(0,1fr)}}

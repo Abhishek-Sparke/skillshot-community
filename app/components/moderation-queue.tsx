@@ -2,7 +2,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { moderationActions, readable } from '../../lib/staff-ui';
+import { readable } from '../../lib/staff-ui';
+import { panelForRole } from '../../lib/roles';
 import { useStaff } from './staff-shell';
 import StaffDialog from './staff-dialog';
 import { StaffEmpty, StaffError, StaffSkeleton, StaffStatus } from './staff-states';
@@ -43,7 +44,7 @@ export default function ModerationQueue({ focus }: { focus: string }) {
     } catch {setMessage('The action could not be saved. Check your access and try again.');}
     finally {setBusy('');}
   }
-  const actions = (item:Item) => item.status==='PENDING' ? <div className="staffActions">{moderationActions(item.target_type,user.permissions).map(action=><button type="button" key={action} disabled={!!busy} className={action==='APPROVE'?'staffPrimary':action==='DELETE'?'staffDanger':''} onClick={()=>{if(action==='DELETE'){setDetail(null);setDeleting(item);}else void act(item,action);}}>{busy===item.id?'Saving…':readable(action)}</button>)}{item.target_type==='PROFILE' && <p>Profile flags require account review.{['OWNER','ADMIN'].includes(user.role)&&user.permissions.includes('users.view')&&<> <Link href="/admin/users">Open user management ↗</Link></>}</p>}</div>:null;
+  const actions = (item:Item) => user.permissions.includes('reports.view') ? <Link prefetch={false} className="staffDetailLink" href={panelForRole(user.role)+'/reports/'+item.id}>Review Case →</Link> : null;
   return <section className="moderationWorkspace" aria-label="Moderation review">
     <div className="staffTabs" aria-label="Review source">{[['ALL','All sources'],['AUTO','Automatic Flags'],['REPORT','User Reports']].filter(([value])=>value!=='REPORT'||user.permissions.includes('reports.view')).map(([value,label])=><button type="button" key={value} aria-pressed={filters.source===value} onClick={()=>change('source',value)}>{label}</button>)}</div>
     <div className="staffFilters"><div className="staffTabs" aria-label="Content type">{[['ALL','All'],['IMAGE','Images'],['PROFILE','Profiles'],['SKILLSHOT','Skillshots'],['COMMENT','Comments'],['REPLY','Replies']].map(([value,label])=><button type="button" key={value} aria-pressed={filters.type===value} onClick={()=>change('type',value)}>{label}</button>)}</div><div className="staffFilterFields">

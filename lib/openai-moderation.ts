@@ -1,7 +1,7 @@
 import type { ModerationDecision } from './moderation.ts';
 
 const categories = ['sexual', 'sexual/minors', 'harassment', 'harassment/threatening', 'hate', 'hate/threatening', 'illicit', 'illicit/violent', 'self-harm', 'self-harm/intent', 'self-harm/instructions', 'violence', 'violence/graphic'];
-const severe = new Set(['sexual/minors', 'hate/threatening', 'harassment/threatening', 'illicit/violent', 'self-harm/instructions']);
+const severe = new Set(['sexual','sexual/minors', 'hate/threatening', 'harassment/threatening', 'illicit/violent', 'self-harm/instructions']);
 const held = (category: string): ModerationDecision => ({ level: 'BORDERLINE', category });
 
 function record(value: unknown): value is Record<string, unknown> {

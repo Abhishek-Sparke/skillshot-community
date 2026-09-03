@@ -3,9 +3,9 @@ import { getChatGPTUser } from '../../chatgpt-auth';
 import { getReadyDb } from '../../../lib/db';
 import { normalizeRole } from '../../../lib/roles';
 import { rateLimit } from '../../../lib/rate-limit';
-import { moderateImage, moderateText } from '../../../lib/moderation';
+import { moderateImage, moderateText, scanUnavailable } from '../../../lib/moderation';
 import { requirePrincipal } from '../../../lib/authz';
-import { moderationPreview, processSkillshot, publicUploadMessage, SKILLSHOT_MAX_BYTES, uploadError } from '../../../lib/image-processing';
+import { moderationFrames, processSkillshot, publicUploadMessage, SKILLSHOT_MAX_BYTES, uploadError } from '../../../lib/image-processing';
 import { readBoundedImage, stagingType } from '../../../lib/upload-policy';
 import { decodeCursor, encodeCursor, pageSize } from '../../../lib/pagination';
 
@@ -139,20 +139,24 @@ export async function POST(request: Request) {
     const requestedCategory = String(data.get('category') || 'Other');
     const category = categories.has(requestedCategory) ? requestedCategory : 'Other';
     const sourceBuffer = Buffer.from(await image.arrayBuffer());
-    let preview: string;
-    try { preview = await moderationPreview(sourceBuffer, image.type); }
+    let previews: string[];
+    try { previews = await moderationFrames(sourceBuffer, image.type); }
     catch (error) {
       const message = error instanceof Error ? error.message : '';
-      throw new Error(message === 'HUGE_DIMENSIONS' || /pixel limit/i.test(message) ? 'HUGE_DIMENSIONS' : 'INVALID_IMAGE');
+      throw new Error(message==='GIF_TOO_COMPLEX'?message:message === 'HUGE_DIMENSIONS' || /pixel limit/i.test(message) ? 'HUGE_DIMENSIONS' : 'INVALID_IMAGE');
     }
-    const [textDecision, imageDecision] = await Promise.all([
-      moderateText(`${title}\n${description}\n${skills.join(' ')}\n${tags.join(' ')}`),
-      moderateImage(preview),
-    ]);
+    const textDecision = await moderateText(`${title}\n${description}\n${skills.join(' ')}\n${tags.join(' ')}`);
+    const imageDecisions=[];
+    for(let start=0;start<previews.length;start+=4)imageDecisions.push(...await Promise.all(previews.slice(start,start+4).map(preview=>moderateImage(preview))));
+    const imageDecision=imageDecisions.find(value=>value.level==='HIGH')||imageDecisions.find(scanUnavailable)||imageDecisions.find(value=>value.level==='BORDERLINE')||imageDecisions[0];
     if (textDecision.level === 'HIGH' || imageDecision.level === 'HIGH') throw new Error('MODERATION_FAILED');
-    const processed = await processSkillshot(sourceBuffer, image.type);
+    // Scanner outages are retryable errors, not evidence requiring staff review.
+    // Never publish an image that has not actually been scanned.
+    if (scanUnavailable(textDecision) || scanUnavailable(imageDecision)) throw new Error('MODERATION_UNAVAILABLE');
+    let processed;
+    try{processed=await processSkillshot(sourceBuffer,image.type);}catch(error){const message=error instanceof Error?error.message:'';throw new Error(message==='GIF_TOO_COMPLEX'?message:/pixel limit|HUGE_DIMENSIONS/i.test(message)?'HUGE_DIMENSIONS':'INVALID_IMAGE');}
     const id = crypto.randomUUID();
-    const extension = image.type === 'image/png' ? 'png' : image.type === 'image/webp' ? 'webp' : 'jpg';
+    const extension = image.type === 'image/gif'?'gif':image.type === 'image/png' ? 'png' : image.type === 'image/webp' ? 'webp' : 'jpg';
     const original = await put(`shots/${userId}/${id}/original.${extension}`, sourceBuffer, { access: 'private', addRandomSuffix: false, contentType: image.type });
     uploaded.push(original.pathname);
     const display = await put(`shots/${userId}/${id}/display.webp`, processed.display, { access: 'private', addRandomSuffix: false, contentType: 'image/webp' });
@@ -170,10 +174,10 @@ export async function POST(request: Request) {
     await recordUpload(userId, held ? 'HELD' : 'SUCCESS', sourceBytes);
     return Response.json({ id, status: held ? 'PENDING_MODERATION' : 'VISIBLE' }, { status: 201 });
   } catch (error) {
-    const known = ['FILE_TOO_LARGE', 'UNSUPPORTED_FORMAT', 'INVALID_IMAGE', 'HUGE_DIMENSIONS', 'MODERATION_FAILED'];
+    const known = ['FILE_TOO_LARGE', 'UNSUPPORTED_FORMAT', 'INVALID_IMAGE', 'HUGE_DIMENSIONS', 'GIF_TOO_COMPLEX','MODERATION_FAILED', 'MODERATION_UNAVAILABLE'];
     const code = error instanceof Error && known.includes(error.message) ? error.message : 'STORAGE_UNAVAILABLE';
     await recordUpload(userId, code === 'MODERATION_FAILED' ? 'BLOCKED' : 'FAILED', sourceBytes, code);
-    return errorResponse(code, code === 'STORAGE_UNAVAILABLE' ? 503 : code === 'MODERATION_FAILED' ? 422 : 400);
+    return errorResponse(code, ['STORAGE_UNAVAILABLE', 'MODERATION_UNAVAILABLE'].includes(code) ? 503 : code === 'MODERATION_FAILED' ? 422 : 400);
   } finally {
     // Never roll back committed image references if later logging/cleanup fails.
     await discardPaths([...(committed ? [] : uploaded), ...(stagingPath ? [stagingPath] : [])]).catch(() => undefined);

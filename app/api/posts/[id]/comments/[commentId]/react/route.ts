@@ -6,10 +6,11 @@ export async function POST(_:Request,{params}:{params:Promise<{id:string;comment
   const auth=await requirePrincipal();if('error'in auth)return auth.error;
   if(!await rateLimit(`comment-like:${auth.principal.id}`,60,300))return Response.json({error:'Please wait before liking more comments.'},{status:429});
   const {id,commentId}=await params;const sql=await getReadyDb();
-  const found=await sql.query(`SELECT id FROM comments WHERE id=$1 AND post_id=$2 AND status='VISIBLE' LIMIT 1`,[commentId,id]);
+  const found=await sql.query(`SELECT c.id,c.user_id FROM comments c JOIN posts p ON p.id=c.post_id JOIN users u ON u.id=p.user_id WHERE c.id=$1 AND c.post_id=$2 AND c.status='VISIBLE' AND p.status='VISIBLE' AND u.status='ACTIVE' LIMIT 1`,[commentId,id]);
   if(!found.length)return Response.json({error:'Comment not found'},{status:404});
   const removed=await sql.query(`DELETE FROM comment_reactions WHERE comment_id=$1 AND user_id=$2 RETURNING comment_id`,[commentId,auth.principal.id]);
   if(removed.length)return Response.json({liked:false});
   await sql.query(`INSERT INTO comment_reactions(comment_id,user_id)VALUES($1,$2) ON CONFLICT DO NOTHING`,[commentId,auth.principal.id]);
+  if(found[0].user_id!==auth.principal.id)await sql.query(`INSERT INTO notifications(id,user_id,type,title,body,event_key)VALUES($1,$2,'LIKE','Someone liked your comment','Your contribution was appreciated.',$3) ON CONFLICT DO NOTHING`,[crypto.randomUUID(),found[0].user_id,`comment-like:${commentId}:${auth.principal.id}`]);
   return Response.json({liked:true});
 }

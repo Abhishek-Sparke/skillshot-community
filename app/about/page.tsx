@@ -1,0 +1,2 @@
+import PublicNavbar from '../components/public-navbar';
+export default function Page(){return <><PublicNavbar returnTo="/about"/><main className="settingsPage shell"><h1>Skillshot</h1><h2>Show your skills.<br/>In one shot.</h2><p>A visual home for something you’ve created, built, captured, designed, discovered, or are proud of. Explore creative work, meet its makers, and share your own.</p></main></>;}

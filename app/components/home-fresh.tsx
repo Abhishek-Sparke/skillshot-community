@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getReadyDb } from '../../lib/db';
 import { normalizeRole } from '../../lib/roles';
 import RoleBadge from './role-badge';
@@ -7,7 +8,26 @@ export function HomeFreshSkeleton() {
 }
 export default async function HomeFresh() {
   const sql = await getReadyDb();
-  const rows = await sql.query(`SELECT p.id,p.title,p.tags,p.image_width,p.image_height,u.display_name,u.username,u.role,u.avatar_url,(SELECT count(*) FROM reactions r WHERE r.post_id=p.id) reaction_count,(SELECT count(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE') comment_count FROM posts p JOIN users u ON u.id=p.user_id WHERE p.status='VISIBLE' AND u.status='ACTIVE' ORDER BY p.created_at DESC LIMIT 3`);
-  if (!rows.length) return <div className="emptyFeed"><span>✦</span><h3>Have something you’re proud of?</h3><p>Share it with the Skillshot community.</p><a className="primary" href="/upload">Create your first Skillshot →</a></div>;
-  return <div className="grid homeFreshGrid">{rows.map(row => <article className="post discoveryCard" key={String(row.id)}><div className="shot uploadedShot" style={{aspectRatio:`${Number(row.image_width)||4}/${Number(row.image_height)||3}`}}><a className="shotMediaLink" href={`/shots/${row.id}`}><img src={`/api/images/${row.id}?variant=thumbnail`} alt={String(row.title)} loading="lazy" decoding="async" width={Number(row.image_width)||640} height={Number(row.image_height)||480} sizes="(max-width: 600px) 100vw, (max-width: 800px) 50vw, 33vw"/></a><a className="postAvatar" href={`/users/${encodeURIComponent(String(row.username))}`} aria-label={`View ${String(row.display_name)}'s profile`}><span>{String(row.display_name).slice(0,1).toUpperCase()}</span>{row.avatar_url&&<img src={`/api/avatars/${encodeURIComponent(String(row.username))}?v=${encodeURIComponent(String(row.avatar_url))}`} alt="" loading="lazy"/>}</a></div><div className="meta"><div className="postIdentity"><a className="postTitle" href={`/shots/${row.id}`}>{String(row.title)}</a><small className="authorBlock"><span className="authorName"><a href={`/users/${encodeURIComponent(String(row.username))}`}>{String(row.display_name)}</a><RoleBadge role={normalizeRole(row.role)}/></span><a className="authorHandle" href={`/users/${encodeURIComponent(String(row.username))}`}>@{String(row.username)}</a></small></div><div className="tags">{(Array.isArray(row.tags)?row.tags:[]).slice(0,2).map(String).map(tag=><span key={tag}>#{tag}</span>)}<span className="postStat">♥ {Number(row.reaction_count)} · ◌ {Number(row.comment_count)}</span></div></div></article>)}</div>;
+  const rows = await sql.query(`SELECT p.id,p.title,p.category,p.image_width,p.image_height,u.display_name,u.username,u.role,u.avatar_url,(SELECT count(*) FROM reactions r WHERE r.post_id=p.id) reaction_count,(SELECT count(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE') comment_count FROM posts p JOIN users u ON u.id=p.user_id WHERE p.status='VISIBLE' AND u.status='ACTIVE' ORDER BY p.created_at DESC LIMIT 3`);
+  if (!rows.length) return <div className="emptyFeed"><span>✦</span><h3>Be the first to share something you’re proud of.</h3><Link className="primary" href="/upload">Create a Skillshot</Link></div>;
+  return <div className="homeFreshGrid">{rows.map(row => {
+    const id = String(row.id), name = String(row.display_name);
+    const profile = '/users/' + encodeURIComponent(String(row.username));
+    return <article className="homeFreshCard" key={id}>
+      <div className="homeFreshMedia">
+        <Link className="homeFreshImage" href={'/shots/'+id} aria-label={'View '+String(row.title)}>
+          <img src={'/api/images/'+id+'?variant=thumbnail'} alt={String(row.title)} loading="lazy" decoding="async" width={Number(row.image_width)||640} height={Number(row.image_height)||480} sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"/>
+        </Link>
+        <Link className="postAvatar" href={profile} aria-label={"View "+name+"'s profile"}><span>{name.slice(0,1).toUpperCase()}</span>{row.avatar_url&&<img src={'/api/avatars/'+encodeURIComponent(String(row.username))+'?v='+encodeURIComponent(String(row.avatar_url))} alt="" loading="lazy"/>}</Link>
+      </div>
+      <div className="homeFreshMeta">
+        <div className="authorName"><Link href={profile}>{name}</Link><RoleBadge role={normalizeRole(row.role)}/></div>
+        <h3><Link href={'/shots/'+id}>{String(row.title)}</Link></h3>
+        <div className="homeFreshFooter"><span>{String(row.category||'')}</span><div>
+          <Link href={'/shots/'+id} aria-label={String(row.reaction_count)+' likes on '+String(row.title)}>♡ {Number(row.reaction_count)}</Link>
+          <Link href={'/shots/'+id+'#comments'} aria-label={String(row.comment_count)+' comments on '+String(row.title)}>◌ {Number(row.comment_count)}</Link>
+        </div></div>
+      </div>
+    </article>;
+  })}</div>;
 }

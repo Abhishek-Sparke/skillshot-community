@@ -13,6 +13,7 @@ export function staffLinks(user: StaffIdentity): StaffLink[] {
   };
   add('moderation.view', 'Moderation', `${root}/moderation`, 'Workspace', 'flagged');
   add('reports.view', 'Reports', `${root}/reports`, 'Workspace', 'reports');
+  add('reports.view', 'My Cases', `${root}/reports?mine=1`);
   add('skillshots.view', 'Skillshots', `${root}/skillshots`);
   add('comments.view', 'Comments', `${root}/comments`);
   if (admin) {

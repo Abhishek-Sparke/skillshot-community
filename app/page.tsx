@@ -16,7 +16,7 @@ export default async function Home() {
       <div>
         <p className="eyebrow">THE PLACE FOR WORK YOU’RE PROUD OF</p>
         <h1>Show your skills.<br/><em>In one shot.</em></h1>
-        <p className="lede">Share the screenshots behind your best work, discover how others create, and cheer on the details that deserve attention.</p>
+        <p className="lede">Show something you’ve created, built, captured, designed, discovered, or are proud of. Discover the work—and the creators—behind every shot.</p>
         <div className="heroActions">
           <Link className="primary" href={signedIn ? '/upload' : signInPath('/upload', 'Sign in to share your first Skillshot')}>Share your first shot →</Link>
           <Link href="/community">Explore the community</Link>
@@ -48,7 +48,7 @@ export default async function Home() {
     <footer className="shell">
       <Link className="brand" href="/"><span>S</span> Skillshot</Link>
       <p>A community for people who make things.</p>
-      <div><Link href="/community">Community</Link> · <Link href="/search">Search</Link> · <Link href="/guidelines">Guidelines</Link> · <Link href={signedIn ? '/profile' : signInPath('/')}>{signedIn ? 'Profile' : 'Sign in'}</Link></div>
+      <div><Link href="/community">Community</Link> · <Link href="/search">Search</Link> · <Link href="/guidelines">Guidelines</Link> · <Link href="/help">Help</Link> · <Link href="/about">About</Link> · <Link href="/terms">Terms</Link> · <Link href="/privacy">Privacy</Link> · <Link href={signedIn ? '/profile' : signInPath('/')}>{signedIn ? 'Profile' : 'Sign in'}</Link></div>
     </footer>
   </main>;
 }

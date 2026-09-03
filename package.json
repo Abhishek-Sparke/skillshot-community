@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint . --ignore-pattern .next",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/core.test.ts tests/staff-api.test.mjs tests/auth-ui.test.mjs tests/social-ui.test.mjs"
+    "test": "node --experimental-strip-types --test tests/core.test.ts tests/staff-api.test.mjs tests/auth-ui.test.mjs tests/social-ui.test.mjs tests/upload-flow.test.mjs tests/report-cases.test.mjs tests/platform.test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
@@ -23,6 +23,7 @@
     "sharp": "0.34.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
