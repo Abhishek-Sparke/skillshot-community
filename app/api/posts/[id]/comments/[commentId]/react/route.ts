@@ -11,6 +11,6 @@ export async function POST(_:Request,{params}:{params:Promise<{id:string;comment
   const removed=await sql.query(`DELETE FROM comment_reactions WHERE comment_id=$1 AND user_id=$2 RETURNING comment_id`,[commentId,auth.principal.id]);
   if(removed.length)return Response.json({liked:false});
   await sql.query(`INSERT INTO comment_reactions(comment_id,user_id)VALUES($1,$2) ON CONFLICT DO NOTHING`,[commentId,auth.principal.id]);
-  if(found[0].user_id!==auth.principal.id)await sql.query(`INSERT INTO notifications(id,user_id,type,title,body,event_key)VALUES($1,$2,'LIKE','Someone liked your comment','Your contribution was appreciated.',$3) ON CONFLICT DO NOTHING`,[crypto.randomUUID(),found[0].user_id,`comment-like:${commentId}:${auth.principal.id}`]);
+  if(found[0].user_id!==auth.principal.id)await sql.query(`INSERT INTO notifications(id,user_id,type,title,body,event_key,target_url)VALUES($1,$2,'LIKE','Someone liked your comment','Your contribution was appreciated.',$3,$4) ON CONFLICT DO NOTHING`,[crypto.randomUUID(),found[0].user_id,`comment-like:${commentId}:${auth.principal.id}`,`/shots/${id}#comment-${commentId}`]);
   return Response.json({liked:true});
 }

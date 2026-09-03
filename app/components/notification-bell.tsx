@@ -23,12 +23,15 @@ export default function NotificationBell({ initialUnread = 0 }: { initialUnread?
 
     fetchUnread();
     const interval = setInterval(fetchUnread, 30_000);
+    const handleUpdate = () => { fetchUnread(); };
     window.addEventListener('focus', fetchUnread);
+    window.addEventListener('notifications:updated', handleUpdate);
 
     return () => {
       active = false;
       clearInterval(interval);
       window.removeEventListener('focus', fetchUnread);
+      window.removeEventListener('notifications:updated', handleUpdate);
     };
   }, []);
 

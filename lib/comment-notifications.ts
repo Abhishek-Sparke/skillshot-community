@@ -6,6 +6,6 @@ export async function notifyComment(postId:string,commentId:string,authorId:stri
   await sql.query(`WITH recipients AS(
     SELECT id,CASE WHEN id=$4 THEN 'COMMENT_REPLY' WHEN lower(username)=ANY($5::text[]) THEN 'MENTION' ELSE 'COMMENT' END type
     FROM users WHERE status='ACTIVE' AND id<>$1 AND (id=$4 OR lower(username)=ANY($5::text[]) OR id=(SELECT user_id FROM posts WHERE id=$2))
-  ) INSERT INTO notifications(id,user_id,type,title,body,event_key)
-    SELECT gen_random_uuid()::text,id,type,$6,$7,$3||':'||id FROM recipients ON CONFLICT DO NOTHING`,[authorId,postId,commentId,parentAuthor||'',mentionedNames(body),`${authorName} joined the conversation.`,body.slice(0,160)]);
+  ) INSERT INTO notifications(id,user_id,type,title,body,event_key,target_url)
+    SELECT gen_random_uuid()::text,id,type,$6,$7,$3||':'||id,'/shots/'||$2||'#comment-'||$3 FROM recipients ON CONFLICT DO NOTHING`,[authorId,postId,commentId,parentAuthor||'',mentionedNames(body),`${authorName} joined the conversation.`,body.slice(0,160)]);
 }
