@@ -5,7 +5,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } f
 import './public-navbar.css';
 
 /** One link list, measured at its natural desktop width even when the drawer is closed. */
-export default function ResponsiveNavbar({ children }: { children: ReactNode }) {
+export default function ResponsiveNavbar({ children, bell }: { children: ReactNode; bell?: ReactNode }) {
   const root = useRef<HTMLElement>(null);
   const links = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -65,11 +65,14 @@ export default function ResponsiveNavbar({ children }: { children: ReactNode }) 
     data-compact={menu.compact} data-open={menu.open}
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) close(); }}>
     <Link ref={brand} className="brand" href="/" onClick={close}><span aria-hidden="true">S</span> Skillshot</Link>
-    <button ref={toggle} type="button" className="publicNavToggle" aria-label={menu.open ? 'Close navigation' : 'Open navigation'}
-      aria-expanded={menu.open} aria-controls={id}
-      onClick={() => setMenu(previous => ({ ...previous, open: !previous.open }))}>
-      <span/><span/><span/>
-    </button>
+    <div className="publicNavMobileActions">
+      {bell}
+      <button ref={toggle} type="button" className="publicNavToggle" aria-label={menu.open ? 'Close navigation' : 'Open navigation'}
+        aria-expanded={menu.open} aria-controls={id}
+        onClick={() => setMenu(previous => ({ ...previous, open: !previous.open }))}>
+        <span/><span/><span/>
+      </button>
+    </div>
     <div ref={links} id={id} className="publicNavLinks" inert={menu.compact && !menu.open}
       onSubmit={close}
       onClick={event => { if ((event.target as Element).closest('a')) close(); }}>
