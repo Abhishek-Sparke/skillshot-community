@@ -5,7 +5,15 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } f
 import './public-navbar.css';
 
 /** One link list, measured at its natural desktop width even when the drawer is closed. */
-export default function ResponsiveNavbar({ children, bell }: { children: ReactNode; bell?: ReactNode }) {
+export default function ResponsiveNavbar({
+  children,
+  bell,
+  upload,
+}: {
+  children: ReactNode;
+  bell?: ReactNode;
+  upload?: ReactNode;
+}) {
   const root = useRef<HTMLElement>(null);
   const links = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -66,6 +74,7 @@ export default function ResponsiveNavbar({ children, bell }: { children: ReactNo
     onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) close(); }}>
     <Link ref={brand} className="brand" href="/" onClick={close}><span aria-hidden="true">S</span> Skillshot</Link>
     <div className="publicNavMobileActions">
+      {upload}
       {bell}
       <button ref={toggle} type="button" className="publicNavToggle" aria-label={menu.open ? 'Close navigation' : 'Open navigation'}
         aria-expanded={menu.open} aria-controls={id}

@@ -1,33 +1,40 @@
-.publicNavbar{position:relative;z-index:40;display:flex;align-items:center;gap:28px;height:78px;min-width:0;border-bottom:1px solid var(--line);background:var(--paper)}
-.publicNavbar>.brand{flex:none;white-space:nowrap}
-.publicNavLinks{display:flex;align-items:center;gap:24px;margin-left:auto;flex:none}
-.publicNavLinks>a{display:inline-flex;align-items:center;min-height:44px;white-space:nowrap;text-decoration:none;color:inherit;font-size:14px;font-weight:700}
+.publicNavbar{position:relative;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:clamp(12px,2vw,28px);height:78px;min-width:0;border-bottom:1px solid var(--line);background:var(--paper)}
+.publicNavbar>.brand{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:10px;font-size:20px;font-weight:800;text-decoration:none;color:inherit}
+.publicNavLinks{display:flex;align-items:center;gap:clamp(14px,1.8vw,24px);margin-left:auto;flex:none}
+.publicNavLinks>a{display:inline-flex;align-items:center;min-height:44px;white-space:nowrap;text-decoration:none;color:inherit;font-size:14px;font-weight:700;transition:color .15s ease}
 .publicNavLinks>a:hover{color:var(--red)}
 .publicNavbar a:focus-visible,.publicNavToggle:focus-visible{outline:3px solid var(--red);outline-offset:4px}
 .publicNavMobileActions{display:none}
-.publicNavToggle{display:none;flex:none;position:relative;width:44px;height:44px;margin-left:auto;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);cursor:pointer}
-.publicNavToggle span{position:absolute;left:11px;width:20px;height:2px;border-radius:2px;background:currentColor;transition:transform .16s ease,opacity .16s ease;pointer-events:none}
-.publicNavToggle span:nth-child(1){top:14px}.publicNavToggle span:nth-child(2){top:20px}.publicNavToggle span:nth-child(3){top:26px}
-.publicNavbar[data-compact=true]>.publicNavMobileActions{display:flex;align-items:center;gap:10px;margin-left:auto}
+.publicNavToggle{display:none;flex:none;position:relative;width:42px;height:42px;margin-left:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface,#fff);color:var(--ink);cursor:pointer;transition:border-color .15s ease,background-color .15s ease}
+.publicNavToggle:hover{background:var(--surface-soft,#ebe7df);border-color:#c9c5bd}
+.publicNavToggle span{position:absolute;left:10px;width:20px;height:2px;border-radius:2px;background:currentColor;transition:transform .16s ease,opacity .16s ease;pointer-events:none}
+.publicNavToggle span:nth-child(1){top:13px}.publicNavToggle span:nth-child(2){top:19px}.publicNavToggle span:nth-child(3){top:25px}
+.publicNavbar[data-compact=true]>.publicNavMobileActions{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}
 .publicNavbar[data-compact=true] .publicNavToggle{display:block;margin-left:0}
 .publicNavbar[data-compact=true] .desktopOnlyBell{display:none!important}
 .desktopOnlyBell{display:inline-flex;align-items:center}
-.navBellLink{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;color:var(--ink);text-decoration:none;background:transparent;transition:background-color .15s ease,color .15s ease}
-.navBellLink:hover{background:#ebe7df;color:var(--red)}
+.navMobileUpload{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px;background:var(--red,#ff5b42);color:#fff!important;text-decoration:none;font-size:20px;font-weight:700;line-height:1;box-shadow:2px 2px 0 var(--solid,#20201d);transition:transform .12s ease,opacity .12s ease}
+.navMobileUpload:hover{opacity:.92;transform:scale(1.04)}
+.navMobileUpload:active{transform:scale(.97)}
+.navMobileUpload:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.navBellLink{position:relative;display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px;color:var(--ink);text-decoration:none;background:transparent;transition:background-color .15s ease,color .15s ease,border-color .15s ease}
+.publicNavMobileActions .navBellLink{border:1px solid var(--line);background:var(--surface,#fff)}
+.publicNavMobileActions .navBellLink:hover{background:var(--surface-soft,#ebe7df);border-color:#c9c5bd}
+.navBellLink:hover{background:var(--surface-soft,#ebe7df);color:var(--red)}
 .navBellLink:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-.navBellIconWrap{position:relative;display:inline-flex;align-items:center;justify-content:center}
-.navBellIcon{display:block;transition:transform .2s ease}
+.navBellIconWrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px}
+.navBellIcon{display:block;width:20px;height:20px;transition:transform .2s ease}
 .navBellLink.hasUnread .navBellIcon{animation:bellNotice 3s ease infinite;transform-origin:top center}
-.navBellBadge{position:absolute;top:-8px;right:-10px;display:flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--red,#ff5b42);color:#fff;font-size:10px;font-weight:800;line-height:1;box-shadow:0 0 0 2px var(--paper);pointer-events:none;animation:badgePop .25s ease-out}
+.navBellBadge{position:absolute;top:-6px;right:-8px;display:flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--red,#ff5b42);color:#fff;font-size:10px;font-weight:800;line-height:1;box-shadow:0 0 0 2px var(--paper);pointer-events:none;z-index:2;animation:badgePop .25s ease-out}
 @keyframes bellNotice{0%,70%,100%{transform:rotate(0deg)}73%{transform:rotate(14deg)}76%{transform:rotate(-12deg)}79%{transform:rotate(8deg)}82%{transform:rotate(-6deg)}85%{transform:rotate(0deg)}}
 @keyframes badgePop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
-.publicNavbar[data-compact=true]>.publicNavLinks{position:absolute;top:calc(100% + 8px);right:clamp(18px,3vw,28px);width:min(320px,calc(100% - 36px));max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--paper);box-shadow:0 14px 34px #20201d20;visibility:hidden;opacity:0;transform:translateY(-6px);transition:opacity .16s ease,transform .16s ease,visibility .16s}
+.publicNavbar[data-compact=true]>.publicNavLinks{position:absolute;top:calc(100% + 8px);right:clamp(16px,3vw,28px);width:min(320px,calc(100% - 32px));max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fff);box-shadow:0 14px 34px #20201d20;visibility:hidden;opacity:0;transform:translateY(-6px);transition:opacity .16s ease,transform .16s ease,visibility .16s}
 .publicNavbar[data-compact=true]>.publicNavLinks>a{padding:12px 14px;border-radius:9px;white-space:normal;overflow-wrap:anywhere}
-.publicNavbar[data-compact=true]>.publicNavLinks>a:hover{background:#ebe7df;color:var(--ink)}
+.publicNavbar[data-compact=true]>.publicNavLinks>a:hover{background:var(--surface-soft,#ebe7df);color:var(--ink)}
 .publicNavbar[data-compact=true]>.publicNavLinks>.upload{margin:5px 3px 3px 0}
 .publicNavLogout{display:flex;margin:0;flex:none}
 .publicNavLogoutButton{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 14px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--ink);font:700 14px Arial,sans-serif;white-space:nowrap;cursor:pointer}
-.publicNavLogoutButton:hover{background:#ebe7df}
+.publicNavLogoutButton:hover{background:var(--surface-soft,#ebe7df)}
 .publicNavLogoutButton:focus-visible{outline:3px solid var(--red);outline-offset:3px}
 .publicNavLogoutButton:disabled{opacity:.65;cursor:wait}
 .publicNavbar[data-compact=true]>.publicNavLinks>.publicNavLogout{border-top:1px solid var(--line);padding-top:8px;margin-top:5px;width:100%}
@@ -44,5 +51,17 @@
 .publicNavbar>.publicNavLinks[data-measuring=true]>.staffDashboardLink{padding:10px 14px!important}
 .publicNavbar>.publicNavLinks[data-measuring=true]>.publicNavLogout{width:auto!important;padding:0!important;border:0!important;margin:0!important}
 .publicNavbar>.publicNavLinks[data-measuring=true]>.publicNavLogout button{width:auto!important}
-@media(max-width:600px){.publicNavbar{height:74px}}
+@media(max-width:600px){
+  .publicNavbar{height:68px}
+  .publicNavbar>.brand{font-size:18px}
+}
+@media(max-width:360px){
+  .publicNavbar{padding-left:12px;padding-right:12px;gap:6px}
+  .publicNavbar>.brand{font-size:16px}
+  .publicNavbar>.brand span{width:26px;height:26px;font-size:13px}
+  .publicNavMobileActions{gap:5px}
+  .publicNavMobileActions .navBellLink,
+  .publicNavMobileActions .navMobileUpload,
+  .publicNavbar[data-compact=true] .publicNavToggle{width:36px;height:36px}
+}
 @media(prefers-reduced-motion:reduce){.publicNavbar .publicNavLinks,.publicNavToggle span,.navBellLink.hasUnread .navBellIcon,.navBellBadge{animation:none!important;transition:none!important}}
