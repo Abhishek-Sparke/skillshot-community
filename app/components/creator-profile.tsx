@@ -27,13 +27,23 @@ function compactNumber(value: number) {
   return new Intl.NumberFormat(undefined, { notation: value >= 1000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(value);
 }
 
-export default function CreatorProfile({ username, saved = false }: { username: string; saved?: boolean }) {
+export default function CreatorProfile({ username, saved = false, initialTab = 'skillshots' }: { username: string; saved?: boolean; initialTab?: Tab }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<Tab>('skillshots');
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [avatarFailed, setAvatarFailed] = useState(false);
   const [shareLabel, setShareLabel] = useState('Share profile');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlTab = params.get('tab');
+      if (urlTab === 'saved' || urlTab === 'liked' || urlTab === 'about' || urlTab === 'skillshots') {
+        setTab(urlTab);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;

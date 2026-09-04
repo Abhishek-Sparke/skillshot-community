@@ -6,10 +6,10 @@ import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Profile({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
+export default async function Profile({ searchParams }: { searchParams: Promise<{ saved?: string; tab?: string }> }) {
   const user = await getChatGPTUser();
   if (!user) redirect(chatGPTSignInPath('/profile'));
   const profile = await ensureUser(user);
-  const { saved } = await searchParams;
-  return <><PublicNavbar returnTo="/profile"/><CreatorProfile username={String(profile.username)} saved={saved === '1'} /></>;
+  const { saved, tab } = await searchParams;
+  return <><PublicNavbar returnTo="/profile"/><CreatorProfile username={String(profile.username)} saved={saved === '1'} initialTab={tab === 'saved' ? 'saved' : tab === 'liked' ? 'liked' : tab === 'about' ? 'about' : 'skillshots'} /></>;
 }

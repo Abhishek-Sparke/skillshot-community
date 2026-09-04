@@ -23,6 +23,7 @@ export default function SettingsMenu({name,dashboard,logout}:{name:string;dashbo
       <div className="settingsDialogInner"><header><h2 id="settings-menu-title">{view==='settings'?'Settings & Support':name}</h2><button autoFocus aria-label={view==='settings'?'Close settings':'Close account menu'} onClick={()=>setView(null)}>×</button></header>
       {view==='account'?<div className="settingsMenuRows">
         <Link href="/profile" onClick={()=>setView(null)}>Profile <span>→</span></Link>
+        <Link href="/profile?tab=saved" onClick={()=>setView(null)}>Saved Skillshots <span>🔖</span></Link>
         <button type="button" onClick={()=>setView('settings')}>Settings & Support <span>→</span></button>
         <Link href="/notifications" onClick={()=>setView(null)}>Notifications <span>→</span></Link>
         {dashboard&&<><hr className="settingsMenuDivider"/><Link href={dashboard} className="staffDashboardItem" onClick={()=>setView(null)}>Dashboard <span>↗</span></Link></>}
