@@ -12,6 +12,7 @@ export default function UserManager(){
   const principal=useStaff();
   const [users,setUsers]=useState<User[]>([]),[q,setQ]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[searched,setSearched]=useState(false);
   const [pending,setPending]=useState<{user:User;action:string}|null>(null);
+  const [roleFilter,setRoleFilter]=useState('ALL');
 
   useEffect(() => {
     const term = q.trim();
@@ -57,15 +58,23 @@ export default function UserManager(){
   async function act(){if(!pending)return;setBusy(true);try{const response=await fetch('/api/staff/users',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({userId:pending.user.id,action:pending.action})});if(!response.ok)throw new Error();setPending(null);await search();setMessage('Account status updated.');}catch{setMessage('Could not update this account. Check your access and try again.');}finally{setBusy(false);}}
   const actions=(user:User)=>user.id===principal.id||!canModerateUser(principal.role,user.role)?[]:(user.status==='ACTIVE'?['SUSPEND','BAN']:user.status==='BANNED'?['UNBAN']:['UNSUSPEND']).filter(action=>principal.permissions.includes(`users.${action.toLowerCase()}` as Permission));
 
+  const filteredUsers = users.filter(u => roleFilter === 'ALL' || u.role === roleFilter);
+
   return <section className="staffSection">
+    <div className="staffCardTop"><h2>Users</h2></div>
     <form className="teamSearch" onSubmit={e=>{e.preventDefault();search();}}>
-      <label className="staffSearchLabel">Find a community account
-        <input value={q} maxLength={50} onChange={e=>setQ(e.target.value)} placeholder="Type a name or @username (e.g. L, Li)" required/>
-      </label>
+      <input value={q} maxLength={50} onChange={e=>setQ(e.target.value)} placeholder="Search by name or @username" aria-label="Search users"/>
       <button className="staffPrimary" disabled={busy}>{busy?'Searching…':'Search'}</button>
     </form>
+    <div className="staffTabs" aria-label="Filter by role">
+      {['ALL','ADMIN','HEAD_MODERATOR','MODERATOR','TRUSTED_CONTRIBUTOR','USER'].map(role => (
+        <button type="button" key={role} aria-pressed={roleFilter === role} onClick={() => setRoleFilter(role)}>
+          {role === 'ALL' ? 'All' : role === 'HEAD_MODERATOR' ? 'Head Moderator' : role === 'TRUSTED_CONTRIBUTOR' ? 'Trusted Contributor' : role[0] + role.slice(1).toLowerCase()}
+        </button>
+      ))}
+    </div>
     <div className="staffTable">
-      {users.map(user=><article key={user.id} className="staffUserCard">
+      {filteredUsers.map(user=><article key={user.id} className="staffUserCard">
         <div className="staffUserIdentity">
           <div className="staffUserAvatar">
             {user.avatar_url ? <img src={`/api/avatars/${encodeURIComponent(user.username)}?v=${encodeURIComponent(user.avatar_url)}`} alt="" width={38} height={38} loading="lazy"/> : <span>{user.display_name.slice(0, 1).toUpperCase()}</span>}

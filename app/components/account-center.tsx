@@ -29,12 +29,36 @@ export default function AccountCenter({section}:{section:'notifications'|'appeal
    } catch {}
  };
 
+ const [notifFilter, setNotifFilter] = useState<'ALL' | 'MENTIONS' | 'COMMENTS' | 'LIKES' | 'SYSTEM'>('ALL');
+
  if(section==='notifications'){
-   const items=(data||[]) as Notice[];
+   const allItems=(data||[]) as Notice[];
+   const items = allItems.filter(item => {
+     if (notifFilter === 'ALL') return true;
+     const t = (item.title + ' ' + item.body).toLowerCase();
+     if (notifFilter === 'MENTIONS') return t.includes('mention') || t.includes('@');
+     if (notifFilter === 'COMMENTS') return t.includes('comment') || t.includes('reply');
+     if (notifFilter === 'LIKES') return t.includes('like');
+     if (notifFilter === 'SYSTEM') return !t.includes('mention') && !t.includes('@') && !t.includes('comment') && !t.includes('reply') && !t.includes('like');
+     return true;
+   });
+
    return <>
      <div className="sectionHead">
        <div><p className="eyebrow">INBOX</p><h1>Notifications</h1></div>
        <button className="quietButton" onClick={markAllRead}>Mark all read</button>
+     </div>
+     <div className="staffTabs notifTabs" aria-label="Filter notifications">
+       {(['ALL', 'MENTIONS', 'COMMENTS', 'LIKES', 'SYSTEM'] as const).map(tab => (
+         <button
+           key={tab}
+           type="button"
+           aria-pressed={notifFilter === tab}
+           onClick={() => setNotifFilter(tab)}
+         >
+           {tab === 'ALL' ? 'All' : tab[0] + tab.slice(1).toLowerCase()}
+         </button>
+       ))}
      </div>
      <div className="accountList">
        {items.length ? items.map(item => (
@@ -62,7 +86,7 @@ export default function AccountCenter({section}:{section:'notifications'|'appeal
              </div>
            )}
          </article>
-       )) : <div className="emptyFeed"><span>✦</span><h3>No notifications yet</h3><p>You&apos;re all caught up.</p></div>}
+       )) : <div className="emptyFeed"><span>✦</span><h3>You&apos;re all caught up.</h3></div>}
      </div>
      <p role="status">{message}</p>
    </>;

@@ -144,9 +144,7 @@ export default function Upload() {
   return <main className="formPage">
     <Link className="brand" href="/"><span>S</span> Skillshot</Link>
     <section className="formCard createCard">
-      <p className="eyebrow">SHARE A SKILLSHOT</p>
-      <h1>Share your work.</h1>
-      <p className="createIntro">Share the work you&apos;re proud of with the Skillshot community.</p>
+      <h1>Share a Skillshot</h1>
       <div className="createLayout"><form onSubmit={submit}>
         <label className={`drop ${dragging ? 'dragging' : ''}`} onDragOver={handleDragOver} onDragEnter={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
           {preview ? <span className="editablePreview"><img src={preview} alt="Selected Skillshot preview"/></span> : <div className="dropPrompt">
@@ -181,7 +179,6 @@ export default function Upload() {
               <button disabled={busy} type="button" onClick={()=>imageInput.current?.click()}>Choose another</button>
             </div>}
             {qualityAccepted && <p>✓ Image kept. Ready to publish.</p>}
-            <small>Resolution guidance, not a sharpness guarantee. 1200px+ recommended; 1600–2400px ideal. Skillshot optimizes images for display.</small>
           </> : <><p>{status || 'Choose an image to see its resolution, shape and file size.'}</p>{status && <button type="button" onClick={()=>imageInput.current?.click()}>Choose another</button>}</>}
         </section>
         <p className="eyebrow">LIVE COMMUNITY PREVIEW</p><article><div className="previewImage" style={{aspectRatio:prepared ? `${prepared.width} / ${prepared.height}` : '4 / 3'}}>{preview && prepared ? <img src={preview} width={prepared.width} height={prepared.height} alt="Skillshot card preview"/> : <span>Your image preview</span>}<i className="previewAvatar">YOU</i></div><div><h2>{title || 'Your Skillshot title'}</h2><small className="previewAuthor">Your display name</small><p>{description || 'Tell the community what makes this worth sharing.'}</p><div className="previewSkills">{skills.split(',').filter(Boolean).slice(0,3).map(item => <span key={item}>{item.trim()}</span>)}{category&&<span>{category}</span>}</div><div className="previewCardFooter"><span>{tags.split(',').filter(Boolean).slice(0,2).map(item=>'#'+item.trim()).join(' ')}</span><b>♥ 0 · ◌ 0</b></div></div></article></aside></div>

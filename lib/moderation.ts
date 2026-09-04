@@ -24,15 +24,8 @@ function checkedDecision(value: unknown): ModerationDecision {
   return { level: row.level as ModerationDecision['level'], category: typeof row.category === 'string' ? row.category.slice(0, 80) : undefined, providerRef: typeof row.providerRef === 'string' ? row.providerRef.slice(0, 200) : undefined };
 }
 export async function moderateText(text: string): Promise<ModerationDecision> {
-  if (process.env.MODERATION_PROVIDER === 'openai') {
-    const decision = await moderateWithOpenAI('text', text);
-    if (!scanUnavailable(decision) || process.env.MODERATION_STRICT !== 'false') return decision;
-    if (highRisk.test(text)) return { level: 'HIGH', category: 'SAFETY' };
-    if (borderline.test(text)) return { level: 'BORDERLINE', category: 'REVIEW' };
-    return { level: 'SAFE' };
-  }
+  if (process.env.MODERATION_PROVIDER === 'openai') return moderateWithOpenAI('text', text);
   if (process.env.MODERATION_PROVIDER && process.env.MODERATION_PROVIDER !== 'custom') {
-    if (process.env.MODERATION_STRICT === 'false') return { level: 'SAFE' };
     return { level: 'BORDERLINE', category: 'INVALID_PROVIDER_CONFIGURATION' };
   }
   const endpoint = process.env.MODERATION_API_URL;
@@ -43,7 +36,6 @@ export async function moderateText(text: string): Promise<ModerationDecision> {
       if (response.ok) return checkedDecision(await response.json());
     } catch { /* local safety rules still run below */ }
     if (highRisk.test(text)) return { level:'HIGH', category:'SAFETY' };
-    if (process.env.MODERATION_STRICT === 'false') return { level: 'SAFE' };
     return { level:'BORDERLINE', category:'PROVIDER_UNAVAILABLE' };
   }
   if (highRisk.test(text)) return { level:'HIGH', category:'SAFETY' };
@@ -51,13 +43,8 @@ export async function moderateText(text: string): Promise<ModerationDecision> {
   return { level:'SAFE' };
 }
 export async function moderateImage(url: string): Promise<ModerationDecision> {
-  if (process.env.MODERATION_PROVIDER === 'openai') {
-    const decision = await moderateWithOpenAI('image', url);
-    if (!scanUnavailable(decision) || process.env.MODERATION_STRICT !== 'false') return decision;
-    return { level: 'SAFE' };
-  }
+  if (process.env.MODERATION_PROVIDER === 'openai') return moderateWithOpenAI('image', url);
   if (process.env.MODERATION_PROVIDER && process.env.MODERATION_PROVIDER !== 'custom') {
-    if (process.env.MODERATION_STRICT === 'false') return { level: 'SAFE' };
     return { level: 'BORDERLINE', category: 'INVALID_PROVIDER_CONFIGURATION' };
   }
   const endpoint = process.env.MODERATION_API_URL;
@@ -69,6 +56,5 @@ export async function moderateImage(url: string): Promise<ModerationDecision> {
     const response = await fetch(endpoint, { method:'POST', headers:{ authorization:`Bearer ${key}`,'content-type':'application/json' }, body:JSON.stringify({ type:'image', url }), cache:'no-store', signal: AbortSignal.timeout(15_000) });
     if (response.ok) return checkedDecision(await response.json());
   } catch { /* fall through */ }
-  if (process.env.MODERATION_STRICT === 'false') return { level: 'SAFE' };
   return { level:'BORDERLINE', category:'PROVIDER_UNAVAILABLE' };
 }

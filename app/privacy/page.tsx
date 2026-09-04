@@ -1,2 +1,27 @@
 import PublicNavbar from '../components/public-navbar';
-export default function Page(){return <><PublicNavbar returnTo="/privacy"/><main className="settingsPage shell"><h1>Privacy Policy</h1><section className="settingsSection"><h2>Policy publication pending</h2><p>The site operator must provide an approved privacy policy covering data use, service providers, retention, and contact details before this page is treated as final.</p><p>Skillshot currently stores account details, profiles, uploads, interactions, preferences, and review records. Published profiles and Skillshots are public. Account settings and staff review records require authorization.</p></section></main></>;}
+
+export default function Page() {
+  return (
+    <>
+      <PublicNavbar returnTo="/privacy" />
+      <main className="settingsPage shell">
+        <h1>Privacy Policy</h1>
+
+        <section className="settingsSection">
+          <h2>Information We Collect</h2>
+          <p>Skillshot collects your account email, display name, username, profile information, and uploaded content to operate the community platform.</p>
+        </section>
+
+        <section className="settingsSection">
+          <h2>Public vs. Private Data</h2>
+          <p>Your published Skillshots, creator profile, bio, and comments are visible to the public. Your sign-in email, account settings, and staff moderation records remain private.</p>
+        </section>
+
+        <section className="settingsSection">
+          <h2>Data Protection</h2>
+          <p>We do not sell personal information. You can update or request deletion of your account at any time through Account Settings.</p>
+        </section>
+      </main>
+    </>
+  );
+}

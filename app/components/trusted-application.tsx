@@ -9,7 +9,38 @@ export default function TrustedApplication({initial,appeal=false}:{initial:Progr
     setBusy(true);setMessage('');try{const response=await fetch('/api/trusted-contributor',{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const result=await response.json();if(!response.ok)throw Error(result.error);const updated=await fetch('/api/trusted-contributor',{cache:'no-store'});if(!updated.ok)throw Error('Saved. Please refresh to see the updated status.');setData(await updated.json());setMessage('Your request has been saved.');}catch(error){setMessage(error instanceof Error?error.message:'Network error. Please try again.');}finally{setBusy(false);}
   }
   const application=data.application,active=application&&['PENDING','UNDER_REVIEW','MORE_INFO','SUSPENDED'].includes(application.status);
-  return <><h1>{appeal?'Appeal Trusted Contributor Decision':'Trusted Contributor'}</h1><p>Help keep Skillshot a high-quality and welcoming community.</p><section className="settingsSection"><p>Trusted Contributors consistently share useful work, follow Community Guidelines, and contribute constructively. Status is earned through contribution and staff review, never payment.</p><h2>Your progress</h2>{Object.entries(data.progress).map(([key,value])=><p key={key}>{value.current>=value.required?'✓':'○'} {({accountDays:'Account age (days)',posts:'Published Skillshots',participation:'Constructive comments on other creators’ work'} as Record<string,string>)[key]}: {value.current} / {value.required}</p>)}<p>{data.standing}</p><p>{data.role==='TRUSTED_CONTRIBUTOR'?'✓ You are a Trusted Contributor.':data.removed?'Trusted Contributor status removed':active?'Your application is being reviewed.':data.eligible?'You’re eligible to apply.':'You’re not eligible to apply yet.'}</p>{data.removalNote&&<p>{data.removalNote}</p>}{application&&<><h3>Status: {String(application.status).replaceAll('_',' ')}</h3>{application.public_note&&<p>{application.public_note}</p>}</>}{data.cooldown&&!data.eligible&&<p>Reapplication available after {new Date(data.cooldown).toLocaleDateString()}.</p>}{data.appealEligible&&!appeal&&<Link href="/settings/trusted-contributor/appeal">Appeal decision →</Link>}{!data.appealEligible&&data.appealAt&&<p>Appeal eligibility is checked after {new Date(data.appealAt).toLocaleDateString()}.</p>}</section>
+  return <>
+    <h1>{appeal?'Appeal Trusted Contributor Decision':'Trusted Contributor'}</h1>
+    <p className="settingsHint">Build trust through consistent contributions.</p>
+    <section className="settingsSection">
+      <h2>Requirements</h2>
+      <div className="requirementsChecklist">
+        {Object.entries(data.progress).map(([key,value])=>(
+          <div key={key} className="requirementItem">
+            <span className={value.current>=value.required?'reqPassed':'reqPending'}>
+              {value.current>=value.required?'✓':'○'}
+            </span>
+            <span>
+              {({accountDays:'Established account (7+ days)',posts:'Quality Skillshots (3+ published)',participation:'Positive community activity'} as Record<string,string>)[key] || key}
+            </span>
+            <small>({value.current} / {value.required})</small>
+          </div>
+        ))}
+        <div className="requirementItem">
+          <span className="reqPassed">✓</span>
+          <span>No serious moderation violations</span>
+          <small>({data.standing})</small>
+        </div>
+      </div>
+      <p className="settingsStandingText">
+        {data.role==='TRUSTED_CONTRIBUTOR'?'✓ You are a Trusted Contributor.':data.removed?'Status removed':active?'Application under review.':data.eligible?'You are eligible to apply.':'Not yet eligible to apply.'}
+      </p>
+      {data.removalNote&&<p className="settingsHint">{data.removalNote}</p>}
+      {application&&<p className="settingsStatusBadge">Application status: <b>{String(application.status).replaceAll('_',' ')}</b></p>}
+      {application?.public_note&&<p className="settingsHint">{application.public_note}</p>}
+      {data.cooldown&&!data.eligible&&<p className="settingsHint">Reapply after {new Date(data.cooldown).toLocaleDateString()}.</p>}
+      {data.appealEligible&&!appeal&&<div className="settingsActions"><Link className="settingsBtn" href="/settings/trusted-contributor/appeal">Submit appeal →</Link></div>}
+    </section>
     {(appeal?data.appealEligible:data.eligible)&&<form className="settingsSection settingsForm" onSubmit={event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));send({...values,kind:appeal?'APPEAL':'APPLICATION',confirmed:values.confirmed==='on'});}}><fieldset disabled={busy}><h2>{appeal?'Request another review':'Trusted Contributor Application'}</h2><label>{appeal?'Why should the decision be reconsidered?':'Why would you like to become a Trusted Contributor?'}<textarea name="reason" required minLength={30} maxLength={1500}/></label><label>{appeal?'Additional information':'What do you contribute to the community?'}<textarea name="contribution" required minLength={30} maxLength={1500}/></label>{!appeal&&<><label>What types of content do you share?<textarea name="contentTypes" required minLength={3} maxLength={500}/></label><label>Portfolio / website (optional)<input type="url" name="portfolioUrl" maxLength={300}/></label><label><input type="checkbox" name="confirmed" required/> I understand that Trusted Contributor status can be removed if I violate Community Guidelines.</label></>}<button className="primary">{busy?'Submitting…':appeal?'Submit appeal':'Submit application'}</button></fieldset></form>}
     {active&&<section className="settingsSection">{application.status==='MORE_INFO'&&<form className="settingsForm" onSubmit={event=>{event.preventDefault();send({action:'RESPOND',id:application.id,version:application.version,response:new FormData(event.currentTarget).get('response')},'PATCH');}}><label>Additional information<textarea name="response" required minLength={30} maxLength={1500}/></label><button disabled={busy}>Send information</button></form>}<button disabled={busy} onClick={()=>{if(confirm('Withdraw this application?'))send({action:'WITHDRAW',id:application.id,version:application.version},'PATCH');}}>Withdraw application</button></section>}<p role="status">{message}</p><Link href="/community-guidelines">Community Guidelines →</Link></>;
 }
