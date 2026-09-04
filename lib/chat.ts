@@ -79,3 +79,37 @@ export async function findOrCreateDirectConversation(userAId: string, userBId: s
 
   return { id: convId, isNew: true };
 }
+
+export async function canUserMessage(senderId: string, recipientId: string): Promise<{ allowed: boolean; reason?: string }> {
+  if (senderId === recipientId) return { allowed: false, reason: 'You cannot message yourself.' };
+  const sql = await getReadyDb();
+  
+  const userRows = await sql.query(`SELECT id, status, preferences FROM users WHERE id IN ($1, $2)`, [senderId, recipientId]);
+  const sender = userRows.find(u => u.id === senderId);
+  const recipient = userRows.find(u => u.id === recipientId);
+  if (!sender || sender.status !== 'ACTIVE') return { allowed: false, reason: 'Your account is not active.' };
+  if (!recipient || recipient.status !== 'ACTIVE') return { allowed: false, reason: 'User account is not active.' };
+  
+  const blocks = await isBlockBetween(senderId, recipientId);
+  if (blocks.isBlockedByYou) return { allowed: false, reason: 'You have blocked this user.' };
+  if (blocks.isBlockedByThem) return { allowed: false, reason: 'You cannot message this user.' };
+  
+  const prefs = recipient.preferences as { whoCanMessage?: string } | undefined;
+  const policy = prefs?.whoCanMessage || 'EVERYONE';
+  if (policy === 'EVERYONE') return { allowed: true };
+  if (policy === 'NOBODY') return { allowed: false, reason: 'This user does not accept direct messages.' };
+  
+  if (policy === 'FOLLOWING') {
+    const follows = await sql.query(`SELECT 1 FROM follows WHERE follower_id = $1 AND followed_id = $2 LIMIT 1`, [recipientId, senderId]);
+    if (!follows.length) return { allowed: false, reason: 'This user only allows messages from people they follow.' };
+    return { allowed: true };
+  }
+  
+  if (policy === 'FOLLOWERS') {
+    const follows = await sql.query(`SELECT 1 FROM follows WHERE follower_id = $1 AND followed_id = $2 LIMIT 1`, [senderId, recipientId]);
+    if (!follows.length) return { allowed: false, reason: 'This user only allows messages from their followers.' };
+    return { allowed: true };
+  }
+  
+  return { allowed: true };
+}

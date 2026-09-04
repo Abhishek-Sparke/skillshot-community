@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import MessagingPrivacyEditor from '../../components/messaging-privacy-editor';
 
 export default function Page() {
   return (
@@ -13,6 +14,8 @@ export default function Page() {
         </div>
       </section>
 
+      <MessagingPrivacyEditor />
+
       <section className="settingsSection">
         <h2>Content visibility</h2>
         <p>Published Skillshots are visible to visitors.</p>
@@ -21,7 +24,7 @@ export default function Page() {
         </div>
       </section>
 
-      <p className="settingsMutedNote">Private profiles and blocking aren&apos;t available yet.</p>
+      <p className="settingsMutedNote">Blocked creators cannot message, follow, or see your live chat presence.</p>
 
       <div className="settingsFooterLink">
         <Link href="/privacy">Privacy Policy →</Link>

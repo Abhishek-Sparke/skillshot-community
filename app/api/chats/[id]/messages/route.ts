@@ -1,6 +1,6 @@
 import { requirePrincipal } from '../../../../../lib/authz';
 import { getReadyDb } from '../../../../../lib/db';
-import { isConversationParticipant, updateLastSeen, isBlockBetween } from '../../../../../lib/chat';
+import { isConversationParticipant, updateLastSeen, isBlockBetween, canUserMessage } from '../../../../../lib/chat';
 import { moderateText, moderateImage } from '../../../../../lib/moderation';
 
 export async function GET(
@@ -208,10 +208,10 @@ export async function POST(
   }
   const recipientId = recipientRows[0].user_id as string;
 
-  // Check block status
-  const blockState = await isBlockBetween(currentUserId, recipientId);
-  if (blockState.isBlockedByYou || blockState.isBlockedByThem) {
-    return Response.json({ error: 'Cannot send message due to block status' }, { status: 403 });
+  // Check messaging permissions (blocks, account status, whoCanMessage privacy settings)
+  const canSend = await canUserMessage(currentUserId, recipientId);
+  if (!canSend.allowed) {
+    return Response.json({ error: canSend.reason || 'Cannot send message to this user' }, { status: 403 });
   }
 
   let body: {

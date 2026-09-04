@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   if (following && !user) return Response.json({ error: 'Sign in to see creators you follow.' }, { status: 401 });
   const sql = await getReadyDb();
   const rows = await sql.query(`
-    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,p.image_width,p.image_height,
+    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,p.image_width,p.image_height,p.image_type,
       u.display_name, u.username, u.email, u.role, u.avatar_url,
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS reaction_count,
       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.status='VISIBLE') AS comment_count,
@@ -68,7 +68,9 @@ export async function GET(request: Request) {
     createdAt: new Date(row.created_at as string).getTime(),
     reactionCount: Number(row.reaction_count), commentCount: Number(row.comment_count),
     imageWidth: Number(row.image_width) || 4, imageHeight: Number(row.image_height) || 3,
-    imageUrl: `/api/images/${row.id}?variant=thumbnail`, previewUrl: `/api/images/${row.id}?variant=display`, downloadUrl: `/api/images/${row.id}?download=1`,
+    isGif: String(row.image_type).toLowerCase() === 'image/gif',
+    imageUrl: String(row.image_type).toLowerCase() === 'image/gif' ? `/api/images/${row.id}` : `/api/images/${row.id}?variant=thumbnail`,
+    previewUrl: `/api/images/${row.id}?variant=display`, downloadUrl: `/api/images/${row.id}?download=1`,
     isOwner: user?.userId === row.user_id, viewerLiked: Boolean(row.viewer_liked), viewerSaved: Boolean(row.viewer_saved),
   })), nextCursor: sort === 'latest' && hasMore ? encodeCursor(visibleRows[visibleRows.length - 1]) : null,
     signedIn: Boolean(user) });

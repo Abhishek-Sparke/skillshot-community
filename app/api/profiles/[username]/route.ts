@@ -2,6 +2,7 @@ import { getChatGPTUser } from '../../../chatgpt-auth';
 import { getReadyDb } from '../../../../lib/db';
 import { normalizeRole } from '../../../../lib/roles';
 import { safeStoredSocialLinks } from '../../../../lib/social-links';
+import { canUserMessage, isBlockBetween } from '../../../../lib/chat';
 
 export async function GET(_: Request, { params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
@@ -43,6 +44,20 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     Number(row.comment_count)>=10&&{key:'CONVERSATION',label:'Community Voice',description:'Added 10 visible comments.'},
     Number(row.follower_count)>=25&&{key:'CONNECTED',label:'Connected Creator',description:'Reached 25 followers.'},
   ].filter(Boolean);
+  let canMessage = true;
+  let canMessageReason = '';
+  let isBlocked = false;
+  let isBlockedByThem = false;
+
+  if (viewer && viewer.userId !== row.id) {
+    const blocks = await isBlockBetween(viewer.userId, row.id);
+    isBlocked = blocks.isBlockedByYou;
+    isBlockedByThem = blocks.isBlockedByThem;
+    const msgCheck = await canUserMessage(viewer.userId, row.id);
+    canMessage = msgCheck.allowed;
+    canMessageReason = msgCheck.reason || '';
+  }
+
   return Response.json({ profile: {
     displayName: String(row.display_name),
     username: String(row.username),
@@ -63,6 +78,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     isFollowing: Boolean(row.viewer_follows),
     isSelf: viewer?.userId === row.id,
     signedIn: Boolean(viewer),
+    canMessage,
+    canMessageReason,
+    isBlocked,
+    isBlockedByThem,
     featuredPosts: featuredRows.map(post => ({
       id: String(post.id), title: String(post.title), description: String(post.description || ''),
       createdAt: new Date(post.created_at as string).getTime(), reactionCount: Number(post.reaction_count),

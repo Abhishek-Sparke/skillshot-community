@@ -1,6 +1,6 @@
 import { requirePrincipal } from '../../../lib/authz';
 import { getReadyDb } from '../../../lib/db';
-import { findOrCreateDirectConversation, updateLastSeen, isUserBlocked } from '../../../lib/chat';
+import { findOrCreateDirectConversation, updateLastSeen, canUserMessage } from '../../../lib/chat';
 
 export async function GET() {
   const auth = await requirePrincipal();
@@ -110,23 +110,9 @@ export async function POST(request: Request) {
   }
 
   const recipient = recipientRows[0];
-  if (recipient.id === currentUserId) {
-    return Response.json({ error: 'You cannot message yourself' }, { status: 400 });
-  }
-
-  if (recipient.status !== 'ACTIVE') {
-    return Response.json({ error: 'This user account is not active' }, { status: 403 });
-  }
-
-  // Check if either user has blocked the other
-  const blockedThem = await isUserBlocked(currentUserId, recipient.id);
-  const blockedYou = await isUserBlocked(recipient.id, currentUserId);
-
-  if (blockedThem) {
-    return Response.json({ error: 'You have blocked this user. Unblock them to chat.' }, { status: 403 });
-  }
-  if (blockedYou) {
-    return Response.json({ error: 'Cannot start conversation with this user' }, { status: 403 });
+  const check = await canUserMessage(currentUserId, recipient.id);
+  if (!check.allowed) {
+    return Response.json({ error: check.reason || 'Cannot start conversation with this user' }, { status: 403 });
   }
 
   const result = await findOrCreateDirectConversation(currentUserId, recipient.id);

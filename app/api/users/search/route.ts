@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       id: r.id,
       username: r.username,
       displayName: r.display_name,
-      avatarUrl: r.avatar_url,
+      avatarUrl: r.avatar_url ? `/api/avatars/${encodeURIComponent(String(r.username))}?v=${encodeURIComponent(String(r.avatar_url))}` : '',
       role: r.role,
       lastSeenAt: r.last_seen_at,
     })),

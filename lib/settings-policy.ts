@@ -1,5 +1,7 @@
 export const THEMES = ['light','dark','system'] as const;
 export type Theme = typeof THEMES[number];
+export const MESSAGE_PRIVACY_OPTIONS = ['EVERYONE', 'FOLLOWING', 'FOLLOWERS', 'NOBODY'] as const;
+export type MessagePrivacy = typeof MESSAGE_PRIVACY_OPTIONS[number];
 export const NOTIFICATION_GROUPS = {
   Activity: { likes:'Likes', comments:'Comments', replies:'Replies', mentions:'Mentions', follows:'Follows' },
   Skillshots: { approvals:'Skillshot approvals', moderation:'Moderation updates', featured:'Featured Skillshots', trusted:'Trusted Contributor updates' },
@@ -10,8 +12,9 @@ export const NOTIFICATION_KEYS = Object.values(NOTIFICATION_GROUPS).flatMap(grou
 export function settingsPatch(input: unknown) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw Error('Invalid settings.');
   const value=input as Record<string,unknown>;
-  if(Object.keys(value).some(key=>!['theme','notifications'].includes(key))) throw Error('Unsupported setting.');
+  if(Object.keys(value).some(key=>!['theme','notifications','whoCanMessage'].includes(key))) throw Error('Unsupported setting.');
   if(value.theme!==undefined && !THEMES.includes(value.theme as Theme)) throw Error('Choose Light, Dark, or System.');
+  if(value.whoCanMessage!==undefined && !MESSAGE_PRIVACY_OPTIONS.includes(value.whoCanMessage as MessagePrivacy)) throw Error('Invalid messaging privacy option.');
   const notifications:Record<string,boolean>={};
   if(value.notifications!==undefined){
     if(!value.notifications || typeof value.notifications!=='object' || Array.isArray(value.notifications))throw Error('Invalid notification preferences.');
@@ -20,5 +23,5 @@ export function settingsPatch(input: unknown) {
       notifications[key]=enabled;
     }
   }
-  return {theme:value.theme as Theme|undefined,notifications};
+  return {theme:value.theme as Theme|undefined,notifications,whoCanMessage:value.whoCanMessage as MessagePrivacy|undefined};
 }
