@@ -30,10 +30,10 @@
 .navBellLink:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .navBellIconWrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px}
 .navBellIcon{display:block;width:20px;height:20px;transition:transform .2s ease}
-.navBellLink.hasUnread .navBellIcon{animation:bellNotice 3s ease infinite;transform-origin:top center}
-.navBellBadge{position:absolute;top:-6px;right:-8px;display:flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--red,#ff5b42);color:#fff;font-size:10px;font-weight:800;line-height:1;box-shadow:0 0 0 2px var(--paper);pointer-events:none;z-index:2;animation:badgePop .25s ease-out}
-@keyframes bellNotice{0%,70%,100%{transform:rotate(0deg)}73%{transform:rotate(14deg)}76%{transform:rotate(-12deg)}79%{transform:rotate(8deg)}82%{transform:rotate(-6deg)}85%{transform:rotate(0deg)}}
-@keyframes badgePop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.navBellLink.hasUnread .navBellIcon{animation:bellNotice 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1;transform-origin:top center}
+.navBellBadge{position:absolute;top:-6px;right:-8px;display:flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--red,#ff5b42);color:#fff;font-size:10px;font-weight:800;line-height:1;box-shadow:0 0 0 2px var(--paper);pointer-events:none;z-index:2;animation:badgePop .22s cubic-bezier(0.16,1,0.3,1)}
+@keyframes bellNotice{0%{transform:rotate(0deg)}20%{transform:rotate(12deg)}40%{transform:rotate(-10deg)}60%{transform:rotate(6deg)}80%{transform:rotate(-3deg)}100%{transform:rotate(0deg)}}
+@keyframes badgePop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
 .publicNavbar[data-compact=true]>.publicNavLinks{position:absolute;top:calc(100% + 10px);right:clamp(16px,3vw,28px);width:min(320px,calc(100% - 32px));max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:14px;border:1.5px solid var(--line);border-radius:18px;background:var(--surface,#fff);box-shadow:0 20px 48px rgba(32,32,29,0.16),0 4px 12px rgba(32,32,29,0.06);visibility:hidden;opacity:0;transform:translateY(-8px) scale(0.98);transition:opacity .18s cubic-bezier(0.16,1,0.3,1),transform .18s cubic-bezier(0.16,1,0.3,1),visibility .18s}
 .publicNavbar[data-compact=true]>.publicNavLinks>a{padding:12px 14px;border-radius:10px;white-space:normal;overflow-wrap:anywhere;font-size:14.5px;font-weight:700}
 .publicNavbar[data-compact=true]>.publicNavLinks>a:hover{background:var(--surface-soft,#ebe7df);color:var(--ink)}
@@ -47,10 +47,15 @@
 .publicNavbar[data-compact=true]>.publicNavLinks>.publicNavLogout button{width:100%;justify-content:flex-start}
 .settingsMenuDivider{border:0;border-top:1px solid var(--line);margin:6px 0;width:100%}
 .staffDashboardItem{color:var(--accent,#ff5039)!important;font-weight:700}
-.publicNavbar[data-compact=true][data-open=true]>.publicNavLinks{visibility:visible;opacity:1;transform:translateY(0)}
+.publicNavbar[data-compact=true][data-open=true]>.publicNavLinks{visibility:visible;opacity:1;transform:translateY(0) scale(1)}
 .publicNavbar[data-open=true]>.publicNavToggle span:nth-child(1){transform:translateY(6px) rotate(45deg)}
-.publicNavbar[data-open=true]>.publicNavToggle span:nth-child(2){opacity:0}
+.publicNavbar[data-open=true]>.publicNavToggle span:nth-child(2){opacity:0;transform:scaleX(0)}
 .publicNavbar[data-open=true]>.publicNavToggle span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.publicNavbar[data-compact=true][data-open=true]>.publicNavLinks>a:nth-child(1){animation:menuItemIn .2s ease-out 20ms backwards}
+.publicNavbar[data-compact=true][data-open=true]>.publicNavLinks>a:nth-child(2){animation:menuItemIn .2s ease-out 50ms backwards}
+.publicNavbar[data-compact=true][data-open=true]>.publicNavLinks>a:nth-child(3){animation:menuItemIn .2s ease-out 80ms backwards}
+.publicNavbar[data-compact=true][data-open=true]>.publicNavLinks>a:nth-child(4){animation:menuItemIn .2s ease-out 110ms backwards}
+@keyframes menuItemIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
 /* Synchronous measurement restores the same list before paint. Never visible or focusable. */
 .publicNavbar>.publicNavLinks[data-measuring=true]{position:fixed!important;top:0!important;left:0!important;right:auto!important;width:max-content!important;max-height:none!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:24px!important;padding:0!important;border:0!important;margin:0!important;visibility:hidden!important;transform:none!important;transition:none!important}
 .publicNavbar>.publicNavLinks[data-measuring=true]>a{display:inline-flex!important;padding:0!important;margin:0!important;white-space:nowrap!important}

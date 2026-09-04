@@ -10,10 +10,10 @@ export default async function HomeFresh() {
   const sql = await getReadyDb();
   const rows = await sql.query(`SELECT p.id,p.title,p.category,p.image_width,p.image_height,u.display_name,u.username,u.role,u.avatar_url,(SELECT count(*) FROM reactions r WHERE r.post_id=p.id) reaction_count,(SELECT count(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE') comment_count FROM posts p JOIN users u ON u.id=p.user_id WHERE p.status='VISIBLE' AND u.status='ACTIVE' ORDER BY p.created_at DESC LIMIT 3`);
   if (!rows.length) return <div className="emptyFeed"><span>✦</span><h3>Be the first to share something you’re proud of.</h3><Link className="primary" href="/upload">Create a Skillshot</Link></div>;
-  return <div className="homeFreshGrid">{rows.map(row => {
+  return <div className="homeFreshGrid">{rows.map((row, index) => {
     const id = String(row.id), name = String(row.display_name);
     const profile = '/users/' + encodeURIComponent(String(row.username));
-    return <article className="homeFreshCard" key={id}>
+    return <article className="homeFreshCard" key={id} style={{ animationDelay: `${index * 40}ms` }}>
       <div className="homeFreshMedia">
         <Link className="homeFreshImage" href={'/shots/'+id} aria-label={'View '+String(row.title)}>
           <img src={'/api/images/'+id+'?variant=thumbnail'} alt={String(row.title)} loading="lazy" decoding="async" width={Number(row.image_width)||640} height={Number(row.image_height)||480} sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"/>
