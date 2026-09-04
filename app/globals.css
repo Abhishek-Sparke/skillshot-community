@@ -799,6 +799,16 @@ main {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* 1. Global Page Transitions */
+.pageTransitionWrap {
+  animation: pageFadeIn 0.2s var(--ease-out-quad);
+  will-change: opacity, transform;
+}
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* 2. Homepage Hero Entrance Sequence */
 .hero h1 {
   animation: heroRise 0.32s var(--ease-out-quad) 0ms backwards;
@@ -811,6 +821,9 @@ main {
 }
 .heroCard {
   animation: heroCardEntrance 0.38s var(--ease-out-quad) 130ms backwards;
+}
+.feed .sectionHead {
+  animation: heroRise 0.32s var(--ease-out-quad) 140ms backwards;
 }
 @keyframes heroRise {
   from { opacity: 0; transform: translateY(10px); }
@@ -906,6 +919,13 @@ main {
 }
 
 /* 8. Comment & Reply Thread Expansion */
+.conversation .conversationComment {
+  animation: commentIn 0.2s var(--ease-out-quad);
+}
+@keyframes commentIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .conversationThreadReplies {
   animation: threadExpand 0.2s var(--ease-out-quad);
   transform-origin: top;
@@ -926,16 +946,15 @@ main {
 }
 
 /* 10. Modals & Dialogs (Report, Share, Delete, Image Viewer, Settings) */
+.viewerBackdrop,
+.reportDialog,
 .imageLightbox {
   animation: lightboxFade 0.18s ease-out;
 }
-.imageLightboxPanel {
-  animation: dialogScale 0.22s var(--ease-out-quad);
-}
+.imageViewer,
+.reportDialog form,
+.imageLightboxPanel,
 dialog.settingsDialog {
-  animation: dialogScale 0.22s var(--ease-out-quad);
-}
-dialog.reportDialog {
   animation: dialogScale 0.22s var(--ease-out-quad);
 }
 @keyframes lightboxFade {
@@ -948,6 +967,11 @@ dialog.reportDialog {
 }
 
 /* 11. Buttons & Links Micro-Interactions */
+button:hover:not(:disabled),
+.primary:hover:not(:disabled),
+.settingsBtn:hover:not(:disabled) {
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
 button:active:not(:disabled),
 .primary:active:not(:disabled),
 .upload:active:not(:disabled),
@@ -958,12 +982,41 @@ button:active:not(:disabled),
   transition: color 0.15s ease, opacity 0.15s ease;
 }
 
-/* 12. Role Badges Hover Scale & Tooltip */
+/* 12. Role Badges Hover Scale & Tooltip Fade-in */
 .roleBadge {
   transition: transform 0.14s ease;
 }
 .roleBadge:hover {
   transform: scale(1.08);
+}
+.roleBadge[data-tooltip] {
+  position: relative;
+}
+.roleBadge[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--solid, #20201d);
+  color: var(--on-solid, #fff);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 30;
+}
+.roleBadge[data-tooltip]:hover::after,
+.roleBadge[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* 13. Profile Page Subtle Entrance */
@@ -974,7 +1027,16 @@ button:active:not(:disabled),
   animation: heroRise 0.28s var(--ease-out-quad) 60ms backwards;
 }
 
-/* 14. Upload Page Transitions */
+/* 14. Notifications Subtle Entrance */
+.accountList article.notificationItem {
+  animation: notificationIn 0.22s var(--ease-out-quad);
+}
+@keyframes notificationIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 15. Upload Page Transitions */
 .drop {
   transition: border-color 0.18s ease, background-color 0.18s ease;
 }
@@ -985,20 +1047,27 @@ button:active:not(:disabled),
 .uploadProgress {
   transition: width 0.25s var(--ease-out-quad);
 }
+.editablePreview img {
+  animation: previewFadeIn 0.22s var(--ease-out-quad);
+}
+@keyframes previewFadeIn {
+  from { opacity: 0; transform: scale(0.99); }
+  to { opacity: 1; transform: scale(1); }
+}
 
-/* 15. Smooth Theme & Surface Transitions */
+/* 16. Smooth Theme & Surface Transitions */
 body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .settingsSection, .authCard {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* 16. Skeleton Shimmer */
-.feedSkeleton .skeletonCard, .profileSkeleton span, .detailSkeleton span {
+/* 17. Skeleton Shimmer */
+.feedSkeleton .skeletonCard, .profileSkeleton span, .detailSkeleton span, .commentsLoadingState p {
   background: linear-gradient(90deg, var(--surface-soft) 25%, #eae4d8 50%, var(--surface-soft) 75%);
   background-size: 200% 100%;
   animation: thumbShimmer 1.5s infinite;
 }
 
-/* 17. Reduced Motion Accessibility Requirement */
+/* 18. Reduced Motion Accessibility Requirement */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -1006,11 +1075,15 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .pageTransitionWrap,
   .uploadedShot:hover img,
   .heroCard:hover,
   .post:hover,
-  .roleBadge:hover {
+  .roleBadge:hover,
+  .roleBadge[data-tooltip]::after {
     transform: none !important;
+    animation: none !important;
+    transition: none !important;
   }
 }
 

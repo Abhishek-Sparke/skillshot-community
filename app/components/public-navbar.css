@@ -31,11 +31,14 @@
 .navBellLink:focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .navBellIconWrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px}
 .navBellIcon{display:block;width:20px;height:20px;transition:transform .2s ease}
-.navBellLink.hasUnread .navBellIcon{animation:bellNotice 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1;transform-origin:top center}
+.navBellLink.hasUnread .navBellIcon{animation:bellNotice 0.35s cubic-bezier(0.16, 1, 0.3, 1) 1;transform-origin:top center}
 .navBellBadge{position:absolute;top:-6px;right:-8px;display:flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--red,#ff5b42);color:#fff;font-size:10px;font-weight:800;line-height:1;box-shadow:0 0 0 2px var(--paper);pointer-events:none;z-index:2;animation:badgePop .22s cubic-bezier(0.16,1,0.3,1)}
 @keyframes bellNotice{0%{transform:rotate(0deg)}20%{transform:rotate(12deg)}40%{transform:rotate(-10deg)}60%{transform:rotate(6deg)}80%{transform:rotate(-3deg)}100%{transform:rotate(0deg)}}
 @keyframes badgePop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:1}}
-.publicNavbar[data-compact=true]>.publicNavLinks{position:absolute;top:calc(100% + 10px);right:clamp(16px,3vw,28px);width:min(320px,calc(100% - 32px));max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:14px;border:1.5px solid var(--line);border-radius:18px;background:var(--surface,#fff);box-shadow:0 20px 48px rgba(32,32,29,0.16),0 4px 12px rgba(32,32,29,0.06);visibility:hidden;opacity:0;transform:translateY(-8px) scale(0.98);transition:opacity .18s cubic-bezier(0.16,1,0.3,1),transform .18s cubic-bezier(0.16,1,0.3,1),visibility .18s}
+.publicNavLinks>a.active,.publicNavLinks>a[aria-current="page"]{background:var(--surface-soft);color:var(--ink)}
+.publicNavbar[data-compact=true][data-open=true]::before{content:'';position:fixed;inset:0;background:rgba(0,0,0,0.22);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:10;animation:overlayFadeIn .2s ease-out;pointer-events:none}
+@keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}
+.publicNavbar[data-compact=true]>.publicNavLinks{position:absolute;top:calc(100% + 10px);right:clamp(16px,3vw,28px);width:min(320px,calc(100% - 32px));max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:14px;border:1.5px solid var(--line);border-radius:18px;background:var(--surface,#fff);box-shadow:0 20px 48px rgba(32,32,29,0.16),0 4px 12px rgba(32,32,29,0.06);visibility:hidden;opacity:0;transform:translateY(-8px) scale(0.98);transition:opacity .18s cubic-bezier(0.16,1,0.3,1),transform .18s cubic-bezier(0.16,1,0.3,1),visibility .18s;z-index:20}
 .publicNavbar[data-compact=true]>.publicNavLinks>a{padding:12px 14px;border-radius:10px;white-space:normal;overflow-wrap:anywhere;font-size:14.5px;font-weight:700}
 .publicNavbar[data-compact=true]>.publicNavLinks>a:hover{background:var(--surface-soft,#ebe7df);color:var(--ink)}
 .publicNavbar[data-compact=true]>.publicNavLinks>.upload{margin:6px 0 2px;text-align:center;justify-content:center}
