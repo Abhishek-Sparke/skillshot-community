@@ -49,6 +49,7 @@ export default function ShotDetail({id}:{id:string}) {
           <div className="detailMoreWrap">
             <button type="button" className="detailMoreButton" onClick={()=>setMoreOpen(v=>!v)} aria-expanded={moreOpen} aria-label="More actions">⋯ More</button>
             {moreOpen&&<div className="detailMoreMenu">
+              <a className="detailMenuItem" href={'/chats?shareShotId=' + id + '&shareShotTitle=' + encodeURIComponent(post.title) + '&shareShotImage=' + encodeURIComponent(post.imageUrl) + '&shareShotAuthor=' + encodeURIComponent(post.username)}>💬 Share into Chat</a>
               <a className="detailMenuItem" href={post.downloadUrl} download>↓ Download image</a>
               <div className="detailMenuReport"><ReportButton targetType="SKILLSHOT" targetId={post.id}/></div>
               {post.isOwner&&<button className="detailMenuDelete" type="button" onClick={deletePost}>Delete Skillshot</button>}

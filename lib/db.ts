@@ -5,6 +5,7 @@ import { SEARCH_MIGRATION } from './search-schema';
 import { SETTINGS_MIGRATION } from './settings-schema';
 import { TRUSTED_MIGRATION } from './trusted-schema';
 import { COMMENT_MIGRATION } from './comment-schema';
+import { CHAT_MIGRATION } from './chat-schema';
 
 let client: NeonQueryFunction<false, false> | null = null;
 let initialization: Promise<unknown> | null = null;
@@ -93,6 +94,7 @@ export async function getReadyDb() {
     await sql.transaction(SETTINGS_MIGRATION.map(statement=>sql.query(statement)));
     await sql.transaction(TRUSTED_MIGRATION.map(statement=>sql.query(statement)));
     await sql.transaction(COMMENT_MIGRATION.map(statement=>sql.query(statement)));
+    await sql.transaction(CHAT_MIGRATION.map(statement=>sql.query(statement)));
   })();
   await initialization;
   return sql;

@@ -13,7 +13,7 @@ export function publicNavigation(viewer: { role: UserRole; status: string } | nu
     { href: signInPath(returnTo), label: 'Sign in', className: 'authEntry' },
     { href: signUpPath(), label: 'Sign up', className: 'upload' },
   ];
-  links.push({ href: '/my-posts', label: 'My posts' }, { href: '/profile', label: 'Profile' });
+  links.push({ href: '/my-posts', label: 'My posts' }, { href: '/chats', label: 'Chats' }, { href: '/profile', label: 'Profile' });
   if (isStaffRole(viewer.role)) {
     links.push({ href: panelForRole(viewer.role), label: '◆ Dashboard' });
   }

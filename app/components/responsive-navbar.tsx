@@ -68,6 +68,39 @@ export default function ResponsiveNavbar({
     };
   }, [menu.open]);
 
+  useEffect(() => {
+    let active = true;
+    async function updateChatBadge() {
+      try {
+        const res = await fetch('/api/chats/unread', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const unread = Number(data.unread || 0);
+        if (!active || !links.current) return;
+        const chatLink = links.current.querySelector('a[href="/chats"]');
+        if (chatLink) {
+          let badge = chatLink.querySelector('.chatNavUnreadBadge');
+          if (unread > 0) {
+            if (!badge) {
+              badge = document.createElement('span');
+              badge.className = 'chatNavUnreadBadge';
+              chatLink.appendChild(badge);
+            }
+            badge.textContent = unread > 99 ? '99+' : String(unread);
+          } else if (badge) {
+            badge.remove();
+          }
+        }
+      } catch { /* graceful fallback */ }
+    }
+    updateChatBadge();
+    const timer = setInterval(updateChatBadge, 15000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, []);
+
   const close = () => setMenu(previous => previous.open ? { ...previous, open: false } : previous);
   return <nav ref={root} className="publicNavbar shell" aria-label="Main navigation"
     data-compact={menu.compact} data-open={menu.open}

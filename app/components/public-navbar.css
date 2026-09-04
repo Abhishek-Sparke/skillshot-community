@@ -7,6 +7,7 @@
 .publicNavLinks{display:flex;align-items:center;gap:clamp(10px,1.5vw,20px);margin-left:auto;flex:none}
 .publicNavLinks>a{display:inline-flex;align-items:center;min-height:40px;padding:6px 12px;border-radius:999px;white-space:nowrap;text-decoration:none;color:inherit;font-size:14px;font-weight:700;transition:all .15s ease}
 .publicNavLinks>a:hover{background:var(--surface-soft);color:var(--ink)}
+.chatNavUnreadBadge{margin-left:6px;background:var(--red,#ff604a);color:#fff;font-size:11px;font-weight:700;line-height:1;padding:2px 6px;border-radius:10px;vertical-align:middle}
 .publicNavLinks>a.upload{padding:10px 18px!important;border-radius:12px!important;box-shadow:0 4px 14px var(--red-glow),2px 2px 0 var(--ink)!important}
 .publicNavLinks>a.upload:hover{transform:translateY(-1px);box-shadow:0 6px 18px var(--red-glow),2px 3px 0 var(--ink)!important}
 .publicNavbar a:focus-visible,.publicNavToggle:focus-visible{outline:3px solid var(--red);outline-offset:3px}
