@@ -70,6 +70,8 @@ export async function getReadyDb() {
     await sql.query(`CREATE TABLE IF NOT EXISTS storage_scans (id text PRIMARY KEY, file_count integer NOT NULL, total_bytes bigint NOT NULL, complete boolean NOT NULL, created_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`CREATE TABLE IF NOT EXISTS follows (follower_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, followed_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (follower_id, followed_id), CHECK (follower_id <> followed_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS featured_posts (user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, position smallint NOT NULL CHECK (position BETWEEN 1 AND 3), created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (user_id, post_id), UNIQUE (user_id, position))`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS saved_posts (user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (user_id, post_id))`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_saved_posts_user_created ON saved_posts(user_id, created_at DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_visible_created ON posts(status, created_at DESC, id DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id)`);

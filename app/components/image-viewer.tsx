@@ -1,6 +1,6 @@
 'use client';
 
-import { PointerEvent, useEffect, useRef, useState } from 'react';
+import { PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 type Props = {
   src: string;
@@ -17,6 +17,22 @@ export default function ImageViewer({ src, alt, title, subtitle, onClose, onPrev
   const closeButton = useRef<HTMLButtonElement>(null);
   const pointerStart = useRef<number | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!dialog.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    } else {
+      dialog.current.requestFullscreen?.().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -27,6 +43,7 @@ export default function ImageViewer({ src, alt, title, subtitle, onClose, onPrev
       if (event.key === 'Escape') onClose();
       if (event.key === 'ArrowLeft') onPrevious?.();
       if (event.key === 'ArrowRight') onNext?.();
+      if (event.key === 'f' || event.key === 'F') toggleFullscreen();
       if (event.key === '+' || event.key === '=') setZoom(value => Math.min(3, value + .25));
       if (event.key === '-') setZoom(value => Math.max(1, value - .25));
       if (event.key === 'Tab' && dialog.current) {
@@ -43,7 +60,7 @@ export default function ImageViewer({ src, alt, title, subtitle, onClose, onPrev
       window.removeEventListener('keydown', onKeyDown);
       previousFocus?.focus();
     };
-  }, [onClose, onNext, onPrevious]);
+  }, [onClose, onNext, onPrevious, toggleFullscreen]);
 
   function finishSwipe(event: PointerEvent<HTMLDivElement>) {
     if (pointerStart.current === null) return;
@@ -60,6 +77,7 @@ export default function ImageViewer({ src, alt, title, subtitle, onClose, onPrev
         <span aria-live="polite">{Math.round(zoom * 100)}%</span>
         <button type="button" onClick={() => setZoom(value => Math.min(3, value + .25))} disabled={zoom === 3} aria-label="Zoom in">+</button>
         <button type="button" onClick={() => setZoom(1)} disabled={zoom === 1}>Reset</button>
+        <button type="button" className="viewerFullscreen" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>{isFullscreen ? '⤓' : '⤢'}</button>
         <button className="viewerClose" ref={closeButton} type="button" onClick={onClose} aria-label="Close preview">×</button>
       </div></header>
       <div className={`viewerStage ${zoom > 1 ? 'zoomed' : ''}`} onPointerDown={event => { pointerStart.current = event.clientX; }} onPointerUp={finishSwipe}>

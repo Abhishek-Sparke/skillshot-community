@@ -45,10 +45,9 @@ export default function Upload() {
     });
     return () => { active = false; if (url) URL.revokeObjectURL(url); };
   }, [selectedFile, sourceInfo, crop, rotation]);
+  const [dragging, setDragging] = useState(false);
 
-  async function chooseImage(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  async function processSelectedFile(file: File) {
     const version = ++selectionVersion.current;
     setPreview(''); setSelectedFile(null); setPrepared(null); setSourceInfo(null);
     setQualityAccepted(false); setPreparing(true); setStatus('Checking image…');
@@ -62,6 +61,29 @@ export default function Upload() {
       setPreparing(false);
       setStatus(file.size > MAX_IMAGE_SIZE ? `⚠ Large image · ${(file.size / (1024 * 1024)).toFixed(1)} MB. Please choose an image of 10 MB or less.` : error instanceof Error ? error.message : 'Could not read this image. Please choose another.');
     }
+  }
+
+  async function chooseImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await processSelectedFile(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    if (!busy && !preparing) setDragging(true);
+  }
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+  }
+  async function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    if (busy || preparing) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await processSelectedFile(file);
   }
 
   function editImage(nextCrop: ImageCrop, nextRotation: number) {
@@ -122,12 +144,17 @@ export default function Upload() {
   return <main className="formPage">
     <Link className="brand" href="/"><span>S</span> Skillshot</Link>
     <section className="formCard createCard">
-      <p className="eyebrow">CREATE A SKILLSHOT</p>
-      <h1>What are you sharing?</h1>
-      <p className="createIntro">Show something you&apos;ve created, built, captured, discovered, or are proud of.</p>
+      <p className="eyebrow">SHARE A SKILLSHOT</p>
+      <h1>Share your work.</h1>
+      <p className="createIntro">Share the work you&apos;re proud of with the Skillshot community.</p>
       <div className="createLayout"><form onSubmit={submit}>
-        <label className="drop">
-          {preview ? <span className="editablePreview"><img src={preview} alt="Selected Skillshot preview"/></span> : <><b>{preparing ? 'Checking image…' : 'Upload your Skillshot'}</b><small>PNG, JPG/JPEG, WebP or GIF · 10 MB maximum</small></>}
+        <label className={`drop ${dragging ? 'dragging' : ''}`} onDragOver={handleDragOver} onDragEnter={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+          {preview ? <span className="editablePreview"><img src={preview} alt="Selected Skillshot preview"/></span> : <div className="dropPrompt">
+            <b>{preparing ? 'Checking image…' : 'Drag & drop media'}</b>
+            <span className="dropOr">or</span>
+            <button type="button" className="chooseFileBtn" onClick={e => { e.preventDefault(); imageInput.current?.click(); }} disabled={busy || preparing}>Choose file</button>
+            <small>JPG PNG WebP GIF · 10 MB maximum</small>
+          </div>}
           <input ref={imageInput} required disabled={busy} name="image" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={chooseImage}/>
         </label>
         {selectedFile && selectedFile.type!=='image/gif' && <div ref={cropTools} tabIndex={-1} className="imageEditTools" aria-label="Image adjustments"><span>Optional center crop</span><button disabled={busy} type="button" className={crop==='original'?'active':''} onClick={()=>editImage('original',rotation)}>Original</button><button disabled={busy} type="button" className={crop==='square'?'active':''} onClick={()=>editImage('square',rotation)}>Square</button><button disabled={busy} type="button" className={crop==='landscape'?'active':''} onClick={()=>editImage('landscape',rotation)}>4:3</button><button disabled={busy} type="button" onClick={()=>editImage(crop,(rotation+90)%360)}>↻ Rotate</button><button disabled={busy} type="button" onClick={()=>editImage('original',0)}>Reset</button></div>}
@@ -136,7 +163,7 @@ export default function Upload() {
         <label>Skills<input name="skills" maxLength={300} placeholder="Add skills..." value={skills} onChange={event => setSkills(event.target.value)}/><small>Separate skills with commas.</small></label>
         <label>Tags<input name="tags" maxLength={300} placeholder="Add tags..." value={tags} onChange={event=>setTags(event.target.value)}/></label>
         <label>Category <small>(optional)</small><select name="category" value={category} onChange={event => setCategory(event.target.value)}><option value="">Choose a category</option>{CATEGORIES.map(value => <option key={value}>{value}</option>)}</select></label>
-        <button className="primary" type="submit" disabled={busy || preparing || !prepared}>{busy ? 'Publishing…' : preparing ? 'Checking image…' : 'Publish shot →'}</button>
+        <button className="primary" type="submit" disabled={busy || preparing || !prepared}>{busy ? 'Publishing…' : preparing ? 'Checking image…' : 'Publish Skillshot'}</button>
         {busy && <div className="uploadProgress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={`Upload ${progress}%`}><span style={{ width: `${progress}%` }}/></div>}
         <p role="status" aria-live="polite">{status}{busy && status === 'Uploading…' ? ` ${progress}%` : ''}</p>
       </form><aside className="livePreview">

@@ -62,7 +62,7 @@ export default function AccountCenter({section}:{section:'notifications'|'appeal
              </div>
            )}
          </article>
-       )) : <p>No notifications yet.</p>}
+       )) : <div className="emptyFeed"><span>✦</span><h3>No notifications yet</h3><p>You&apos;re all caught up.</p></div>}
      </div>
      <p role="status">{message}</p>
    </>;

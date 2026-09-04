@@ -64,7 +64,7 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
       event.target.value = '';
       setAvatarFile(null);
       setAvatarPreview(profile.avatarUrl);
-      setFeedback('Image is too large. Please choose an image smaller than 2 MB.');
+      setFeedback('Image is too large. Please choose a smaller image.');
       return;
     }
 

@@ -18,6 +18,7 @@ export async function GET(request: Request) {
   const user = await getChatGPTUser();
   const url = new URL(request.url);
   const mine = url.searchParams.get('mine') === '1';
+  const saved = url.searchParams.get('saved') === '1';
   const requestedUsername = url.searchParams.get('username')?.trim().toLowerCase().slice(0, 30) || null;
   const likedByUsername = url.searchParams.get('likedBy')?.trim().toLowerCase().slice(0, 30) || null;
   const sort = url.searchParams.get('sort') === 'trending' ? 'trending' : 'latest';
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
   const limit = pageSize(url.searchParams.get('limit'));
   const cursor = decodeCursor(url.searchParams.get('cursor'));
   if (mine && !user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (saved && !user) return Response.json({ error: 'Sign in to see saved Skillshots.' }, { status: 401 });
   if (following && !user) return Response.json({ error: 'Sign in to see creators you follow.' }, { status: 401 });
   const sql = await getReadyDb();
   const rows = await sql.query(`
@@ -34,6 +36,7 @@ export async function GET(request: Request) {
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS reaction_count,
       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.status='VISIBLE') AS comment_count,
       EXISTS(SELECT 1 FROM reactions mine WHERE mine.post_id=p.id AND mine.user_id=$11) AS viewer_liked,
+      EXISTS(SELECT 1 FROM saved_posts sp WHERE sp.post_id=p.id AND sp.user_id=$11) AS viewer_saved,
       ((SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.id)*3 +
        (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE')*5 +
        GREATEST(0,14-EXTRACT(EPOCH FROM (now()-p.created_at))/86400.0)) AS trend_score
@@ -49,9 +52,10 @@ export async function GET(request: Request) {
       AND ($6::text IS NULL OR p.category=$6)
       AND ($7::timestamptz IS NULL OR (p.created_at, p.id) < ($7::timestamptz, $8::text))
       AND ($9::text='latest' OR p.created_at>=now()-interval '45 days')
+      AND ($12::text IS NULL OR EXISTS(SELECT 1 FROM saved_posts saved_by WHERE saved_by.post_id=p.id AND saved_by.user_id=$12))
     ORDER BY CASE WHEN $9='trending' THEN ((SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.id)*3 + (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE')*5 + GREATEST(0,14-EXTRACT(EPOCH FROM (now()-p.created_at))/86400.0)) END DESC,
       p.created_at DESC,p.id DESC LIMIT $10
-  `, [mine ? user!.userId : null, requestedUsername, likedByUsername, following, user?.userId ?? '', category, sort === 'trending' ? null : cursor.date, sort === 'trending' ? '' : cursor.id, sort, limit + 1, user?.userId ?? '']);
+  `, [mine ? user!.userId : null, requestedUsername, likedByUsername, following, user?.userId ?? '', category, sort === 'trending' ? null : cursor.date, sort === 'trending' ? '' : cursor.id, sort, limit + 1, user?.userId ?? '', saved ? user!.userId : null]);
   const hasMore = rows.length > limit;
   const visibleRows = hasMore ? rows.slice(0, limit) : rows;
   return Response.json({ posts: visibleRows.map(row => ({
@@ -65,7 +69,7 @@ export async function GET(request: Request) {
     reactionCount: Number(row.reaction_count), commentCount: Number(row.comment_count),
     imageWidth: Number(row.image_width) || 4, imageHeight: Number(row.image_height) || 3,
     imageUrl: `/api/images/${row.id}?variant=thumbnail`, previewUrl: `/api/images/${row.id}?variant=display`, downloadUrl: `/api/images/${row.id}?download=1`,
-    isOwner: user?.userId === row.user_id, viewerLiked: Boolean(row.viewer_liked),
+    isOwner: user?.userId === row.user_id, viewerLiked: Boolean(row.viewer_liked), viewerSaved: Boolean(row.viewer_saved),
   })), nextCursor: sort === 'latest' && hasMore ? encodeCursor(visibleRows[visibleRows.length - 1]) : null,
     signedIn: Boolean(user) });
 }

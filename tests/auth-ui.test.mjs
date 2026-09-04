@@ -31,6 +31,7 @@ async function component(file, { principal = null, session = null } = {}) {
     if (id.endsWith('/auth-submit-button')) return { default: 'SubmitButton' };
     if (id.endsWith('/responsive-navbar')) return { default: 'Navbar' };
     if (id.endsWith('/settings-menu')) return { default: 'SettingsMenu' };
+    if (id.endsWith('/notification-bell')) return { default: 'NotificationBell' };
     if (id.endsWith('/roles')) return roles;
     if (id.endsWith('.css')) return {};
     throw new Error(`Unexpected component dependency: ${id}`);

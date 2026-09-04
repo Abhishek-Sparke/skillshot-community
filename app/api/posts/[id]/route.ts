@@ -12,7 +12,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       u.display_name, u.username, u.email, u.role,u.avatar_url,
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.id) AS reaction_count,
       (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE') AS comment_count,
-      (SELECT COUNT(*) FROM reactions vr WHERE vr.post_id=p.id AND vr.user_id=$1) AS viewer_liked
+      (SELECT COUNT(*) FROM reactions vr WHERE vr.post_id=p.id AND vr.user_id=$1) AS viewer_liked,
+      (SELECT COUNT(*) FROM saved_posts sp WHERE sp.post_id=p.id AND sp.user_id=$1) AS viewer_saved
     FROM posts p JOIN users u ON u.id=p.user_id WHERE p.id=$2 AND p.status NOT IN ('PURGING','PURGED') AND ((p.status='VISIBLE' AND u.status='ACTIVE') OR p.user_id=$1) LIMIT 1
   `, [user?.userId ?? '', id]);
   if (!rows.length) return Response.json({ error: 'Post not found' }, { status: 404 });
@@ -26,7 +27,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     authorRole: normalizeRole(row.role),
     createdAt: new Date(row.created_at as string).getTime(),
     reactionCount: Number(row.reaction_count), commentCount: Number(row.comment_count),
-    viewerLiked: Boolean(Number(row.viewer_liked)), signedIn: Boolean(user),
+    viewerLiked: Boolean(Number(row.viewer_liked)), viewerSaved: Boolean(Number(row.viewer_saved)), signedIn: Boolean(user),
     canPin: user?.userId===row.user_id || Boolean(viewerPrincipal?.permissions.includes('moderation.approve')),
     commentReview: viewerPrincipal?.permissions.includes('reports.view')
       ? { hide:viewerPrincipal.permissions.includes('moderation.hide'), delete:viewerPrincipal.permissions.includes('comments.delete') }

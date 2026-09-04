@@ -7,9 +7,8 @@ export default function CommunityPage() {
   return <main>
     <PublicNavbar returnTo="/community"/>
     <section className="communityHero shell">
-      <p className="eyebrow">EXPLORE SKILLSHOT</p>
-      <h1>See what the community is making.</h1>
-      <p>Browse real screenshots shared by designers, developers, artists, and makers. Open any shot to react, comment, or download it.</p>
+      <h1>Community</h1>
+      <p>Discover work from the Skillshot community.</p>
     </section>
     <section className="feed communityFeed shell"><CommunityFeed /></section>
   </main>;

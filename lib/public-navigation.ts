@@ -14,7 +14,6 @@ export function publicNavigation(viewer: { role: UserRole; status: string } | nu
     { href: signUpPath(), label: 'Sign up', className: 'upload' },
   ];
   links.push({ href: '/my-posts', label: 'My posts' }, { href: '/profile', label: 'Profile' });
-  if (isStaffRole(viewer.role)) links.push({ href: panelForRole(viewer.role), label: '◆ Dashboard', className: 'staffDashboardLink' });
   links.push({ href: '/upload', label: '＋ Share a shot', className: 'upload' });
   return links;
 }

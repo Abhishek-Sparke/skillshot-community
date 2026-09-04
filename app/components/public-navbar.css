@@ -1,12 +1,18 @@
-.publicNavbar{position:relative;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:clamp(12px,2vw,28px);height:78px;min-width:0;border-bottom:1px solid var(--line);background:var(--paper)}
-.publicNavbar>.brand{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:10px;font-size:20px;font-weight:800;text-decoration:none;color:inherit}
-.publicNavLinks{display:flex;align-items:center;gap:clamp(14px,1.8vw,24px);margin-left:auto;flex:none}
-.publicNavLinks>a{display:inline-flex;align-items:center;min-height:44px;white-space:nowrap;text-decoration:none;color:inherit;font-size:14px;font-weight:700;transition:color .15s ease}
-.publicNavLinks>a:hover{color:var(--red)}
-.publicNavbar a:focus-visible,.publicNavToggle:focus-visible{outline:3px solid var(--red);outline-offset:4px}
+.publicNavbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:clamp(12px,2vw,28px);height:74px;min-width:0;border-bottom:1px solid var(--line);background:rgba(248,246,240,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:background-color .2s ease,border-color .2s ease}
+:root[data-theme=dark] .publicNavbar{background:rgba(20,20,19,0.85);border-color:var(--line)}
+.publicNavbar>.brand{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:10px;font-size:20px;font-weight:800;letter-spacing:-.5px;text-decoration:none;color:inherit;transition:transform .15s ease}
+.publicNavbar>.brand:hover{transform:scale(1.02)}
+.publicNavbar>.brand span{display:grid;place-items:center;background:var(--ink);color:#fff;width:31px;height:31px;border-radius:9px;transform:rotate(-5deg);box-shadow:0 3px 8px rgba(0,0,0,0.18);transition:transform .2s ease}
+.publicNavbar>.brand:hover span{transform:rotate(0deg) scale(1.08)}
+.publicNavLinks{display:flex;align-items:center;gap:clamp(10px,1.5vw,20px);margin-left:auto;flex:none}
+.publicNavLinks>a{display:inline-flex;align-items:center;min-height:40px;padding:6px 12px;border-radius:999px;white-space:nowrap;text-decoration:none;color:inherit;font-size:14px;font-weight:700;transition:all .15s ease}
+.publicNavLinks>a:hover{background:var(--surface-soft);color:var(--ink)}
+.publicNavLinks>a.upload{padding:10px 18px!important;border-radius:12px!important;box-shadow:0 4px 14px var(--red-glow),2px 2px 0 var(--ink)!important}
+.publicNavLinks>a.upload:hover{transform:translateY(-1px);box-shadow:0 6px 18px var(--red-glow),2px 3px 0 var(--ink)!important}
+.publicNavbar a:focus-visible,.publicNavToggle:focus-visible{outline:3px solid var(--red);outline-offset:3px}
 .publicNavMobileActions{display:none}
-.publicNavToggle{display:none;flex:none;position:relative;width:42px;height:42px;margin-left:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface,#fff);color:var(--ink);cursor:pointer;transition:border-color .15s ease,background-color .15s ease}
-.publicNavToggle:hover{background:var(--surface-soft,#ebe7df);border-color:#c9c5bd}
+.publicNavToggle{display:none;flex:none;position:relative;width:42px;height:42px;margin-left:auto;border:1.5px solid var(--line);border-radius:11px;background:var(--surface,#fff);color:var(--ink);cursor:pointer;transition:all .15s ease}
+.publicNavToggle:hover{background:var(--surface-soft,#ebe7df);border-color:#b8b3a8;transform:scale(1.03)}
 .publicNavToggle span{position:absolute;left:10px;width:20px;height:2px;border-radius:2px;background:currentColor;transition:transform .16s ease,opacity .16s ease;pointer-events:none}
 .publicNavToggle span:nth-child(1){top:13px}.publicNavToggle span:nth-child(2){top:19px}.publicNavToggle span:nth-child(3){top:25px}
 .publicNavbar[data-compact=true]>.publicNavMobileActions{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}
@@ -28,10 +34,10 @@
 .navBellBadge{position:absolute;top:-6px;right:-8px;display:flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--red,#ff5b42);color:#fff;font-size:10px;font-weight:800;line-height:1;box-shadow:0 0 0 2px var(--paper);pointer-events:none;z-index:2;animation:badgePop .25s ease-out}
 @keyframes bellNotice{0%,70%,100%{transform:rotate(0deg)}73%{transform:rotate(14deg)}76%{transform:rotate(-12deg)}79%{transform:rotate(8deg)}82%{transform:rotate(-6deg)}85%{transform:rotate(0deg)}}
 @keyframes badgePop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
-.publicNavbar[data-compact=true]>.publicNavLinks{position:absolute;top:calc(100% + 8px);right:clamp(16px,3vw,28px);width:min(320px,calc(100% - 32px));max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fff);box-shadow:0 14px 34px #20201d20;visibility:hidden;opacity:0;transform:translateY(-6px);transition:opacity .16s ease,transform .16s ease,visibility .16s}
-.publicNavbar[data-compact=true]>.publicNavLinks>a{padding:12px 14px;border-radius:9px;white-space:normal;overflow-wrap:anywhere}
+.publicNavbar[data-compact=true]>.publicNavLinks{position:absolute;top:calc(100% + 10px);right:clamp(16px,3vw,28px);width:min(320px,calc(100% - 32px));max-height:calc(100dvh - 96px);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0;padding:14px;border:1.5px solid var(--line);border-radius:18px;background:var(--surface,#fff);box-shadow:0 20px 48px rgba(32,32,29,0.16),0 4px 12px rgba(32,32,29,0.06);visibility:hidden;opacity:0;transform:translateY(-8px) scale(0.98);transition:opacity .18s cubic-bezier(0.16,1,0.3,1),transform .18s cubic-bezier(0.16,1,0.3,1),visibility .18s}
+.publicNavbar[data-compact=true]>.publicNavLinks>a{padding:12px 14px;border-radius:10px;white-space:normal;overflow-wrap:anywhere;font-size:14.5px;font-weight:700}
 .publicNavbar[data-compact=true]>.publicNavLinks>a:hover{background:var(--surface-soft,#ebe7df);color:var(--ink)}
-.publicNavbar[data-compact=true]>.publicNavLinks>.upload{margin:5px 3px 3px 0}
+.publicNavbar[data-compact=true]>.publicNavLinks>.upload{margin:6px 0 2px;text-align:center;justify-content:center}
 .publicNavLogout{display:flex;margin:0;flex:none}
 .publicNavLogoutButton{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 14px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--ink);font:700 14px Arial,sans-serif;white-space:nowrap;cursor:pointer}
 .publicNavLogoutButton:hover{background:var(--surface-soft,#ebe7df)}
@@ -39,6 +45,8 @@
 .publicNavLogoutButton:disabled{opacity:.65;cursor:wait}
 .publicNavbar[data-compact=true]>.publicNavLinks>.publicNavLogout{border-top:1px solid var(--line);padding-top:8px;margin-top:5px;width:100%}
 .publicNavbar[data-compact=true]>.publicNavLinks>.publicNavLogout button{width:100%;justify-content:flex-start}
+.settingsMenuDivider{border:0;border-top:1px solid var(--line);margin:6px 0;width:100%}
+.staffDashboardItem{color:var(--accent,#ff5039)!important;font-weight:700}
 .publicNavbar[data-compact=true][data-open=true]>.publicNavLinks{visibility:visible;opacity:1;transform:translateY(0)}
 .publicNavbar[data-open=true]>.publicNavToggle span:nth-child(1){transform:translateY(6px) rotate(45deg)}
 .publicNavbar[data-open=true]>.publicNavToggle span:nth-child(2){opacity:0}

@@ -15,7 +15,7 @@ type Profile = {
   likesReceived: number; followerCount: number; followingCount: number; isFollowing: boolean; isSelf: boolean;
   signedIn: boolean; featuredPosts: FeaturedPost[]; reputation:number; achievements:{key:string;label:string;description:string}[];
 };
-type Tab = 'skillshots' | 'liked' | 'about';
+type Tab = 'skillshots' | 'saved' | 'liked' | 'about';
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'S';
@@ -70,6 +70,7 @@ export default function CreatorProfile({ username, saved = false }: { username: 
   if (!profile) return <main className="formPage"><section className="detail"><h1>Creator not found</h1><p>{error}</p><Link className="backHome" href="/community">← Back to community</Link></section></main>;
 
   const joined = new Date(profile.joinedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const tabs: Tab[] = profile.isSelf ? ['skillshots', 'saved', 'liked', 'about'] : ['skillshots', 'liked', 'about'];
   return <main className="profilePage">
     {saved && <div className="saveToast" role="status">✓ Profile updated</div>}
     <section className="profileHero shell">
@@ -101,7 +102,7 @@ export default function CreatorProfile({ username, saved = false }: { username: 
       </div>
       {error && <p className="profileActionError" role="status">{error}</p>}
       <div className="profileTabs" role="tablist" aria-label="Profile sections">
-        {(['skillshots', 'liked', 'about'] as Tab[]).map(value => <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => setTab(value)}>{value === 'skillshots' ? 'Skillshots' : value === 'liked' ? 'Liked' : 'About'}</button>)}
+        {tabs.map(value => <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => setTab(value)}>{value === 'skillshots' ? 'Skillshots' : value === 'saved' ? 'Saved' : value === 'liked' ? 'Liked' : 'About'}</button>)}
       </div>
     </section>
 
@@ -111,6 +112,11 @@ export default function CreatorProfile({ username, saved = false }: { username: 
         {profile.featuredPosts.length ? <div className="featuredGrid">{profile.featuredPosts.map(post => <article className="featuredPost" key={post.id}><Link className="featuredImage" href={`/shots/${post.id}`}><img src={post.imageUrl} alt={post.title} loading="lazy" width="900" height="600" onError={event => { event.currentTarget.style.display = 'none'; }}/></Link><div><p className="eyebrow">{new Date(post.createdAt).toLocaleDateString()}</p><h3><Link href={`/shots/${post.id}`}>{post.title}</Link></h3>{post.description && <p>{post.description}</p>}<small>♥ {post.reactionCount} <span>◌ {post.commentCount}</span></small></div></article>)}</div> : <div className="profileEmpty"><span>✦</span><h3>{profile.isSelf ? 'Choose the work that represents you best.' : 'No featured Skillshots yet.'}</h3><p>{profile.isSelf ? 'Select up to three posts from Edit Profile.' : 'This creator has not selected featured work.'}</p>{profile.isSelf && <Link className="primary" href="/profile/edit">Choose featured work →</Link>}</div>}
       </div>
       <div className="allSkillshots"><div className="sectionHead"><div><p className="eyebrow">ALL SKILLSHOTS</p><h2>{profile.isSelf ? 'Your published work.' : `${profile.displayName}'s work.`}</h2></div>{profile.isSelf && <Link className="primary" href="/upload">＋ New post</Link>}</div><CommunityFeed username={profile.username} compact emptyTitle={profile.isSelf ? 'Your first Skillshot starts here.' : 'No Skillshots yet.'} emptyText={profile.isSelf ? 'Share something you are proud of and let the community discover it.' : 'This creator has not published any work yet.'}/></div>
+    </section>}
+
+    {tab === 'saved' && <section className="profileWork shell profileTabPanel" role="tabpanel">
+      <div className="sectionHead"><div><p className="eyebrow">SAVED WORK</p><h2>Saved Skillshots.</h2></div></div>
+      <CommunityFeed saved compact emptyTitle="No saved Skillshots yet" emptyText="Save Skillshots you want to revisit."/>
     </section>}
 
     {tab === 'liked' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">APPRECIATED WORK</p><h2>Skillshots {profile.displayName} likes.</h2></div></div><CommunityFeed likedBy={profile.username} compact emptyTitle="No liked Skillshots yet." emptyText="Work this creator appreciates will appear here."/></section>}

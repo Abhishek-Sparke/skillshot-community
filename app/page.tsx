@@ -14,12 +14,12 @@ export default async function Home() {
 
     <section className="hero shell">
       <div>
-        <p className="eyebrow">THE PLACE FOR WORK YOU’RE PROUD OF</p>
+        <p className="eyebrow">SKILLSHOT</p>
         <h1>Show your skills.<br/><em>In one shot.</em></h1>
-        <p className="lede">Show something you’ve created, built, captured, designed, discovered, or are proud of. Discover the work—and the creators—behind every shot.</p>
+        <p className="lede">Share the work you&apos;re proud of.</p>
         <div className="heroActions">
-          <Link className="primary" href={signedIn ? '/upload' : signInPath('/upload', 'Sign in to share your first Skillshot')}>Share your first shot →</Link>
-          <Link href="/community">Explore the community</Link>
+          <Link className="primary" href={signedIn ? '/upload' : signInPath('/upload', 'Sign in to share a Skillshot')}>Share a Skillshot</Link>
+          <Link href="/community">Explore Community</Link>
         </div>
       </div>
       <div className="heroCard">
@@ -36,14 +36,6 @@ export default async function Home() {
       </div>
       <Suspense fallback={<HomeFreshSkeleton/>}><HomeFresh/></Suspense>
     </section>
-
-    <section className="cta"><div>
-      <span className="spark">✦</span>
-      <p className="eyebrow">YOUR WORK BELONGS HERE</p>
-      <h2>Made something good lately?</h2>
-      <p>Share the process, the polish, or the tiny detail you finally got right.</p>
-      <Link className="primary" href={signedIn ? '/upload' : signInPath('/upload', 'Sign in to create a Skillshot')}>Create a Skillshot →</Link>
-    </div></section>
 
     <footer className="shell">
       <Link className="brand" href="/"><span>S</span> Skillshot</Link>
