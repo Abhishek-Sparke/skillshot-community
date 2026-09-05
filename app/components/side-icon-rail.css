@@ -1,0 +1,350 @@
+/* ==========================================================================
+   SKILLSHOT — INFINITE SIDE VISUAL ANIMATION SYSTEM
+   Dual vertical rails framing the desktop experience with subtle,
+   continuously moving minimal monochrome editorial glyphs.
+   ========================================================================== */
+
+/* 1. Mobile & Tablet: Completely hidden below 1200px */
+.sideIconRail {
+  display: none !important;
+}
+
+/* 2. Desktop (>= 1200px): Fixed outer side rails */
+@media (min-width: 1200px) {
+  .sideIconRail {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    z-index: 12;
+    pointer-events: none;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    background: rgba(248, 246, 242, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  /* Left Rail: Placed at far left edge */
+  .sideIconRail--left {
+    left: 0;
+    border-right: 1px solid rgba(255, 80, 57, 0.18);
+    box-shadow: inset -8px 0 16px -8px rgba(25, 22, 20, 0.05);
+  }
+
+  /* Right Rail: Placed at far right edge */
+  .sideIconRail--right {
+    right: 0;
+    border-left: 1px solid rgba(255, 80, 57, 0.18);
+    box-shadow: inset 8px 0 16px -8px rgba(25, 22, 20, 0.05);
+  }
+
+  /* Inner track viewport with top & bottom edge fade mask */
+  .sideIconRail__inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 1) 8%,
+      rgba(0, 0, 0, 1) 92%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 1) 8%,
+      rgba(0, 0, 0, 1) 92%,
+      transparent 100%
+    );
+  }
+
+  /* Continuous moving track (contains two identical segments for seamless loop) */
+  .sideIconRail__track {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    will-change: transform;
+  }
+
+  /* LEFT SIDE: Moves bottom -> top (infinitely upward) */
+  .sideIconRail__track--left {
+    animation: railScrollUp 52s linear infinite;
+  }
+
+  /* RIGHT SIDE: Moves top -> bottom (infinitely downward) */
+  .sideIconRail__track--right {
+    animation: railScrollDown 52s linear infinite;
+  }
+
+  /* Segment containing sequence of icon cells */
+  .sideIconRail__segment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  /* Individual icon cell wrapper */
+  .sideIconCell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 58px;
+    color: var(--ink, #191614);
+    transition: color 0.3s ease;
+  }
+
+  /* Icon wrapper applying independent subtle rotation */
+  .sideIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center center;
+    will-change: transform;
+  }
+
+  /* Sizing classes */
+  .sideIconCell.size-sm .sideIconWrapper svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .sideIconCell.size-md .sideIconWrapper svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sideIconCell.size-lg .sideIconWrapper svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Opacity / Depth classes */
+  .sideIconCell.op-high {
+    opacity: 0.82;
+  }
+
+  .sideIconCell.op-mid {
+    opacity: 0.52;
+  }
+
+  .sideIconCell.op-low {
+    opacity: 0.32;
+  }
+}
+
+/* 3. Breakpoint: Wide Desktop (>= 1440px) */
+@media (min-width: 1440px) {
+  .sideIconRail {
+    width: 74px;
+  }
+
+  .sideIconCell {
+    height: 64px;
+  }
+
+  .sideIconCell.size-sm .sideIconWrapper svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .sideIconCell.size-md .sideIconWrapper svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sideIconCell.size-lg .sideIconWrapper svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* 4. Breakpoint: Ultra-Wide (>= 1920px) */
+@media (min-width: 1920px) {
+  .sideIconRail {
+    width: 86px;
+  }
+
+  .sideIconCell {
+    height: 72px;
+  }
+
+  .sideIconCell.size-sm .sideIconWrapper svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sideIconCell.size-md .sideIconWrapper svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .sideIconCell.size-lg .sideIconWrapper svg {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* ==========================================================================
+   TRACK VERTICAL MOVEMENT KEYFRAMES
+   Zero-jump mathematical loop: 0% -> -50% (and -50% -> 0%)
+   ========================================================================== */
+@keyframes railScrollUp {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, -50%, 0);
+  }
+}
+
+@keyframes railScrollDown {
+  0% {
+    transform: translate3d(0, -50%, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ==========================================================================
+   INDEPENDENT ICON ROTATION & MICRO-ANIMATION KEYFRAMES
+   Subtle (3–12 deg), gentle rhythm, independent of vertical motion
+   ========================================================================== */
+.anim-swayA {
+  animation: iconSwayA 9s ease-in-out infinite;
+}
+
+.anim-swayB {
+  animation: iconSwayB 11.5s ease-in-out infinite;
+}
+
+.anim-swayC {
+  animation: iconSwayC 8s ease-in-out infinite;
+}
+
+.anim-spinSlow {
+  animation: iconSpinSlow 28s linear infinite;
+}
+
+.anim-pulse {
+  animation: iconPulse 5.5s ease-in-out infinite;
+}
+
+.anim-bounce {
+  animation: iconBounce 6s ease-in-out infinite;
+}
+
+@keyframes iconSwayA {
+  0%, 100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+
+@keyframes iconSwayB {
+  0%, 100% {
+    transform: rotate(8deg);
+  }
+  50% {
+    transform: rotate(-7deg);
+  }
+}
+
+@keyframes iconSwayC {
+  0%, 100% {
+    transform: rotate(-9deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes iconSpinSlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* ==========================================================================
+   DARK MODE OVERRIDES
+   ========================================================================== */
+:root[data-theme=dark] .sideIconRail {
+  background: rgba(18, 17, 16, 0.82);
+}
+
+:root[data-theme=dark] .sideIconRail--left {
+  border-right-color: rgba(255, 80, 57, 0.22);
+  box-shadow: inset -8px 0 20px -8px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme=dark] .sideIconRail--right {
+  border-left-color: rgba(255, 80, 57, 0.22);
+  box-shadow: inset 8px 0 20px -8px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme=dark] .sideIconCell {
+  color: #eae7df;
+}
+
+:root[data-theme=dark] .sideIconCell.op-high {
+  opacity: 0.85;
+}
+
+:root[data-theme=dark] .sideIconCell.op-mid {
+  opacity: 0.55;
+}
+
+:root[data-theme=dark] .sideIconCell.op-low {
+  opacity: 0.32;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION
+   Stop vertical track movement and icon sway; preserve static decorative rail.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .sideIconRail__track--left,
+  .sideIconRail__track--right,
+  .anim-swayA,
+  .anim-swayB,
+  .anim-swayC,
+  .anim-spinSlow,
+  .anim-pulse,
+  .anim-bounce {
+    animation: none !important;
+    transform: none !important;
+  }
+}
