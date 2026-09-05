@@ -1,0 +1,516 @@
+/* ==========================================================================
+   SKILLSHOT — DESKTOP SIDE ANIMATIONS (Lumen-Inspired Editorial Layer)
+   ========================================================================== */
+
+/* 1. Breakpoint: Hidden by default on mobile, tablet, small laptops (< 1200px) */
+.desktopSideDecor {
+  display: none !important;
+}
+
+/* 2. Desktop Only: min-width 1200px */
+@media (min-width: 1200px) {
+  .desktopSideDecor {
+    display: flex !important;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    right: 0;
+    height: 960px;
+    justify-content: center;
+    pointer-events: none;
+    overflow: clip;
+    z-index: 2;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Center spacer matching the 1220px .shell to guarantee ZERO overlap with hero */
+  .sideDecorSpacer {
+    flex: 0 0 1220px;
+    max-width: 1220px;
+    width: 1220px;
+    pointer-events: none;
+  }
+
+  /* Left and right side tracks occupying only the unused outer margins */
+  .sideDecorTrack {
+    flex: 1 1 0;
+    min-width: 0;
+    position: relative;
+    pointer-events: none;
+    opacity: 0.78;
+    transition: opacity 0.4s ease;
+    will-change: transform;
+    transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0);
+  }
+
+  /* Outer card positioning wrappers (Handles Entrance & Parallax Coordinates) */
+  .sideDecorItem {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    animation: sideDecorEnter 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Inner floating element (Handles slow infinite floating & gentle rotation) */
+  .sideDecorFloat {
+    display: block;
+    transform-origin: center center;
+    will-change: transform, opacity;
+  }
+
+  /* ========================================================================
+     LEFT SIDE COMPOSITION (Organic Editorial Zigzag toward viewport edge)
+     ======================================================================== */
+  /* Left Item 1 (Top) - Offset slightly inward */
+  .sideDecorLeft .sideDecorItem:nth-child(1) {
+    top: 24px;
+    right: 32px;
+    width: 195px;
+    animation-delay: 120ms;
+  }
+  .sideDecorLeft .sideDecorItem:nth-child(1) .sideDecorFloat {
+    animation: floatSubtleA 11s ease-in-out infinite 0.2s;
+  }
+
+  /* Left Item 2 (Middle) - Offset further outward toward screen edge */
+  .sideDecorLeft .sideDecorItem:nth-child(2) {
+    top: 270px;
+    right: 96px;
+    width: 215px;
+    animation-delay: 280ms;
+  }
+  .sideDecorLeft .sideDecorItem:nth-child(2) .sideDecorFloat {
+    animation: floatSubtleB 13.5s ease-in-out infinite 1.6s;
+  }
+
+  /* Left Item 3 (Bottom) - Positioned back inward */
+  .sideDecorLeft .sideDecorItem:nth-child(3) {
+    top: 530px;
+    right: 24px;
+    width: 185px;
+    animation-delay: 420ms;
+  }
+  .sideDecorLeft .sideDecorItem:nth-child(3) .sideDecorFloat {
+    animation: floatSubtleC 10s ease-in-out infinite 0.8s;
+  }
+
+  /* ========================================================================
+     RIGHT SIDE COMPOSITION (Asymmetrical, matching editorial flow)
+     ======================================================================== */
+  /* Right Item 1 (Top) - Offset lower and positioned outward */
+  .sideDecorRight .sideDecorItem:nth-child(1) {
+    top: 55px;
+    left: 84px;
+    width: 210px;
+    animation-delay: 200ms;
+  }
+  .sideDecorRight .sideDecorItem:nth-child(1) .sideDecorFloat {
+    animation: floatSubtleD 12.5s ease-in-out infinite 1.2s;
+  }
+
+  /* Right Item 2 (Middle) - Compact creative card/pill positioned closer inward */
+  .sideDecorRight .sideDecorItem:nth-child(2) {
+    top: 310px;
+    left: 20px;
+    width: 175px;
+    animation-delay: 360ms;
+  }
+  .sideDecorRight .sideDecorItem:nth-child(2) .sideDecorFloat {
+    animation: floatSubtleA 9.5s ease-in-out infinite 2.4s;
+  }
+
+  /* Right Item 3 (Bottom) - Asymmetrical editorial preview card */
+  .sideDecorRight .sideDecorItem:nth-child(3) {
+    top: 550px;
+    left: 72px;
+    width: 198px;
+    animation-delay: 500ms;
+  }
+  .sideDecorRight .sideDecorItem:nth-child(3) .sideDecorFloat {
+    animation: floatSubtleB 14s ease-in-out infinite 0.5s;
+  }
+
+  /* ========================================================================
+     CARD VISUAL STYLING (Lumen / Skillshot aesthetic)
+     ======================================================================== */
+  .sideDecorCard {
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(25, 22, 20, 0.06), 0 2px 6px rgba(25, 22, 20, 0.03);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  /* Image card container */
+  .sideDecorMedia {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--surface-soft, #f2f0ec);
+    overflow: hidden;
+  }
+
+  .sideDecorMedia img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Micro card meta */
+  .sideDecorMeta {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background: var(--surface, #ffffff);
+  }
+
+  .sideDecorCategory {
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: var(--muted, #6e6a62);
+  }
+
+  .sideDecorTitle {
+    font-size: 11.5px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--ink, #191614);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sideDecorAuthor {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--muted, #6e6a62);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ========================================================================
+     ABSTRACT EDITORIAL CARDS (Subtle creative shapes / fallbacks)
+     ======================================================================== */
+  .sideDecorAbstract {
+    padding: 14px;
+    min-height: 105px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    background: var(--surface, #ffffff);
+    border-radius: 16px;
+  }
+
+  .sideDecorAbstractHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted, #878277);
+  }
+
+  .sideDecorAbstractGlyph {
+    font-size: 13px;
+    color: var(--accent, #ff5039);
+    line-height: 1;
+  }
+
+  .sideDecorAbstractGraphic {
+    margin: 8px 0;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: var(--surface-soft, #f2f0ec);
+    border: 1px dashed var(--line, rgba(0, 0, 0, 0.08));
+    overflow: hidden;
+  }
+
+  .sideDecorAbstractGraphic svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .sideDecorAbstractFooter {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink, #191614);
+  }
+
+  .sideDecorAbstractBadge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--surface-soft, #f2f0ec);
+    color: var(--muted, #58554f);
+    border: 1px solid var(--line, rgba(0, 0, 0, 0.06));
+  }
+
+  /* Compact editorial pill variation */
+  .sideDecorPillCard {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+    box-shadow: 0 6px 20px rgba(25, 22, 20, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sideDecorPillIcon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--surface-soft, #f2f0ec);
+    display: grid;
+    place-items: center;
+    color: var(--accent, #ff5039);
+    font-size: 11px;
+    flex: none;
+  }
+
+  .sideDecorPillText {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink, #191614);
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+  }
+}
+
+/* ==========================================================================
+   3. RESPONSIVE SCALE: 1440px+ (Slightly increased visual presence)
+   ========================================================================== */
+@media (min-width: 1440px) {
+  .sideDecorTrack {
+    opacity: 0.92;
+  }
+
+  .sideDecorLeft .sideDecorItem:nth-child(1) {
+    right: 44px;
+    width: 205px;
+  }
+
+  .sideDecorLeft .sideDecorItem:nth-child(2) {
+    right: 118px;
+    width: 225px;
+  }
+
+  .sideDecorLeft .sideDecorItem:nth-child(3) {
+    right: 36px;
+    width: 195px;
+  }
+
+  .sideDecorRight .sideDecorItem:nth-child(1) {
+    left: 104px;
+    width: 220px;
+  }
+
+  .sideDecorRight .sideDecorItem:nth-child(2) {
+    left: 28px;
+    width: 185px;
+  }
+
+  .sideDecorRight .sideDecorItem:nth-child(3) {
+    left: 88px;
+    width: 208px;
+  }
+}
+
+/* ==========================================================================
+   4. RESPONSIVE SCALE: 1920px+ (Generous breathing room between elements)
+   ========================================================================== */
+@media (min-width: 1920px) {
+  .desktopSideDecor {
+    height: 1080px;
+  }
+
+  .sideDecorTrack {
+    opacity: 1;
+  }
+
+  .sideDecorLeft .sideDecorItem:nth-child(1) {
+    top: 36px;
+    right: 70px;
+    width: 225px;
+  }
+
+  .sideDecorLeft .sideDecorItem:nth-child(2) {
+    top: 320px;
+    right: 170px;
+    width: 245px;
+  }
+
+  .sideDecorLeft .sideDecorItem:nth-child(3) {
+    top: 610px;
+    right: 56px;
+    width: 215px;
+  }
+
+  .sideDecorRight .sideDecorItem:nth-child(1) {
+    top: 72px;
+    left: 150px;
+    width: 240px;
+  }
+
+  .sideDecorRight .sideDecorItem:nth-child(2) {
+    top: 370px;
+    left: 48px;
+    width: 205px;
+  }
+
+  .sideDecorRight .sideDecorItem:nth-child(3) {
+    top: 640px;
+    left: 135px;
+    width: 228px;
+  }
+}
+
+/* ==========================================================================
+   5. DARK THEME COMPATIBILITY
+   ========================================================================== */
+:root[data-theme=dark] .sideDecorCard,
+:root[data-theme=dark] .sideDecorAbstract,
+:root[data-theme=dark] .sideDecorPillCard {
+  background: rgba(25, 22, 20, 0.92);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme=dark] .sideDecorMedia,
+:root[data-theme=dark] .sideDecorAbstractGraphic,
+:root[data-theme=dark] .sideDecorPillIcon {
+  background: #24211e;
+}
+
+:root[data-theme=dark] .sideDecorMeta {
+  background: rgba(25, 22, 20, 0.92);
+}
+
+:root[data-theme=dark] .sideDecorTitle,
+:root[data-theme=dark] .sideDecorAbstractFooter,
+:root[data-theme=dark] .sideDecorPillText {
+  color: #faf9f7;
+}
+
+:root[data-theme=dark] .sideDecorCategory,
+:root[data-theme=dark] .sideDecorAuthor,
+:root[data-theme=dark] .sideDecorAbstractHeader {
+  color: #9c9589;
+}
+
+:root[data-theme=dark] .sideDecorAbstractBadge {
+  background: #24211e;
+  color: #c9c3b8;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   6. KEYFRAME ANIMATIONS (GPU-Friendly Transforms & Gentle Opacity)
+   ========================================================================== */
+/* Soft staggered entrance when homepage loads */
+@keyframes sideDecorEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Continuous slow floating variations (8 - 14s durations) */
+@keyframes floatSubtleA {
+  0% {
+    transform: translateY(-8px) rotate(-1.2deg);
+    opacity: 0.88;
+  }
+  50% {
+    transform: translateY(7px) rotate(0.8deg);
+    opacity: 0.98;
+  }
+  100% {
+    transform: translateY(-8px) rotate(-1.2deg);
+    opacity: 0.88;
+  }
+}
+
+@keyframes floatSubtleB {
+  0% {
+    transform: translateY(8px) rotate(1.3deg);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translateY(-7px) rotate(-0.7deg);
+    opacity: 0.86;
+  }
+  100% {
+    transform: translateY(8px) rotate(1.3deg);
+    opacity: 0.95;
+  }
+}
+
+@keyframes floatSubtleC {
+  0% {
+    transform: translateY(-6px) rotate(0.7deg);
+    opacity: 0.87;
+  }
+  50% {
+    transform: translateY(8px) rotate(-1.1deg);
+    opacity: 0.97;
+  }
+  100% {
+    transform: translateY(-6px) rotate(0.7deg);
+    opacity: 0.87;
+  }
+}
+
+@keyframes floatSubtleD {
+  0% {
+    transform: translateY(7px) rotate(-1deg);
+    opacity: 0.96;
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.2deg);
+    opacity: 0.86;
+  }
+  100% {
+    transform: translateY(7px) rotate(-1deg);
+    opacity: 0.96;
+  }
+}
+
+/* ==========================================================================
+   7. ACCESSIBILITY: PREFERS-REDUCED-MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .desktopSideDecor .sideDecorItem,
+  .desktopSideDecor .sideDecorFloat,
+  .desktopSideDecor .sideDecorTrack {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 0.85 !important;
+  }
+}
