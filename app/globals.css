@@ -1078,7 +1078,9 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 
 /* 18. Reduced Motion Accessibility Requirement */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *:not(.sideIconRail):not(.sideIconRail *),
+  *:not(.sideIconRail):not(.sideIconRail *)::before,
+  *:not(.sideIconRail):not(.sideIconRail *)::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

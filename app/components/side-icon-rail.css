@@ -112,6 +112,28 @@
     animation: railScrollDown 28s linear infinite;
   }
 
+  /* Conveyor Belt Roller Drums (Top & Bottom Spindles) */
+  .sideIconRail__drum {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    height: 10px;
+    border-radius: 5px;
+    z-index: 18;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(25, 22, 20, 0.14) 0%, rgba(255, 255, 255, 0.5) 45%, rgba(25, 22, 20, 0.2) 100%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(25, 22, 20, 0.08);
+  }
+
+  .sideIconRail__drum--top {
+    top: 6px;
+  }
+
+  .sideIconRail__drum--bottom {
+    bottom: 6px;
+  }
+
   /* Segment containing sequence of icon cells */
   .sideIconRail__segment {
     display: flex;
@@ -122,13 +144,35 @@
 
   /* Individual icon cell wrapper with compact, varied spacing (10-16 visible icons) */
   .sideIconCell {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 48px;
     color: var(--ink, #191614);
+    border-bottom: 1px solid rgba(25, 22, 20, 0.035);
     transition: color 0.3s ease;
+  }
+
+  /* Film Strip / Conveyor Belt Sprocket Perforations */
+  .sideIconSprocket {
+    position: absolute;
+    width: 4px;
+    height: 8px;
+    border-radius: 1.5px;
+    background: rgba(25, 22, 20, 0.15);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.22);
+    pointer-events: none;
+    transition: background 0.3s ease;
+  }
+
+  .sideIconSprocket--left {
+    left: 8px;
+  }
+
+  .sideIconSprocket--right {
+    right: 8px;
   }
 
   /* Rhythmic subtle spacing variation */
@@ -416,19 +460,34 @@
   opacity: 0.32;
 }
 
+:root[data-theme=dark] .sideIconCell {
+  border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme=dark] .sideIconRail__drum {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.22) 45%, rgba(0, 0, 0, 0.4) 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme=dark] .sideIconSprocket {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
 /* ==========================================================================
    ACCESSIBILITY: PREFERS-REDUCED-MOTION
    Stop vertical track movement and icon sway; preserve static decorative rail.
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  .sideIconRail__track--left,
-  .sideIconRail__track--right,
-  .anim-swayA,
-  .anim-swayB,
-  .anim-swayC,
-  .anim-spinSlow,
-  .anim-pulse,
-  .anim-bounce {
+  .sideIconRail:not([data-animated="true"]) .sideIconRail__track--left,
+  .sideIconRail:not([data-animated="true"]) .sideIconRail__track--right,
+  .sideIconRail:not([data-animated="true"]) .anim-swayA,
+  .sideIconRail:not([data-animated="true"]) .anim-swayB,
+  .sideIconRail:not([data-animated="true"]) .anim-swayC,
+  .sideIconRail:not([data-animated="true"]) .anim-spinSlow,
+  .sideIconRail:not([data-animated="true"]) .anim-pulse,
+  .sideIconRail:not([data-animated="true"]) .anim-bounce {
     animation: none !important;
     transform: none !important;
   }

@@ -846,23 +846,28 @@ export function SideIconRail({ side, className = '' }: SideIconRailProps) {
   return (
     <aside
       className={`sideIconRail sideIconRail--${side} ${className}`}
+      data-animated="true"
       aria-hidden="true"
       role="presentation"
     >
+      {/* Conveyor Belt Roller Cylinders (Spindle Drums) */}
+      <div className="sideIconRail__drum sideIconRail__drum--top" aria-hidden="true" />
+      <div className="sideIconRail__drum sideIconRail__drum--bottom" aria-hidden="true" />
+
       <div className="sideIconRail__inner">
         {/* Continuous animation track containing duplicated identical sequence */}
         <div className={`sideIconRail__track sideIconRail__track--${side}`}>
           {/* Sequence 1 */}
           <div className="sideIconRail__segment">
             {sequence.map((glyph, index) => (
-              <RailIconCell key={`seg1-${glyph.id}-${index}`} glyph={glyph} index={index} />
+              <RailIconCell key={`seg1-${glyph.id}-${index}`} glyph={glyph} index={index} side={side} />
             ))}
           </div>
 
           {/* Sequence 2 (Identical duplicate creates mathematical 0ms-jump loop) */}
           <div className="sideIconRail__segment" aria-hidden="true">
             {sequence.map((glyph, index) => (
-              <RailIconCell key={`seg2-${glyph.id}-${index}`} glyph={glyph} index={index} />
+              <RailIconCell key={`seg2-${glyph.id}-${index}`} glyph={glyph} index={index} side={side} />
             ))}
           </div>
         </div>
@@ -871,17 +876,19 @@ export function SideIconRail({ side, className = '' }: SideIconRailProps) {
   );
 }
 
-function RailIconCell({ glyph, index }: { glyph: RailGlyph; index: number }) {
+function RailIconCell({ glyph, index, side }: { glyph: RailGlyph; index: number; side: 'left' | 'right' }) {
   const animClass = glyph.animation ? `anim-${glyph.animation}` : 'anim-swayA';
   const opacityClass = glyph.opacity ? `op-${glyph.opacity}` : 'op-mid';
   const sizeClass = glyph.size ? `size-${glyph.size}` : 'size-md';
 
   // Stagger animation delays deterministically based on index so icons sway out-of-phase
   const animDelay = `${((index * 0.37) % 4.5).toFixed(2)}s`;
-  const animDuration = `${(7 + ((index * 0.61) % 6)).toFixed(2)}s`;
+  const animDuration = `${(7 + (index % 6) * 0.61).toFixed(2)}s`;
 
   return (
     <div className={`sideIconCell ${opacityClass} ${sizeClass}`}>
+      {/* Film Strip / Conveyor Belt Sprocket Notch */}
+      <span className={`sideIconSprocket sideIconSprocket--${side}`} aria-hidden="true" />
       <div
         className={`sideIconWrapper ${animClass}`}
         style={{
