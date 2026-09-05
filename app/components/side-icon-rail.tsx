@@ -653,6 +653,175 @@ const GLYPH_ROSTER: RailGlyph[] = [
     opacity: 'low',
     size: 'sm',
   },
+  // --- 9. ADDITIONAL EXPANDED CATEGORIES ---
+  {
+    id: 'flash-strobe',
+    name: 'Camera Flash',
+    category: 'photography',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
+    ),
+    animation: 'pulse',
+    opacity: 'high',
+    size: 'sm',
+    baseRotation: -4,
+  },
+  {
+    id: 'landscape-view',
+    name: 'Landscape View',
+    category: 'photography',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="18.5" cy="7.5" r="2.5" />
+        <path d="M2 18l7-7 5 5 3-3 5 5H2z" />
+      </svg>
+    ),
+    animation: 'swayA',
+    opacity: 'mid',
+    size: 'md',
+    baseRotation: 3,
+  },
+  {
+    id: 'photo-gallery',
+    name: 'Photo Gallery',
+    category: 'photography',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="2" width="15" height="15" rx="2" />
+        <path d="M22 7v13a2 2 0 0 1-2 2H7" />
+      </svg>
+    ),
+    animation: 'swayC',
+    opacity: 'mid',
+    size: 'sm',
+    baseRotation: -5,
+  },
+  {
+    id: 'magic-wand',
+    name: 'Magic Wand',
+    category: 'creative',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m19 5-7 7" />
+        <path d="m14 2 1.5 2.5L18 5l-2.5 1.5L14 9l-1.5-2.5L10 5l2.5-1.5z" />
+        <path d="m5 14 1 1.5L7.5 16 6 17l-1 1.5L4 17l-1.5-1L4 14.5z" />
+        <path d="m2 22 10-10" />
+      </svg>
+    ),
+    animation: 'swayB',
+    opacity: 'high',
+    size: 'md',
+    baseRotation: 12,
+  },
+  {
+    id: 'video-timeline',
+    name: 'Video Timeline',
+    category: 'video',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="6" width="20" height="12" rx="2" />
+        <line x1="6" y1="6" x2="6" y2="18" />
+        <line x1="12" y1="6" x2="12" y2="18" />
+        <polygon points="12 2 15 6 9 6 12 2" fill="currentColor" />
+      </svg>
+    ),
+    animation: 'swayA',
+    opacity: 'mid',
+    size: 'md',
+    baseRotation: -2,
+  },
+  {
+    id: 'browser-window',
+    name: 'Browser Window',
+    category: 'tech',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2" />
+        <line x1="2" y1="9" x2="22" y2="9" />
+        <circle cx="5" cy="6.5" r=".75" fill="currentColor" />
+        <circle cx="8" cy="6.5" r=".75" fill="currentColor" />
+      </svg>
+    ),
+    animation: 'swayA',
+    opacity: 'low',
+    size: 'sm',
+  },
+  {
+    id: 'community-users',
+    name: 'Community Users',
+    category: 'community',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+    animation: 'swayA',
+    opacity: 'high',
+    size: 'md',
+  },
+  {
+    id: 'notification-bell',
+    name: 'Notification Bell',
+    category: 'community',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+    ),
+    animation: 'swayB',
+    opacity: 'mid',
+    size: 'sm',
+    baseRotation: 6,
+  },
+  {
+    id: 'award-ribbon',
+    name: 'Award Ribbon',
+    category: 'skillshot',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="8" r="6" />
+        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+      </svg>
+    ),
+    animation: 'swayA',
+    opacity: 'high',
+    size: 'md',
+    baseRotation: -4,
+  },
+  {
+    id: 'showcase-star',
+    name: 'Showcase Star',
+    category: 'skillshot',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ),
+    animation: 'pulse',
+    opacity: 'high',
+    size: 'md',
+  },
+  {
+    id: 'concentric-circles',
+    name: 'Concentric Circles',
+    category: 'creative',
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="6" />
+        <circle cx="12" cy="12" r="2" fill="currentColor" />
+      </svg>
+    ),
+    animation: 'spinSlow',
+    opacity: 'low',
+    size: 'sm',
+  },
 ];
 
 // Left rail order (curated for visual rhythm and domain interleaving)

@@ -3,45 +3,19 @@ import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
 import Link from 'next/link';
 import PublicNavbar from './components/public-navbar';
 import SideIconRail from './components/side-icon-rail';
-import { type SideShotItem } from './components/desktop-side-animations';
 import { getChatGPTUser } from './chatgpt-auth';
 import { signInPath } from '../lib/auth-path';
-import { getReadyDb } from '../lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   const signedIn = Boolean(await getChatGPTUser());
-  let sideShots: SideShotItem[] = [];
-  try {
-    if (process.env.DATABASE_URL) {
-      const sql = await getReadyDb();
-      const rows = await sql.query(`
-        SELECT p.id, p.title, p.category, p.image_width, p.image_height, u.display_name, u.username
-        FROM posts p
-        JOIN users u ON u.id = p.user_id
-        WHERE p.status = 'VISIBLE' AND u.status = 'ACTIVE'
-        ORDER BY p.created_at DESC
-        LIMIT 6
-      `);
-      sideShots = rows.map((r: Record<string, unknown>) => ({
-        id: String(r.id),
-        title: String(r.title || 'Untitled Skillshot'),
-        category: String(r.category || 'Creative'),
-        displayName: String(r.display_name || 'Creator'),
-        imageWidth: Number(r.image_width) || 640,
-        imageHeight: Number(r.image_height) || 480,
-      }));
-    }
-  } catch {
-    sideShots = [];
-  }
   return <main style={{ position: 'relative', overflowX: 'clip' }}>
     <PublicNavbar returnTo="/"/>
     {/* Infinite Side Visual Animation Rails */}
     <SideIconRail side="left" />
     <SideIconRail side="right" />
-    {/* <DesktopSideAnimations initialShots={sideShots}/> */}
+    {/* <DesktopSideAnimations /> */}
 
     <section className="hero shell">
       <div className="heroEditorial">
