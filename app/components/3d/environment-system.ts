@@ -82,6 +82,7 @@ export function createAtmosphericParticles(count: number = 80): {
   points: THREE.Points;
   update: (time: number) => void;
   updateTheme: (isDark: boolean) => void;
+  setParticleCount: (activeCount: number) => void;
 } {
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(count * 3);
@@ -134,10 +135,16 @@ export function createAtmosphericParticles(count: number = 80): {
   });
 
   const points = new THREE.Points(geometry, material);
+  let visibleCount = count;
+
+  const setParticleCount = (activeCount: number) => {
+    visibleCount = Math.min(count, Math.max(0, activeCount));
+    geometry.setDrawRange(0, visibleCount);
+  };
 
   const update = (time: number) => {
     const pos = geometry.attributes.position.array as Float32Array;
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < visibleCount; i++) {
       // Subtle upward floating with gentle horizontal drift
       pos[i * 3 + 1] = initialY[i] + Math.sin(time * speeds[i] + i) * 1.5;
       pos[i * 3] += Math.sin(time * 0.5 + i) * 0.003;
@@ -159,5 +166,6 @@ export function createAtmosphericParticles(count: number = 80): {
     points,
     update,
     updateTheme,
+    setParticleCount,
   };
 }

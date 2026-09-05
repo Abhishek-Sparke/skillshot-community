@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { EntranceStyle, ExitStyle } from './choreography-director';
 
 /**
  * SKILLSHOT — ORIGINAL 3D CHARACTER SYSTEM
@@ -10,9 +11,11 @@ import * as THREE from 'three';
 
 export interface CharacterRig {
   root: THREE.Group;
-  category: 'SUPERHERO' | 'ANIME' | 'SCIFI' | 'CYBERPUNK' | 'FANTASY' | 'MECHA';
+  category: 'SUPERHERO' | 'ANIME' | 'SCIFI' | 'CYBERPUNK' | 'FANTASY' | 'MECHA' | 'GAMING';
   name: string;
   title: string;
+  entranceType?: EntranceStyle;
+  exitType?: ExitStyle;
   head: THREE.Object3D;
   torso: THREE.Object3D;
   leftArm?: THREE.Object3D;
@@ -51,11 +54,6 @@ export function createSuperheroCharacter(): CharacterRig {
     emissiveIntensity: 0.9,
     roughness: 0.1,
     metalness: 0.9,
-  });
-  const jointMat = new THREE.MeshStandardMaterial({
-    color: 0x0d0e12,
-    roughness: 0.6,
-    metalness: 0.8,
   });
 
   // Torso / Chest
@@ -170,6 +168,8 @@ export function createSuperheroCharacter(): CharacterRig {
     category: 'SUPERHERO',
     name: 'Aero-Strider',
     title: 'Kinetic Grapple Hero',
+    entranceType: 'swing',
+    exitType: 'swingAway',
     head,
     torso,
     leftArm,
@@ -177,7 +177,7 @@ export function createSuperheroCharacter(): CharacterRig {
     leftLeg,
     rightLeg,
     grappleAnchor,
-    setPose: (time, cursor, progress = 0) => {
+    setPose: (time, cursor) => {
       // Dynamic superhero swinging posture:
       // Lead arm extended towards grapple anchor point
       leftArm.rotation.x = -1.6 + Math.sin(time * 2) * 0.15;
@@ -351,6 +351,8 @@ export function createAnimeWarrior(): CharacterRig {
     category: 'ANIME',
     name: 'Kaze-Blade',
     title: 'Tactical Cyber-Ronin',
+    entranceType: 'slideIn',
+    exitType: 'slideOut',
     head,
     torso,
     leftArm,
@@ -453,6 +455,8 @@ export function createSciFiScout(): CharacterRig {
     category: 'SCIFI',
     name: 'Nova Sentinel',
     title: 'Orbital Recon Scout',
+    entranceType: 'flyAcross',
+    exitType: 'flyUp',
     head,
     torso,
     specialProps: [halo, leftThruster, rightThruster],
@@ -553,6 +557,8 @@ export function createCyberpunkRogue(): CharacterRig {
     category: 'CYBERPUNK',
     name: 'Neon Phantom',
     title: 'Covert Cyber Operative',
+    entranceType: 'teleport',
+    exitType: 'fadeOut',
     head,
     torso,
     leftArm,
@@ -631,6 +637,8 @@ export function createFantasyMystic(): CharacterRig {
     category: 'FANTASY',
     name: 'Aether Mystic',
     title: 'Runic Horizon Weft',
+    entranceType: 'riseUp',
+    exitType: 'dropDown',
     head,
     torso,
     specialProps: [outerRing, innerRing],
@@ -715,6 +723,8 @@ export function createMechaAce(): CharacterRig {
     category: 'MECHA',
     name: 'Mecha Ace',
     title: 'Orbital Strike Armament',
+    entranceType: 'fallIn',
+    exitType: 'moveBehind',
     head,
     torso,
     specialProps: [leftWing, rightWing, reactor],
@@ -736,6 +746,184 @@ export function createMechaAce(): CharacterRig {
     },
   };
 }
+
+// ---------------------------------------------------------------------------
+// 7. GAMING CHARACTER: "Volt Runner" (Hyper-Drive Speedster archetype)
+// Original design: Streamlined racing exo-frame, glowing trail emitters,
+// speed-line visor, low drag coefficient posture.
+// ---------------------------------------------------------------------------
+export function createGamingCharacter(): CharacterRig {
+  const root = new THREE.Group();
+  root.name = 'VoltRunner';
+
+  // Base Materials
+  const suitMat = new THREE.MeshStandardMaterial({
+    color: 0x181a24,
+    roughness: 0.35,
+    metalness: 0.7,
+  });
+  const voltAccentMat = new THREE.MeshStandardMaterial({
+    color: 0xfacc15, // Kinetic lightning gold
+    roughness: 0.25,
+    metalness: 0.4,
+  });
+  const speedVisorMat = new THREE.MeshStandardMaterial({
+    color: 0xf59e0b,
+    emissive: 0xf59e0b,
+    emissiveIntensity: 1.1,
+    roughness: 0.1,
+    metalness: 0.85,
+  });
+  const thrusterMat = new THREE.MeshStandardMaterial({
+    color: 0x38bdf8,
+    emissive: 0x0ea5e9,
+    emissiveIntensity: 1.4,
+    roughness: 0.2,
+    metalness: 0.7,
+  });
+
+  // Torso / Aerodynamic Chassis
+  const torso = new THREE.Group();
+  const chestGeo = new THREE.BoxGeometry(1.0, 1.3, 0.65);
+  const chest = new THREE.Mesh(chestGeo, suitMat);
+  chest.position.y = 0;
+  chest.rotation.x = 0.12; // Forward aerodynamic slant
+  torso.add(chest);
+
+  // Chevron Speed Stripes on Chest
+  const stripeGeo = new THREE.ConeGeometry(0.35, 0.7, 3);
+  const stripe = new THREE.Mesh(stripeGeo, voltAccentMat);
+  stripe.position.set(0, 0.05, 0.36);
+  stripe.rotation.x = Math.PI / 2 + 0.12;
+  torso.add(stripe);
+
+  // Twin Dorsal Speed Pods / Thruster Nacelles
+  const leftPod = new THREE.Group();
+  leftPod.position.set(-0.48, 0.35, -0.38);
+  const podGeo = new THREE.CylinderGeometry(0.12, 0.16, 0.8, 8);
+  const leftPodMesh = new THREE.Mesh(podGeo, suitMat);
+  leftPodMesh.rotation.x = Math.PI / 2 + 0.15;
+  leftPod.add(leftPodMesh);
+  const leftJet = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 8), thrusterMat);
+  leftJet.position.set(0, -0.45, 0);
+  leftJet.rotation.x = Math.PI;
+  leftPod.add(leftJet);
+  torso.add(leftPod);
+
+  const rightPod = new THREE.Group();
+  rightPod.position.set(0.48, 0.35, -0.38);
+  const rightPodMesh = new THREE.Mesh(podGeo, suitMat);
+  rightPodMesh.rotation.x = Math.PI / 2 + 0.15;
+  rightPod.add(rightPodMesh);
+  const rightJet = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 8), thrusterMat);
+  rightJet.position.set(0, -0.45, 0);
+  rightJet.rotation.x = Math.PI;
+  rightPod.add(rightJet);
+  torso.add(rightPod);
+
+  // Head with Speed Visor & Top Aero Fin
+  const head = new THREE.Group();
+  head.position.set(0, 0.95, 0.08);
+  const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.52, 0.58), suitMat);
+  head.add(helmet);
+
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.14, 0.22), speedVisorMat);
+  visor.position.set(0, 0.02, 0.28);
+  head.add(visor);
+
+  const aeroFin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.25, 0.5), voltAccentMat);
+  aeroFin.position.set(0, 0.32, -0.06);
+  head.add(aeroFin);
+  torso.add(head);
+
+  // Articulated Arms (Runner forward drive posture)
+  const leftArm = new THREE.Group();
+  leftArm.position.set(-0.68, 0.45, 0.05);
+  const lArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.9, 8), suitMat);
+  lArmMesh.position.y = -0.45;
+  leftArm.add(lArmMesh);
+  const lGauntlet = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.4, 0.24), voltAccentMat);
+  lGauntlet.position.y = -0.55;
+  leftArm.add(lGauntlet);
+  torso.add(leftArm);
+
+  const rightArm = new THREE.Group();
+  rightArm.position.set(0.68, 0.45, -0.05);
+  const rArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.9, 8), suitMat);
+  rArmMesh.position.y = -0.45;
+  rightArm.add(rArmMesh);
+  const rGauntlet = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.4, 0.24), voltAccentMat);
+  rGauntlet.position.y = -0.55;
+  rightArm.add(rGauntlet);
+  torso.add(rightArm);
+
+  // Staggered Athletic Legs
+  const leftLeg = new THREE.Group();
+  leftLeg.position.set(-0.28, -0.9, 0.1);
+  const lLegMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 1.4, 8), suitMat);
+  lLegMesh.position.y = -0.7;
+  leftLeg.add(lLegMesh);
+  torso.add(leftLeg);
+
+  const rightLeg = new THREE.Group();
+  rightLeg.position.set(0.28, -0.9, -0.1);
+  const rLegMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 1.4, 8), suitMat);
+  rLegMesh.position.y = -0.7;
+  rightLeg.add(rLegMesh);
+  torso.add(rightLeg);
+
+  root.add(torso);
+
+  return {
+    root,
+    category: 'GAMING',
+    name: 'Volt Runner',
+    title: 'Hyper-Drive Speedster',
+    entranceType: 'dashIn',
+    exitType: 'dashOut',
+    head,
+    torso,
+    leftArm,
+    rightArm,
+    leftLeg,
+    rightLeg,
+    specialProps: [leftPod, rightPod, aeroFin],
+    setPose: (time, cursor) => {
+      // High-frequency kinetic idle vibration + forward lean
+      const jitter = Math.sin(time * 28) * 0.012;
+      torso.position.y = Math.sin(time * 3.2) * 0.05 + jitter;
+      torso.rotation.x = 0.18 + Math.sin(time * 2) * 0.03;
+
+      // Arm pumping sprint tension
+      leftArm.rotation.x = -0.7 + Math.sin(time * 3) * 0.12;
+      rightArm.rotation.x = 0.65 - Math.sin(time * 3) * 0.12;
+
+      // Thruster micro-pulsing
+      const thrusterPulse = 1.2 + Math.sin(time * 16) * 0.3;
+      thrusterMat.emissiveIntensity = thrusterPulse;
+
+      // Cursor tracking with speedster responsiveness
+      head.rotation.y = cursor.x * 0.45;
+      head.rotation.x = -cursor.y * 0.3;
+    },
+    updateMaterials: (isDark) => {
+      if (isDark) {
+        suitMat.color.setHex(0x101218);
+        suitMat.roughness = 0.3;
+        speedVisorMat.emissiveIntensity = 1.5;
+        thrusterMat.emissiveIntensity = 1.7;
+      } else {
+        suitMat.color.setHex(0x282c37);
+        suitMat.roughness = 0.4;
+        speedVisorMat.emissiveIntensity = 0.95;
+        thrusterMat.emissiveIntensity = 1.1;
+      }
+    },
+  };
+}
+
+// Alias for convenience
+export const createVoltRunnerCharacter = createGamingCharacter;
 
 // ---------------------------------------------------------------------------
 // STYLIZED GRAPPLING / WEB LINE GENERATOR

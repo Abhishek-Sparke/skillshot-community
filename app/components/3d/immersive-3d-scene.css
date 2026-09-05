@@ -223,9 +223,64 @@
   background: #24211e;
 }
 
-/* Accessibility: Disable when prefers-reduced-motion is active */
+/* Accessibility: Static decorative fallback when prefers-reduced-motion is active */
+.immersive3DReducedMotion {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.reducedMotionGlowLeft,
+.reducedMotionGlowRight {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.reducedMotionGlowLeft {
+  top: 100px;
+  left: -120px;
+  background: radial-gradient(circle, var(--accent, #ff5039), transparent 70%);
+}
+
+.reducedMotionGlowRight {
+  top: 180px;
+  right: -120px;
+  background: radial-gradient(circle, #38bdf8, transparent 70%);
+}
+
+.reducedMotionSilhouette {
+  position: absolute;
+  right: 64px;
+  top: 180px;
+  width: 160px;
+  height: 240px;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+:root[data-theme=dark] .reducedMotionGlowLeft,
+:root[data-theme=dark] .reducedMotionGlowRight {
+  opacity: 0.3;
+}
+
+:root[data-theme=dark] .reducedMotionSilhouette {
+  opacity: 0.15;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .immersive3DLayer {
+  .immersive3DCanvas {
     display: none !important;
+  }
+  .auraDot {
+    animation: none !important;
+  }
+  .characterPreviewMenu {
+    animation: none !important;
   }
 }
