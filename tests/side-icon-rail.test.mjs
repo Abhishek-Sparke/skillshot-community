@@ -97,3 +97,11 @@ test('homepage community cards restore green status indicator using database rol
   assert.match(globals, /\.homeFreshMeta\s+\.authorName\s*\{[^}]*display:\s*flex;\s*align-items:\s*center;/);
   assert.match(globals, /\.homeFreshMeta\s+\.authorName\s+\.roleBadge\.compact\s*\{[^}]*width:\s*18px;\s*height:\s*18px;/);
 });
+
+test('community page renders dual rolling side rails', async () => {
+  const page = await read('app/community/page.tsx');
+  assert.match(page, /import SideIconRail from '\.\.\/components\/side-icon-rail'/);
+  assert.match(page, /<SideIconRail side="left"\s*\/>/);
+  assert.match(page, /<SideIconRail side="right"\s*\/>/);
+});
+
