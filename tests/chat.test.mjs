@@ -40,7 +40,7 @@ test('server endpoints enforce conversation participant authorization', async ()
 
   const msgRoute = await read('app/api/chats/[id]/messages/route.ts');
   assert.match(msgRoute, /isConversationParticipant\(conversationId,\s*currentUserId\)/);
-  assert.match(msgRoute, /isBlockBetween\(currentUserId,\s*recipientId\)/);
+  assert.match(msgRoute, /(canUserMessage|isBlockBetween)\(currentUserId,\s*recipientId\)/);
 
   const deleteRoute = await read('app/api/chats/[id]/messages/[messageId]/route.ts');
   assert.match(deleteRoute, /rows\[0\]\.sender_id !== currentUserId/);

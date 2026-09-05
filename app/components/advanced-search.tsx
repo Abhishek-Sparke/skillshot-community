@@ -33,11 +33,35 @@ useEffect(()=>{if(!mobileFilters)return;const node=filterPanel.current;if(!node)
   function change<K extends keyof Filters>(key:K,value:Filters[K]){setFilter(current=>({...current,[key]:value,page:key==='page'?Number(value):1}));setLoading(true);setActive(-1);}
   function clear(){setFilter({q:'',role:[],category:'',skill:'',tag:'',type:'all',sort:'newest',page:1});setLoading(true);}
   function chooseKind(kind:'skill'|'category',value:string){setFilter(current=>({...current,q:'',[kind]:value,page:1}));setLoading(true);setPanel(false);setActive(-1);}
-  const suggestions=[...(results?.people.slice(0,5)||[]).map(p=>({group:'People',label:p.display_name,action:()=>router.push('/users/'+encodeURIComponent(p.username))})),...(results?.shots.slice(0,5)||[]).map(p=>({group:'Skillshots',label:p.title,action:()=>router.push('/shots/'+p.id)})),...(results?.skills.slice(0,5)||[]).map(skill=>({group:filter.q?'Skills':'Popular skills',label:skill,action:()=>chooseKind('skill',skill)})),...(results?.categories.filter(c=>!filter.q||c.toLowerCase().startsWith(filter.q.toLowerCase())).slice(0,5)||[]).map(category=>({group:'Categories',label:category,action:()=>chooseKind('category',category)}))];
+  type SuggestionItem = {
+    group: string;
+    label: string;
+    sublabel?: string;
+    avatarUrl?: string;
+    imageUrl?: string;
+    action: () => void;
+  };
+  const suggestions: SuggestionItem[] = [
+    ...(results?.people.slice(0,5)||[]).map(p=>({group:'People',label:p.display_name,sublabel:'@'+p.username,avatarUrl:p.avatarUrl,action:()=>router.push('/users/'+encodeURIComponent(p.username))})),
+    ...(results?.shots.slice(0,5)||[]).map(p=>({group:'Skillshots',label:p.title,sublabel:'by '+p.display_name,imageUrl:p.imageUrl,action:()=>router.push('/shots/'+p.id)})),
+    ...(results?.skills.slice(0,5)||[]).map(skill=>({group:filter.q?'Tags':'Popular tags',label:'#'+skill,action:()=>chooseKind('skill',skill)})),
+    ...(results?.categories.filter(c=>!filter.q||c.toLowerCase().startsWith(filter.q.toLowerCase())).slice(0,5)||[]).map(category=>({group:'Categories',label:category,action:()=>chooseKind('category',category)}))
+  ];
   const people=filter.type!=='shots',shots=filter.type!=='people';
   return <section className="searchWorkspace">
-    <div className="liveSearch" ref={region}><label htmlFor="skillshot-search">Search Skillshots, people, skills...</label><input id="skillshot-search" ref={input} type="search" value={filter.q} autoComplete="off" maxLength={100} role="combobox" aria-autocomplete="list" aria-expanded={panel} aria-controls="search-suggestions" aria-activedescendant={panel&&active>=0?'suggestion-'+active:undefined} placeholder="Search Skillshots, people, skills..." onFocus={()=>{setPanel(true);setActive(-1);}} onChange={e=>{change('q',e.target.value);setFilter(current=>({...current,sort:e.target.value?'relevance':'newest'}));setPanel(true);}} onKeyDown={e=>{if(e.key==='Escape'){setPanel(false);setActive(-1);}if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();setPanel(true);setActive(i=>suggestions.length?(i<0?(e.key==='ArrowDown'?0:suggestions.length-1):(i+(e.key==='ArrowDown'?1:-1)+suggestions.length)%suggestions.length):-1);}if(e.key==='Enter'){e.preventDefault();if(panel&&active>=0&&!loading)suggestions[active]?.action();setPanel(false);setActive(-1);}}}/>
-      {panel&&<div className="searchSuggestions" id="search-suggestions" role="listbox" aria-label="Search suggestions">{loading?<p role="status">Searching…</p>:error?<p>{error}</p>:suggestions.length?suggestions.map((s,i)=><div key={s.group+':'+s.label+':'+i}>{i===0||suggestions[i-1].group!==s.group?<h3>{s.group}</h3>:null}<button id={'suggestion-'+i} role="option" aria-selected={active===i} type="button" tabIndex={-1} onPointerDown={e=>e.preventDefault()} onClick={()=>{s.action();setPanel(false);}}>{s.label}</button></div>):<p>No results found. Try people, skills or categories.</p>}<button type="button" onClick={()=>{setPanel(false);setActive(-1);}}>View all results →</button></div>}
+    <div className="liveSearch" ref={region}>
+      <label htmlFor="skillshot-search">Search Skillshots, people, skills or tags...</label>
+      <input id="skillshot-search" ref={input} type="search" value={filter.q} autoComplete="off" maxLength={100} role="combobox" aria-autocomplete="list" aria-expanded={panel} aria-controls="search-suggestions" aria-activedescendant={panel&&active>=0?'suggestion-'+active:undefined} placeholder="Search Skillshots, people, skills or tags..." onFocus={()=>{setPanel(true);setActive(-1);}} onChange={e=>{change('q',e.target.value);setFilter(current=>({...current,sort:e.target.value?'relevance':'newest'}));setPanel(true);}} onKeyDown={e=>{if(e.key==='Escape'){setPanel(false);setActive(-1);}if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();setPanel(true);setActive(i=>suggestions.length?(i<0?(e.key==='ArrowDown'?0:suggestions.length-1):(i+(e.key==='ArrowDown'?1:-1)+suggestions.length)%suggestions.length):-1);}if(e.key==='Enter'){e.preventDefault();if(panel&&active>=0&&!loading)suggestions[active]?.action();setPanel(false);setActive(-1);}}}/>
+      {panel&&<div className="searchSuggestions" id="search-suggestions" role="listbox" aria-label="Search suggestions">
+        {loading?<p role="status" className="searchSuggestStatus">Searching…</p>:error?<p className="searchSuggestStatus">{error}</p>:suggestions.length?suggestions.map((s,i)=><div key={s.group+':'+s.label+':'+i}>
+          {i===0||suggestions[i-1].group!==s.group?<h3>{s.group}</h3>:null}
+          <button id={'suggestion-'+i} role="option" aria-selected={active===i} type="button" tabIndex={-1} className="searchSuggestItem" onPointerDown={e=>e.preventDefault()} onClick={()=>{s.action();setPanel(false);}}>
+            {s.avatarUrl ? <span className="suggestAvatar"><img src={s.avatarUrl} alt="" width={22} height={22}/></span> : s.imageUrl ? <span className="suggestThumb"><img src={s.imageUrl} alt="" width={22} height={22}/></span> : null}
+            <span className="suggestText"><b>{s.label}</b>{s.sublabel ? <small>{s.sublabel}</small> : null}</span>
+          </button>
+        </div>):<p className="searchSuggestStatus">No results found. Try people, skillshots, or tags.</p>}
+        <button type="button" className="searchSuggestViewAll" onClick={()=>{setPanel(false);setActive(-1);}}>View all results →</button>
+      </div>}
     </div>
     <button ref={filterButton} className="searchFilterToggle" type="button" aria-expanded={mobileFilters} onClick={()=>setMobileFilters(v=>!v)}>Filters</button>
     {mobileFilters&&<button className="searchFilterScrim" aria-label="Close filters" onClick={()=>{setMobileFilters(false);filterButton.current?.focus();}}/>}

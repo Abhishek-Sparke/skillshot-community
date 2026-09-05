@@ -1,16 +1,16 @@
-.publicNavbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:clamp(12px,2vw,28px);height:74px;min-width:0;border-bottom:1px solid var(--line);background:rgba(248,246,240,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:background-color .2s ease,border-color .2s ease}
-:root[data-theme=dark] .publicNavbar{background:rgba(20,20,19,0.85);border-color:var(--line)}
-.publicNavbar>.brand{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:10px;font-size:20px;font-weight:800;letter-spacing:-.5px;text-decoration:none;color:inherit;transition:transform .15s ease}
+.publicNavbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:clamp(12px,2vw,28px);height:70px;min-width:0;border-bottom:1px solid var(--line);background:rgba(250,249,247,0.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:background-color .2s ease,border-color .2s ease}
+:root[data-theme=dark] .publicNavbar{background:rgba(14,12,11,0.88);border-color:var(--line)}
+.publicNavbar>.brand{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:10px;font-size:19px;font-weight:800;letter-spacing:-.4px;text-decoration:none;color:inherit;transition:transform .15s ease}
 .publicNavbar>.brand:hover{transform:scale(1.02)}
-.publicNavbar>.brand span{display:grid;place-items:center;background:var(--ink);color:#fff;width:31px;height:31px;border-radius:9px;transform:rotate(-5deg);box-shadow:0 3px 8px rgba(0,0,0,0.18);transition:transform .2s ease}
-.publicNavbar>.brand:hover span{transform:rotate(0deg) scale(1.08)}
-.publicNavLinks{display:flex;align-items:center;gap:clamp(10px,1.5vw,20px);margin-left:auto;flex:none}
-.publicNavLinks>a{display:inline-flex;align-items:center;min-height:40px;padding:6px 12px;border-radius:999px;white-space:nowrap;text-decoration:none;color:inherit;font-size:14px;font-weight:700;transition:all .15s ease}
-.publicNavLinks>a:hover{background:var(--surface-soft);color:var(--ink)}
-.chatNavUnreadBadge{margin-left:6px;background:var(--red,#ff604a);color:#fff;font-size:11px;font-weight:700;line-height:1;padding:2px 6px;border-radius:10px;vertical-align:middle}
-.publicNavLinks>a.upload{padding:10px 18px!important;border-radius:12px!important;box-shadow:0 4px 14px var(--red-glow),2px 2px 0 var(--ink)!important}
-.publicNavLinks>a.upload:hover{transform:translateY(-1px);box-shadow:0 6px 18px var(--red-glow),2px 3px 0 var(--ink)!important}
-.publicNavbar a:focus-visible,.publicNavToggle:focus-visible{outline:3px solid var(--red);outline-offset:3px}
+.publicNavbar>.brand span{display:grid;place-items:center;background:var(--ink);color:#fff;width:30px;height:30px;border-radius:8px;transform:rotate(-4deg);box-shadow:0 2px 6px rgba(0,0,0,0.16);transition:transform .2s ease}
+.publicNavbar>.brand:hover span{transform:rotate(0deg) scale(1.06)}
+.publicNavLinks{display:flex;align-items:center;gap:clamp(6px,1.2vw,16px);margin-left:auto;flex:none}
+.publicNavLinks>a{display:inline-flex;align-items:center;min-height:38px;padding:6px 14px;border-radius:999px;white-space:nowrap;text-decoration:none;color:inherit;font-size:13.5px;font-weight:600;opacity:0.85;transition:all .15s ease}
+.publicNavLinks>a:hover{opacity:1;background:var(--surface-soft);color:var(--ink)}
+.chatNavUnreadBadge{margin-left:6px;background:var(--red,#ff5039);color:#fff;font-size:11px;font-weight:700;line-height:1;padding:2px 6px;border-radius:10px;vertical-align:middle}
+.publicNavLinks>a.upload{padding:8px 18px!important;border-radius:999px!important;background:var(--red,#ff5039)!important;color:#fff!important;box-shadow:0 2px 8px var(--red-glow)!important;opacity:1!important;font-weight:600!important}
+.publicNavLinks>a.upload:hover{transform:translateY(-1px);box-shadow:0 4px 14px var(--red-glow)!important;opacity:0.92!important}
+.publicNavbar a:focus-visible,.publicNavToggle:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .publicNavMobileActions{display:none}
 .publicNavToggle{display:none;flex:none;position:relative;width:42px;height:42px;margin-left:auto;border:1.5px solid var(--line);border-radius:11px;background:var(--surface,#fff);color:var(--ink);cursor:pointer;transition:all .15s ease}
 .publicNavToggle:hover{background:var(--surface-soft,#ebe7df);border-color:#b8b3a8;transform:scale(1.03)}
