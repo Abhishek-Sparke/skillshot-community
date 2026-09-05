@@ -3,7 +3,6 @@ import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
 import Link from 'next/link';
 import PublicNavbar from './components/public-navbar';
 import DesktopSideAnimations, { type SideShotItem } from './components/desktop-side-animations';
-import Immersive3DScene from './components/3d/immersive-3d-scene';
 import { getChatGPTUser } from './chatgpt-auth';
 import { signInPath } from '../lib/auth-path';
 import { getReadyDb } from '../lib/db';
@@ -38,7 +37,6 @@ export default async function Home() {
   }
   return <main style={{ position: 'relative', overflowX: 'clip' }}>
     <PublicNavbar returnTo="/"/>
-    <Immersive3DScene />
     <DesktopSideAnimations initialShots={sideShots}/>
 
     <section className="hero shell">
