@@ -7,8 +7,13 @@ export function HomeFreshSkeleton() {
   return <div className="feedSkeleton" aria-label="Loading newest Skillshots" aria-live="polite">{[0,1,2].map(item => <span key={item} className="skeletonCard"><i/><b/><small/></span>)}</div>;
 }
 export default async function HomeFresh() {
-  const sql = await getReadyDb();
-  const rows = await sql.query(`SELECT p.id,p.title,p.category,p.image_width,p.image_height,u.display_name,u.username,u.role,u.avatar_url,(SELECT count(*) FROM reactions r WHERE r.post_id=p.id) reaction_count,(SELECT count(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE') comment_count FROM posts p JOIN users u ON u.id=p.user_id WHERE p.status='VISIBLE' AND u.status='ACTIVE' ORDER BY p.created_at DESC LIMIT 3`);
+  let rows: any[] = [];
+  try {
+    const sql = await getReadyDb();
+    rows = await sql.query(`SELECT p.id,p.title,p.category,p.image_width,p.image_height,u.display_name,u.username,u.role,u.avatar_url,(SELECT count(*) FROM reactions r WHERE r.post_id=p.id) reaction_count,(SELECT count(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE') comment_count FROM posts p JOIN users u ON u.id=p.user_id WHERE p.status='VISIBLE' AND u.status='ACTIVE' ORDER BY p.created_at DESC LIMIT 3`);
+  } catch {
+    rows = [];
+  }
   if (!rows.length) return <div className="emptyFeed"><span>✦</span><h3>Be the first to share something you’re proud of.</h3><Link className="primary" href="/upload">Create a Skillshot</Link></div>;
   return <div className="homeFreshGrid">{rows.map((row, index) => {
     const id = String(row.id), name = String(row.display_name);

@@ -29,6 +29,7 @@ export async function GET(request: Request) {
   if (mine && !user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   if (saved && !user) return Response.json({ error: 'Sign in to see saved Skillshots.' }, { status: 401 });
   if (following && !user) return Response.json({ error: 'Sign in to see creators you follow.' }, { status: 401 });
+  if (!process.env.DATABASE_URL) return Response.json({ posts: [], nextCursor: null });
   const sql = await getReadyDb();
   const rows = await sql.query(`
     SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,p.image_width,p.image_height,p.image_type,
