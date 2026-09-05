@@ -63,3 +63,12 @@ test('homepage mounts Immersive3DScene cleanly behind hero content', async () =>
   assert.match(page, /<Immersive3DScene\s*\/>/);
   assert.match(page, /<section className="hero shell">/);
 });
+
+test('3D scene supports character preview menu and creator energy moment', async () => {
+  const file = await read('app/components/3d/immersive-3d-scene.tsx');
+  assert.match(file, /CREATOR ENERGY/);
+  assert.match(file, /triggerSwingButton/);
+  assert.match(file, /characterPreviewMenu/);
+  assert.match(file, /ROSTER_NAMES/);
+});
+

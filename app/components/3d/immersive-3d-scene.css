@@ -31,28 +31,32 @@
   }
 
   /* Miniature character aura badge (subtle editorial pill indicator) */
-  .characterAuraBadge {
+  .characterAuraWrap {
     position: absolute;
     bottom: 24px;
     right: 32px;
+    pointer-events: auto;
+    z-index: 15;
+  }
+
+  .characterAuraBadge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
+    padding: 7px 14px;
     border-radius: 999px;
     background: var(--surface, #ffffff);
     border: 1px solid var(--line, rgba(0, 0, 0, 0.08));
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-    pointer-events: auto;
-    cursor: default;
-    opacity: 0.75;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    z-index: 10;
+    box-shadow: 0 4px 16px rgba(25, 22, 20, 0.05), 0 1px 3px rgba(25, 22, 20, 0.02);
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   }
 
   .characterAuraBadge:hover {
     opacity: 1;
     transform: translateY(-1px);
+    border-color: var(--ink, #191614);
   }
 
   .auraDot {
@@ -65,11 +69,16 @@
   }
 
   .auraText {
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--ink, #191614);
+  }
+
+  .auraChevron {
+    font-size: 9px;
     color: var(--muted, #6e6a62);
+    margin-left: 2px;
   }
 
   @keyframes auraPulse {
@@ -81,6 +90,102 @@
       opacity: 1;
       transform: scale(1.15);
     }
+  }
+
+  /* Character Preview Menu (Section 19: Creator Energy Moment) */
+  .characterPreviewMenu {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: 0;
+    width: 230px;
+    padding: 8px;
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--line, rgba(0, 0, 0, 0.1));
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(25, 22, 20, 0.12), 0 2px 6px rgba(25, 22, 20, 0.04);
+    animation: menuSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes menuSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .characterMenuHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px 8px;
+    border-bottom: 1px solid var(--line, rgba(0, 0, 0, 0.06));
+    margin-bottom: 6px;
+  }
+
+  .characterMenuEyebrow {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.9px;
+    color: var(--muted, #878277);
+  }
+
+  .triggerSwingButton {
+    border: 0;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(255, 80, 57, 0.08);
+    color: var(--accent, #ff5039);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease;
+  }
+
+  .triggerSwingButton:hover {
+    background: var(--accent, #ff5039);
+    color: #ffffff;
+    transform: scale(1.03);
+  }
+
+  .characterMenuList {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .characterMenuItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink, #191614);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .characterMenuItem:hover {
+    background: var(--surface-soft, #f2f0ec);
+  }
+
+  .characterMenuItem.active {
+    background: var(--surface-soft, #f2f0ec);
+    color: var(--accent, #ff5039);
+    font-weight: 700;
+  }
+
+  .menuItemIcon {
+    font-size: 10px;
+    color: var(--accent, #ff5039);
   }
 }
 
@@ -97,14 +202,25 @@
 }
 
 /* Dark Mode Overrides */
-:root[data-theme=dark] .characterAuraBadge {
-  background: rgba(25, 22, 20, 0.9);
+:root[data-theme=dark] .characterAuraBadge,
+:root[data-theme=dark] .characterPreviewMenu {
+  background: rgba(25, 22, 20, 0.95);
   border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
 }
 
-:root[data-theme=dark] .auraText {
-  color: #9c9589;
+:root[data-theme=dark] .characterAuraBadge:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+:root[data-theme=dark] .auraText,
+:root[data-theme=dark] .characterMenuItem {
+  color: #faf9f7;
+}
+
+:root[data-theme=dark] .characterMenuItem:hover,
+:root[data-theme=dark] .characterMenuItem.active {
+  background: #24211e;
 }
 
 /* Accessibility: Disable when prefers-reduced-motion is active */
