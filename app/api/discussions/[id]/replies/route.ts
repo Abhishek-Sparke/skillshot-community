@@ -2,6 +2,7 @@ import { getReadyDb } from '../../../../../lib/db';
 import { requirePrincipal } from '../../../../../lib/authz';
 import { normalizeRole } from '../../../../../lib/roles';
 import { moderateText } from '../../../../../lib/moderation';
+import { awardXp, XP_REWARDS, isMeaningfulComment } from '../../../../../lib/xp';
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -78,6 +79,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       SET reply_count = reply_count + 1, updated_at = now()
       WHERE id = $1
     `, [id]);
+    if(isMeaningfulComment(replyBody))await awardXp({userId:user.id,amount:XP_REWARDS.DISCUSSION_REPLY,eventType:'DISCUSSION_REPLY',reason:'Meaningful discussion reply',actionId:`discussion-reply:${replyId}`,relatedType:'DISCUSSION',relatedId:id});
 
     return Response.json({
       reply: {

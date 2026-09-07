@@ -40,10 +40,17 @@ export const COMMUNITY_MIGRATION = [
     created_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, discussion_id)
   )`,
+  `CREATE TABLE IF NOT EXISTS announcement_reads (
+    announcement_id text NOT NULL REFERENCES discussions(id) ON DELETE CASCADE,
+    user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    read_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (announcement_id, user_id)
+  )`,
   `CREATE INDEX IF NOT EXISTS idx_discussions_feed ON discussions(status, is_pinned DESC, created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_discussions_category ON discussions(category, status, created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_discussions_user ON discussions(user_id, created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_discussion_replies_parent ON discussion_replies(discussion_id, created_at ASC)`,
   `CREATE INDEX IF NOT EXISTS idx_discussion_reactions_disc ON discussion_reactions(discussion_id)`,
   `CREATE INDEX IF NOT EXISTS idx_saved_discussions_user ON saved_discussions(user_id, created_at DESC)`
+  ,`CREATE INDEX IF NOT EXISTS idx_announcement_reads_user ON announcement_reads(user_id, read_at DESC)`
 ];

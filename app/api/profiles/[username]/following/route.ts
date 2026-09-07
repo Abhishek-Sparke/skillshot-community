@@ -24,6 +24,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
       u.display_name, 
       u.avatar_url, 
       u.role,
+      u.creator_rank,
       u.status,
       f.created_at as followed_at,
       ${viewerId ? `EXISTS(SELECT 1 FROM follows f2 WHERE f2.follower_id = $2 AND f2.followed_id = u.id) as is_following` : `false as is_following`}
@@ -51,6 +52,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
       displayName: r.display_name,
       avatarUrl: r.avatar_url ? `/api/avatars/${encodeURIComponent(String(r.username))}?v=${encodeURIComponent(String(r.avatar_url))}` : '',
       role: r.role,
+      creatorRank: r.creator_rank || 'NEWCOMER',
       isFollowing: Boolean(r.is_following),
       followedAt: r.followed_at,
     })),

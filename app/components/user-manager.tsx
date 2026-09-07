@@ -1,12 +1,13 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 import { useEffect, useState } from 'react';
 import { canModerateUser,type UserRole,type Permission } from '../../lib/roles';
 import { useStaff } from './staff-shell';
 import StaffDialog from './staff-dialog';
-import RoleBadge from './role-badge';
+import CreatorUsername from './creator-username';
 import { StaffEmpty,StaffStatus } from './staff-states';
 
-type User={id:string;display_name:string;username:string;role:UserRole;status:string;created_at:string;avatar_url?:string|null};
+type User={id:string;display_name:string;username:string;role:UserRole;creator_rank:string;status:string;created_at:string;avatar_url?:string|null};
 
 export default function UserManager(){
   const principal=useStaff();
@@ -80,7 +81,7 @@ export default function UserManager(){
             {user.avatar_url ? <img src={`/api/avatars/${encodeURIComponent(user.username)}?v=${encodeURIComponent(user.avatar_url)}`} alt="" width={38} height={38} loading="lazy"/> : <span>{user.display_name.slice(0, 1).toUpperCase()}</span>}
           </div>
           <div>
-            <b>{user.display_name} <RoleBadge role={user.role}/></b>
+            <b><CreatorUsername asSpan name={user.display_name} username={user.username} creatorRank={user.creator_rank} staffRole={user.role}/></b>
             <span>@{user.username}</span>
             <small>Joined {new Date(user.created_at).toLocaleDateString()}</small>
             <StaffStatus value={user.status}/>

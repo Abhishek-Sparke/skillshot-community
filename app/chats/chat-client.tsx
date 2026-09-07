@@ -1,15 +1,20 @@
+/* eslint-disable react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any, react/no-unescaped-entities */
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
+import CreatorUsername from '../components/creator-username';
+import type { UserRole } from '../../lib/roles';
+import type { CreatorRankId } from '../../lib/creator-rank';
 
 export type Recipient = {
   id: string;
   username: string;
   displayName: string;
   avatarUrl?: string;
-  role: string;
+  role: UserRole;
+  creatorRank: CreatorRankId;
   status: string;
   lastSeenAt?: string;
   isBlockedByYou: boolean;
@@ -106,7 +111,7 @@ export default function ChatClient({ currentUserId }: { currentUserId: string })
   // New Chat Modal
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [userQuery, setUserQuery] = useState('');
-  const [userResults, setUserResults] = useState<{ id: string; username: string; displayName: string; avatarUrl?: string }[]>([]);
+  const [userResults, setUserResults] = useState<{ id: string; username: string; displayName: string; avatarUrl?: string;role:UserRole;creatorRank:CreatorRankId }[]>([]);
   const [isSearchingUsers, setIsSearchingUsers] = useState(false);
 
   // Report Modal
@@ -521,7 +526,7 @@ export default function ChatClient({ currentUserId }: { currentUserId: string })
 
                   <div className="convInfo">
                     <div className="convTopRow">
-                      <span className="convName">{conv.recipient.displayName}</span>
+                      <CreatorUsername asSpan name={conv.recipient.displayName} username={conv.recipient.username} creatorRank={conv.recipient.creatorRank} staffRole={conv.recipient.role} className="convName"/>
                       {conv.lastMessage && (
                         <span className="convTime">
                           {formatChatTime(conv.lastMessage.created_at)}
@@ -592,7 +597,7 @@ export default function ChatClient({ currentUserId }: { currentUserId: string })
                     )}
                   </div>
                   <div className="chatHeaderDetails">
-                    <h2>{activeConv.recipient.displayName}</h2>
+                    <h2><CreatorUsername asSpan name={activeConv.recipient.displayName} username={activeConv.recipient.username} creatorRank={activeConv.recipient.creatorRank} staffRole={activeConv.recipient.role}/></h2>
                     <p>
                       @{activeConv.recipient.username} ·{' '}
                       {isUserOnline(activeConv.recipient.lastSeenAt) ? '● Online' : 'Active recently'}
@@ -935,7 +940,7 @@ export default function ChatClient({ currentUserId }: { currentUserId: string })
                       )}
                     </div>
                     <div>
-                      <strong style={{ fontSize: '13.5px', color: 'var(--ink)' }}>{u.displayName}</strong>
+                      <strong style={{ fontSize: '13.5px', color: 'var(--ink)' }}><CreatorUsername asSpan name={u.displayName} username={u.username} creatorRank={u.creatorRank} staffRole={u.role}/></strong>
                       <div style={{ fontSize: '12px', color: 'var(--muted)' }}>@{u.username}</div>
                     </div>
                   </div>

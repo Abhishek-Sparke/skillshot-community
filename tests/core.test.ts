@@ -14,12 +14,20 @@ import { safeReturnPath, signInPath, signUpPath } from '../lib/auth-path.ts';
 import { staffLinks, moderationActions, formatBytes } from '../lib/staff-ui.ts';
 import { queueFilters } from '../lib/staff-query.ts';
 import { publicNavigation } from '../lib/public-navigation.ts';
+import { isMeaningfulComment, normalizeCommentForXp, XP_REWARDS } from '../lib/xp-policy.ts';
+
+test('comment XP eligibility rejects short, duplicate-shaped, emoji-only and repeated-character spam',()=>{
+  for(const value of ['ok','hi','.','🔥','🔥🔥🔥🔥🔥','aaaaaaaaaa','   gg   '])assert.equal(isMeaningfulComment(value),false,value);
+  for(const value of ['Nice!','Great work','Awesome edit!','This helped me'])assert.equal(isMeaningfulComment(value),true,value);
+  assert.equal(normalizeCommentForXp('  NICE!  '),'nice!');
+  assert.equal(XP_REWARDS.COMMENT_CREATED,5);
+});
 
 test('public navigation uses active viewer roles and preserves sign-in return paths', () => {
   const guest = publicNavigation(null, '/shots/example');
   assert.equal(guest.some(link => link.href === '/profile'), false);
   assert.equal(guest.find(link => link.label === 'Sign in')?.href, '/signin?callbackUrl=%2Fshots%2Fexample');
-  assert.deepEqual(guest.map(link => link.label), ['Community', 'Search', 'Sign in', 'Sign up']);
+  assert.deepEqual(guest.map(link => link.label), ['Community', 'Discussion', 'Search', 'Sign in', 'Sign up']);
   assert.equal(guest.find(link => link.label === 'Sign up')?.href, signUpPath('/profile/edit'));
   for (const role of ['USER', 'TRUSTED_CONTRIBUTOR', 'MODERATOR', 'HEAD_MODERATOR', 'ADMIN', 'OWNER'] as const) {
     const links = publicNavigation({ role, status: 'ACTIVE' }, '/');

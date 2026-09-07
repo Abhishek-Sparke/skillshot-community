@@ -8,6 +8,7 @@ import { AVATAR_MAX_BYTES, BANNER_MAX_BYTES, processAvatar, processBanner, uploa
 import { rateLimit } from '../../../lib/rate-limit';
 import { signInPath } from '../../../lib/auth-path';
 import { moderateImage } from '../../../lib/moderation';
+import { awardXp, XP_REWARDS } from '../../../lib/xp';
 
 function redirectError(request: Request, error: string) {
   return NextResponse.redirect(new URL(`/profile/edit?error=${encodeURIComponent(error)}`, request.url), 303);
@@ -195,5 +196,8 @@ export async function POST(request: Request) {
     await sql.query(`INSERT INTO storage_cleanup_queue(id,post_id,pathname,reason,cleanup_after) VALUES($1,NULL,$2,'BANNER_REPLACED',now()+interval '7 days')`, [crypto.randomUUID(), previousBanner]).catch(() => undefined);
   }
   if (avatar instanceof File && avatar.size > 0) await recordAvatarUpload(user.userId, 'SUCCESS', avatar.size);
+  if (displayName && username && bio.length >= 10 && profileSkills.length > 0 && avatarUrl) {
+    await awardXp({userId:user.userId,amount:XP_REWARDS.PROFILE_COMPLETE,eventType:'PROFILE_COMPLETE',reason:'Completed profile',actionId:`profile-complete:${user.userId}`,relatedType:'PROFILE',relatedId:user.userId});
+  }
   return NextResponse.redirect(new URL('/profile?saved=1', request.url), 303);
 }

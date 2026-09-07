@@ -1,25 +1,10 @@
 import PublicNavbar from '../components/public-navbar';
 import SideIconRail from '../components/side-icon-rail';
-import CommunityPageView from '../components/community-page-view';
-import { getPrincipal } from '../../lib/authz';
-import { isStaffRole } from '../../lib/roles';
-import type { CreatorRankId } from '../../lib/creator-rank';
+import CommunityFeed from '../components/community-feed';
 
 export const dynamic = 'force-dynamic';
 
-export default async function CommunityPage() {
-  const principal = await getPrincipal();
-
-  const currentUser = principal ? {
-    id: principal.id,
-    username: String(principal.profile.username || ''),
-    displayName: String(principal.profile.display_name || ''),
-    role: principal.role,
-    avatarUrl: principal.profile.avatar_url ? `/api/avatars/${encodeURIComponent(String(principal.profile.username))}?v=${encodeURIComponent(String(principal.profile.avatar_url))}` : undefined,
-    creatorRank: (principal.profile.creator_rank as CreatorRankId) || 'NEWCOMER',
-    isStaff: isStaffRole(principal.role),
-  } : null;
-
+export default function CommunityPage() {
   return (
     <main style={{ position: 'relative', overflowX: 'clip' }}>
       <PublicNavbar returnTo="/community" />
@@ -27,7 +12,12 @@ export default async function CommunityPage() {
       <SideIconRail side="left" />
       <SideIconRail side="right" />
 
-      <CommunityPageView currentUser={currentUser} />
+      <header className="communityDiscoveryHeader shell">
+        <p className="eyebrow">COMMUNITY</p>
+        <h1>Discover what creators are making.</h1>
+        <p>Explore Skillshots from gaming, development, design, photography, art and more.</p>
+      </header>
+      <section className="feed communityFeed shell" aria-label="Community Skillshots"><CommunityFeed /></section>
     </main>
   );
 }

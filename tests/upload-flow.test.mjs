@@ -68,6 +68,7 @@ async function routeHarness({kind='posts',decision=safe,authenticated=true,stora
     if(id.endsWith('/image-processing'))return processing;
     if(id.endsWith('/upload-policy'))return policy;
     if(id.endsWith('/pagination'))return {};
+    if(id.endsWith('/xp'))return {XP_REWARDS:{SKILLSHOT_PUBLISHED:100},awardXp:async()=>({awarded:true}),awardCommentXp:async()=>({eligible:true}),reverseCommentXp:async()=>undefined};
     throw Error('Unexpected dependency '+id);
   };
   const routeModule={exports:{}};
@@ -155,7 +156,7 @@ test('homepage renders database image links and an intentional image-free empty 
       if(id==='next/link')return {default:props=>React.createElement('a',props)};
       if(id.endsWith('/db'))return {getReadyDb:async()=>({query:async sql=>{assert.match(sql,/LIMIT 3/);return rows;}})};
       if(id.endsWith('/roles'))return {normalizeRole:()=> 'USER'};
-      if(id==='./role-badge')return {default:()=>null};
+      if(id==='./creator-username')return {default:props=>React.createElement('span',null,props.name)};
       throw Error('Unexpected dependency '+id);
     };
     new Function('require','module','exports',code)(require,routeModule,routeModule.exports);

@@ -7,6 +7,7 @@ export type PublicNavLink = { href: string; label: string; className?: string };
 export function publicNavigation(viewer: { role: UserRole; status: string } | null, returnTo: string): PublicNavLink[] {
   const links: PublicNavLink[] = [
     { href: '/community', label: 'Community' },
+    { href: '/discussion', label: 'Discussion' },
     { href: '/search', label: 'Search' },
   ];
   if (!viewer || viewer.status !== 'ACTIVE') return [...links,

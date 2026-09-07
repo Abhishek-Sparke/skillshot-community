@@ -23,6 +23,7 @@ export async function GET(request: Request) {
        u.display_name, 
        u.avatar_url, 
        u.role,
+       u.creator_rank,
        u.last_seen_at
      FROM users u
      WHERE u.id <> $1
@@ -44,6 +45,7 @@ export async function GET(request: Request) {
       displayName: r.display_name,
       avatarUrl: r.avatar_url ? `/api/avatars/${encodeURIComponent(String(r.username))}?v=${encodeURIComponent(String(r.avatar_url))}` : '',
       role: r.role,
+      creatorRank: r.creator_rank || 'NEWCOMER',
       lastSeenAt: r.last_seen_at,
     })),
   });

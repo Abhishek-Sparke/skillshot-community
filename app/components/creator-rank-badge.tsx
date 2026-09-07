@@ -70,8 +70,8 @@ export default function CreatorRankBadge({ rank, showLabel = false, size = 'md',
   return (
     <span
       className={`creatorRankBadge rankBadge-${rankKey.toLowerCase()} size-${size} ${className}`}
-      data-tooltip={`${info.label} (Creator Rank)`}
-      title={`${info.label} (Creator Rank)`}
+      data-tooltip={`${info.label} — Creator Rank`}
+      title={`${info.label} — Creator Rank`}
       aria-label={`${info.label} Creator Rank`}
     >
       <span className="rankIconContainer">{renderIcon()}</span>

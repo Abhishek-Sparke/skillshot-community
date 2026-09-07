@@ -16,22 +16,22 @@ const read = (file) => fs.readFile(path.join(root, file), 'utf8');
 
 test('creator ranks match specifications across all 7 tiers', () => {
   assert.equal(rankFromXp(0).id, 'NEWCOMER');
-  assert.equal(rankFromXp(99).id, 'NEWCOMER');
-  assert.equal(rankFromXp(100).id, 'CREATOR');
-  assert.equal(rankFromXp(299).id, 'CREATOR');
-  assert.equal(rankFromXp(300).id, 'RISING_CREATOR');
-  assert.equal(rankFromXp(699).id, 'RISING_CREATOR');
-  assert.equal(rankFromXp(700).id, 'SKILLED_CREATOR');
-  assert.equal(rankFromXp(1499).id, 'SKILLED_CREATOR');
-  assert.equal(rankFromXp(1500).id, 'ELITE_CREATOR');
-  assert.equal(rankFromXp(2999).id, 'ELITE_CREATOR');
-  assert.equal(rankFromXp(3000).id, 'MASTER_CREATOR');
-  assert.equal(rankFromXp(5999).id, 'MASTER_CREATOR');
-  assert.equal(rankFromXp(6000).id, 'LEGEND');
+  assert.equal(rankFromXp(499).id, 'NEWCOMER');
+  assert.equal(rankFromXp(500).id, 'CREATOR');
+  assert.equal(rankFromXp(1999).id, 'CREATOR');
+  assert.equal(rankFromXp(2000).id, 'RISING_CREATOR');
+  assert.equal(rankFromXp(4999).id, 'RISING_CREATOR');
+  assert.equal(rankFromXp(5000).id, 'SKILLED_CREATOR');
+  assert.equal(rankFromXp(9999).id, 'SKILLED_CREATOR');
+  assert.equal(rankFromXp(10000).id, 'ELITE_CREATOR');
+  assert.equal(rankFromXp(24999).id, 'ELITE_CREATOR');
+  assert.equal(rankFromXp(25000).id, 'MASTER_CREATOR');
+  assert.equal(rankFromXp(49999).id, 'MASTER_CREATOR');
+  assert.equal(rankFromXp(50000).id, 'LEGEND');
   assert.equal(rankFromXp(100000).id, 'LEGEND');
 
   // Legend has no next rank and 100% progress
-  const legendProgress = calculateRankProgress(7500);
+  const legendProgress = calculateRankProgress(75000);
   assert.equal(legendProgress.rank.id, 'LEGEND');
   assert.equal(legendProgress.progressPercent, 100);
   assert.equal(legendProgress.nextRankTitle, null);
@@ -39,8 +39,17 @@ test('creator ranks match specifications across all 7 tiers', () => {
   // Newcomer progress
   const newcomerProgress = calculateRankProgress(50);
   assert.equal(newcomerProgress.rank.id, 'NEWCOMER');
-  assert.equal(newcomerProgress.progressPercent, 50);
+  assert.equal(newcomerProgress.progressPercent, 10);
   assert.equal(newcomerProgress.nextRankTitle, 'Creator');
+});
+
+test('public identity surfaces delegate rank and staff indicators to one shared username component',async()=>{
+  const shared=await read('app/components/creator-username.tsx');
+  assert.equal((shared.match(/<CreatorRankBadge/g)||[]).length,1);
+  assert.equal((shared.match(/<RoleBadge/g)||[]).length,1);
+  for(const file of ['app/page.tsx','app/components/home-fresh.tsx','app/components/community-feed.tsx','app/components/comment-conversation.tsx','app/components/shot-detail.tsx','app/components/advanced-search.tsx','app/components/creator-profile.tsx','app/components/related-skillshots.tsx','app/chats/chat-client.tsx']){
+    const source=await read(file);assert.match(source,/CreatorUsername/,file);assert.doesNotMatch(source,/<CreatorRankBadge|<RoleBadge/,file);
+  }
 });
 
 test('server-side XP calculation balances activity and deters spam', () => {
@@ -182,4 +191,3 @@ test('redesigned homepage increases visual density and implements all required s
   assert.match(page, /Share what you(?:'|&apos;)re proud of\./);
   assert.match(page, /Create a Skillshot/);
 });
-

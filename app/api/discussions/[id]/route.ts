@@ -42,7 +42,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       summary: String(r.summary || ''),
       content: String(r.content),
       category: String(r.category || 'General'),
-      imageUrl: r.image_url ? String(r.image_url) : null,
+      imageUrl: r.image_url ? `/api/discussions/${encodeURIComponent(String(r.id))}/image` : null,
       imageType: r.image_type ? String(r.image_type) : null,
       isGif: Boolean(r.is_gif),
       isAnnouncement: Boolean(r.is_announcement),
@@ -86,7 +86,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const user = auth.principal;
 
   const sql = await getReadyDb();
-  const existing = await sql.query(`SELECT user_id, is_announcement FROM discussions WHERE id = $1 LIMIT 1`, [id]);
+  const existing = await sql.query(`SELECT user_id, is_announcement, is_pinned, is_locked FROM discussions WHERE id = $1 LIMIT 1`, [id]);
   if (!existing.length) return Response.json({ error: 'Discussion not found' }, { status: 404 });
 
   const isOwner = existing[0].user_id === user.id;
@@ -145,6 +145,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     const updated = await sql.query(`UPDATE discussions SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`, values);
     const row = updated[0];
+    if (existing[0].is_announcement) {
+      const actions:string[]=[];
+      if (typeof body.title==='string'||typeof body.summary==='string'||typeof body.content==='string') actions.push('ANNOUNCEMENT_EDITED');
+      if (typeof body.isPinned==='boolean') actions.push(body.isPinned?'ANNOUNCEMENT_PINNED':'ANNOUNCEMENT_UNPINNED');
+      if (typeof body.isLocked==='boolean') actions.push(body.isLocked?'ANNOUNCEMENT_LOCKED':'ANNOUNCEMENT_UNLOCKED');
+      for(const action of actions)await sql.query(`INSERT INTO audit_logs(id,actor_id,action,target_type,target_id) VALUES($1,$2,$3,'ANNOUNCEMENT',$4)`,[crypto.randomUUID(),user.id,action,id]);
+    }
 
     return Response.json({
       discussion: {
@@ -182,6 +189,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     return Response.json({ error: 'Only staff can delete official announcements' }, { status: 403 });
   }
 
+  if(existing[0].is_announcement)await sql.query(`INSERT INTO audit_logs(id,actor_id,action,target_type,target_id) VALUES($1,$2,'ANNOUNCEMENT_DELETED','ANNOUNCEMENT',$3)`,[crypto.randomUUID(),user.id,id]);
   await sql.query(`DELETE FROM discussions WHERE id = $1`, [id]);
   return Response.json({ success: true });
 }

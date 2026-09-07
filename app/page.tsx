@@ -4,8 +4,6 @@ import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
 import PublicNavbar from './components/public-navbar';
 import SideIconRail from './components/side-icon-rail';
 import CreatorUsername from './components/creator-username';
-import CreatorRankBadge from './components/creator-rank-badge';
-import RoleBadge from './components/role-badge';
 import { getChatGPTUser } from './chatgpt-auth';
 import { signInPath } from '../lib/auth-path';
 import { getReadyDb } from '../lib/db';
@@ -231,7 +229,6 @@ export default async function Home() {
                       role={featuredCreator.role}
                       creatorRank={featuredCreator.creatorRank}
                     />
-                    <CreatorRankBadge rank={featuredCreator.creatorRank} />
                   </div>
                   {featuredCreator.bio && <p className="homeCreatorBio">{featuredCreator.bio}</p>}
                 </div>
@@ -296,7 +293,6 @@ export default async function Home() {
                   role={standoutShot.author.role}
                   creatorRank={standoutShot.author.creatorRank}
                 />
-                <RoleBadge role={standoutShot.author.role} />
               </div>
               <h3 className="homeStandoutTitle">
                 <Link href={`/shots/${standoutShot.id}`}>{standoutShot.title}</Link>

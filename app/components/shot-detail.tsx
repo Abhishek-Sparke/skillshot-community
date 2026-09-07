@@ -2,16 +2,17 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import RoleBadge from './role-badge';
+import CreatorUsername from './creator-username';
 import ReportButton from './report-button';
 import ImageViewer from './image-viewer';
 import CommentConversation from './comment-conversation';
 import type { UserRole } from '../../lib/roles';
+import type { CreatorRankId } from '../../lib/creator-rank';
 import { requireClientAuth, signInPath } from '../../lib/auth-path';
 
 type Post = {
   id:string; title:string; description:string; tags:string[]; skills:string[]; category:string; author:string; username:string;
-  avatarUrl:string; authorRole:UserRole; createdAt:number; reactionCount:number; commentCount:number; viewerLiked:boolean; viewerSaved?:boolean;
+  avatarUrl:string; authorRole:UserRole; creatorRank:CreatorRankId; createdAt:number; reactionCount:number; commentCount:number; viewerLiked:boolean; viewerSaved?:boolean;
   signedIn:boolean; isOwner:boolean; canPin:boolean; commentReview:{hide:boolean;delete:boolean}|null; imageUrl:string; previewUrl:string; downloadUrl:string; imageWidth:number; imageHeight:number;
 };
 function initials(name:string){return name.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'S';}
@@ -54,7 +55,7 @@ export default function ShotDetail({id}:{id:string}) {
         </div>
         <Link className="detailCreator" href={'/users/'+encodeURIComponent(post.username)}>
           <span className="detailAvatar">{post.avatarUrl?<img src={post.avatarUrl} alt="" loading="lazy"/>:<i>{initials(post.author)}</i>}</span>
-          <span className="detailAuthorDetails"><b>{post.author} <RoleBadge role={post.authorRole}/></b><small className="detailHandle">{'@' + post.username}</small></span>
+          <span className="detailAuthorDetails"><b><CreatorUsername asSpan name={post.author} username={post.username} creatorRank={post.creatorRank} staffRole={post.authorRole}/></b><small className="detailHandle">{'@' + post.username}</small></span>
         </Link>
       </div>
 

@@ -1,10 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import CommunityFeed from './community-feed';
-import RoleBadge from './role-badge';
-import CreatorRankBadge from './creator-rank-badge';
+import CreatorUsername from './creator-username';
 import CollectionsManager from './collections-manager';
 import type { UserRole } from '../../lib/roles';
 import type { RankProgress, CreatorRankId } from '../../lib/creator-rank';
@@ -29,8 +29,10 @@ type SocialUser = {
   displayName: string;
   avatarUrl?: string;
   role: UserRole;
+  creatorRank?: CreatorRankId | string;
   isFollowing: boolean;
 };
+type XpHistoryItem={id:string;amount:number;reason:string;createdAt:number};
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'S';
@@ -49,6 +51,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
   const [tab, setTab] = useState<Tab>(initialTab);
   const [avatarFailed, setAvatarFailed] = useState(false);
   const [shareLabel, setShareLabel] = useState('Share profile');
+  const [profileMenuOpen,setProfileMenuOpen]=useState(false);
 
   // Followers / Following Modal state
   const [modalTab, setModalTab] = useState<ModalTab | null>(null);
@@ -56,6 +59,8 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
   const [modalLoading, setModalLoading] = useState(false);
   const [modalSearch, setModalSearch] = useState('');
   const [modalActionBusy, setModalActionBusy] = useState<string | null>(null);
+  const [xpHistory,setXpHistory]=useState<XpHistoryItem[]|null>(null);
+  const [xpHistoryOpen,setXpHistoryOpen]=useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -117,6 +122,8 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
     setModalTab(type);
     setModalSearch('');
   }
+
+  async function openXpHistory(){setXpHistoryOpen(true);if(xpHistory)return;const response=await fetch('/api/xp/history');if(response.ok)setXpHistory((await response.json()).events||[]);else setXpHistory([]);}
 
   async function toggleFollow() {
     if (!profile || busy) return;
@@ -266,18 +273,16 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         </div>
         <div className="profileMainInfo">
           <div className="profileNameLine">
-            <h1>{profile.displayName}</h1>
-            <CreatorRankBadge rank={profile.creatorRank || 'NEWCOMER'} />
-            {profile.role && profile.role !== 'USER' && <RoleBadge role={profile.role} variant="profile" />}
+            <h1><CreatorUsername asSpan name={profile.displayName} username={profile.username} creatorRank={profile.creatorRank} staffRole={profile.role} roleVariant="profile"/></h1>
           </div>
           <p className="profileUsername">@{profile.username}</p>
           {profile.bio && <p className="profileBio">{profile.bio}</p>}
 
           {profile.rankProgress && (
-            <div className="profileRankBarBlock">
+            <div className="profileRankBarBlock" aria-label="Creator progress">
               <div className="profileRankBarHeader">
                 <span className="profileRankTitle">
-                  {profile.rankProgress.rank.label} {profile.rankProgress.rank.symbol}
+                  {profile.rankProgress.rank.label}
                 </span>
                 {profile.rankProgress.nextRankTitle && (
                   <span className="profileRankNext">Next: {profile.rankProgress.nextRankTitle}</span>
@@ -290,6 +295,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
                   style={{ width: `${profile.rankProgress.progressPercent}%` }}
                 />
               </div>
+              <div className="profileXpMeta"><span>{profile.rankProgress.xp.toLocaleString()} / {profile.rankProgress.nextTierXp?.toLocaleString()||'50,000+'} XP</span>{profile.rankProgress.nextTierXp&&<span>{Math.max(0,profile.rankProgress.nextTierXp-profile.rankProgress.xp).toLocaleString()} XP to {profile.rankProgress.nextRankTitle}</span>} {profile.isSelf&&<button type="button" onClick={openXpHistory}>XP history →</button>}</div>
             </div>
           )}
 
@@ -336,15 +342,13 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
 
               <button className="shareProfileButton" type="button" onClick={shareProfile}>↗ {shareLabel}</button>
 
-              <button
-                type="button"
-                className={`profileBlockButton ${profile.isBlocked ? 'blocked' : ''}`}
-                onClick={toggleBlock}
-                title={profile.isBlocked ? 'Unblock creator' : 'Block creator'}
-              >
-                {profile.isBlocked ? 'Unblock' : 'Block'}
-              </button>
-              <ReportButton targetType="PROFILE" targetId={profile.username}/>
+              <div className="profileMoreMenu">
+                <button type="button" className="profileMoreButton" aria-label="More profile actions" aria-expanded={profileMenuOpen} onClick={()=>setProfileMenuOpen(value=>!value)}>⋯</button>
+                {profileMenuOpen&&<div className="profileMoreDropdown">
+                  <button type="button" className={`profileBlockButton ${profile.isBlocked ? 'blocked' : ''}`} onClick={()=>{setProfileMenuOpen(false);toggleBlock()}}>{profile.isBlocked ? 'Unblock creator' : 'Block creator'}</button>
+                  <ReportButton targetType="PROFILE" targetId={profile.username}/>
+                </div>}
+              </div>
             </div>
           )}
         </div>
@@ -450,8 +454,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
                     </div>
                     <div className="socialModalUserDetails">
                       <div className="socialModalUserNameLine">
-                        <span>{userItem.displayName}</span>
-                        <RoleBadge role={userItem.role} />
+                        <CreatorUsername asSpan name={userItem.displayName} username={userItem.username} creatorRank={userItem.creatorRank} staffRole={userItem.role}/>
                       </div>
                       <span className="socialModalUsername">@{userItem.username}</span>
                     </div>
@@ -486,6 +489,8 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         </div>
       </div>
     )}
+
+    {xpHistoryOpen&&<div className="socialModalOverlay" role="dialog" aria-modal="true" aria-label="XP history" onClick={()=>setXpHistoryOpen(false)}><div className="socialModalCard xpHistoryCard" onClick={event=>event.stopPropagation()}><div className="socialModalHeader"><div><p className="eyebrow">CREATOR PROGRESS</p><h2>XP history</h2></div><button type="button" className="socialModalClose" onClick={()=>setXpHistoryOpen(false)} aria-label="Close">×</button></div><div className="xpHistoryList">{xpHistory===null?<p>Loading…</p>:xpHistory.length?xpHistory.map(item=><article key={item.id}><strong className={item.amount>0?'xpPositive':'xpNegative'}>{item.amount>0?'+':''}{item.amount} XP</strong><span>{item.reason}</span><small>{new Date(item.createdAt).toLocaleString()}</small></article>):<p>No XP activity yet. Create and contribute to start earning XP.</p>}</div></div></div>}
 
     {tab === 'skillshots' && <section className="profileWork shell profileTabPanel" role="tabpanel">
       {profile.featuredPosts.length > 0 && (
@@ -544,4 +549,3 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
     {tab === 'about' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="aboutProfile"><div><p className="eyebrow">ABOUT</p><h2>About {profile.displayName}.</h2><p className="aboutBio">{profile.bio || 'This creator has not added a bio yet.'}</p></div><dl><div><dt>Location</dt><dd>{profile.location || 'Not added'}</dd></div><div><dt>Website</dt><dd>{profile.website ? <a href={profile.website} target="_blank" rel="noopener noreferrer">{websiteLabel(profile.website)}</a> : 'Not added'}</dd></div><div><dt>Joined</dt><dd>{joined}</dd></div><div><dt>Reputation</dt><dd>{compactNumber(profile.reputation)} points</dd></div></dl>{profile.achievements.length>0&&<div><h3>Achievements</h3><div className="achievementGrid">{profile.achievements.map(item=><article key={item.key}><span>✦</span><div><b>{item.label}</b><small>{item.description}</small></div></article>)}</div></div>}{profile.skills.length > 0 && <div><h3>Skills</h3><div className="profileSkills">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div></div>}{Object.keys(profile.socialLinks).length > 0 && <div><h3>Find me online</h3><div className="socialLinks">{Object.entries(profile.socialLinks).map(([name, url]) => <a key={name} href={url} target="_blank" rel="noopener noreferrer">↗ {name}</a>)}</div></div>}</div></section>}
   </main>;
 }
-

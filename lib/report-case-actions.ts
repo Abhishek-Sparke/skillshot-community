@@ -2,6 +2,7 @@ import type { Principal } from './authz';
 import { getReadyDb } from './db';
 import { findCase, caseContent } from './report-case-data';
 import { caseActions, canViewCase, eligibleReviewer, type CaseAction } from './report-case-policy';
+import { awardXp, reverseCommentXp, reverseRelatedXp, reverseXp, XP_REWARDS } from './xp';
 
 const terminal=new Set(['KEEP','HIDE','DELETE','DISMISS','RESOLVE']);
 const eventName:Record<CaseAction,string>={OPEN:'CASE_OPENED',NOTE:'MODERATOR_NOTE_ADDED',ASSIGN:'CASE_ASSIGNED',ESCALATE:'CASE_ESCALATED',KEEP:'CONTENT_APPROVED',HIDE:'CONTENT_HIDDEN',DELETE:'CONTENT_DELETED',DISMISS:'REPORT_DISMISSED',RESOLVE:'REPORT_RESOLVED'};
@@ -67,5 +68,13 @@ export async function mutateCase(actor:Principal,id:string,body:Record<string,un
     ), notice AS (
       INSERT INTO notifications(id,user_id,type,title,body) SELECT gen_random_uuid()::text,$8,'CASE_ASSIGNED','A report case needs your review','Open Reports → My Cases to review it.' FROM changed WHERE $8::text IS NOT NULL
     ) ${cleanup} SELECT id,version,status FROM changed`,[item.id,body.version,item.target_id,actor.id,action,status,next,assigned,terminal.has(action),reason,eventName[action]]);
+  if(result.length&&['HIDE','DELETE'].includes(action)) {
+    if(item.target_type==='COMMENT')await reverseCommentXp(item.target_id,`Comment ${action.toLowerCase()} by moderation`);
+    if(item.target_type==='SKILLSHOT') {
+      await reverseXp(`skillshot-published:${item.target_id}`,`Skillshot ${action.toLowerCase()} by moderation`);
+      await reverseRelatedXp('SKILLSHOT',item.target_id,`Skillshot ${action.toLowerCase()} by moderation`);
+    }
+  }
+  if(result.length&&action==='KEEP'&&item.target_type==='SKILLSHOT'&&content?.post?.user_id)await awardXp({userId:String(content.post.user_id),amount:XP_REWARDS.SKILLSHOT_PUBLISHED,eventType:'SKILLSHOT_PUBLISHED',reason:'Published an approved Skillshot',actionId:`skillshot-published:${item.target_id}`,relatedType:'SKILLSHOT',relatedId:item.target_id});
   return result.length?Response.json({ok:true,case:result[0]}):Response.json({error:'The case or content changed. Reload before trying again.'},{status:409});
 }

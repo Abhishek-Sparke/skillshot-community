@@ -5,5 +5,6 @@ const icons: Partial<Record<UserRole,string>> = { OWNER:'♛', ADMIN:'◆', HEAD
 export default function RoleBadge({ role, variant = 'compact' }: { role: UserRole; variant?: 'profile'|'compact' }) {
   const label = labels[role];
   if (!label) return null;
-  return <span className={`roleBadge role${role} ${variant}`} aria-label={label} title={variant==='profile'?label:undefined} data-tooltip={variant === 'compact' ? label : undefined} role="img" tabIndex={variant === 'compact' ? 0 : undefined}><span aria-hidden="true">{icons[role]}</span>{variant === 'profile' && <b>{label}</b>}</span>;
+  const tooltip=`${label} — Staff Role`;
+  return <span className={`roleBadge role${role} ${variant}`} aria-label={tooltip} title={tooltip} data-tooltip={tooltip} role="img" tabIndex={0}><span aria-hidden="true">{icons[role]}</span>{variant === 'profile' && <b>{label}</b>}</span>;
 }

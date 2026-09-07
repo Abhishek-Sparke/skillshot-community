@@ -12,6 +12,7 @@ type Props = {
   name: string;
   username: string;
   role?: UserRole;
+  staffRole?: UserRole;
   creatorRank?: CreatorRankId | string;
   showRankBadge?: boolean;
   showRoleBadge?: boolean;
@@ -19,12 +20,16 @@ type Props = {
   cardData?: Partial<CreatorCardData>;
   href?: string;
   className?: string;
+  asSpan?: boolean;
+  prefix?: string;
+  roleVariant?: 'profile'|'compact';
 };
 
 export default function CreatorUsername({
   name,
   username,
   role = 'USER',
+  staffRole,
   creatorRank = 'NEWCOMER',
   showRankBadge = true,
   showRoleBadge = true,
@@ -32,6 +37,9 @@ export default function CreatorUsername({
   cardData,
   href,
   className = '',
+  asSpan = false,
+  prefix = '',
+  roleVariant = 'compact',
 }: Props) {
   const [showPopover, setShowPopover] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -41,6 +49,13 @@ export default function CreatorUsername({
     ? String(creatorRank).toUpperCase()
     : 'NEWCOMER') as CreatorRankId;
   const rankInfo = CREATOR_RANKS[rankKey];
+  const resolvedRole = staffRole ?? role;
+  const managementClass = resolvedRole && resolvedRole !== 'USER'
+    ? `management-${resolvedRole.toLowerCase().replaceAll('_', '-')}`
+    : '';
+  // A management treatment intentionally replaces (rather than stacks with)
+  // the rank animation. The rank badge remains an independent identity signal.
+  const nameEffectClass = managementClass || rankInfo.animationClass;
 
   const profileUrl = href ?? (username ? `/users/${encodeURIComponent(username)}` : '#');
 
@@ -66,7 +81,7 @@ export default function CreatorUsername({
   const fullCardData: CreatorCardData = {
     username,
     displayName: name,
-    role,
+    role: resolvedRole,
     creatorRank: rankKey,
     ...cardData,
   };
@@ -78,20 +93,14 @@ export default function CreatorUsername({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <Link
-        href={profileUrl}
-        className={`creatorUsernameLink ${rankInfo.animationClass}`}
-        data-rank={rankKey.toLowerCase()}
-      >
-        <span className="creatorNameText">{name}</span>
-      </Link>
+      {asSpan ? <span className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></span> : <Link href={profileUrl} className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></Link>}
 
       {showRankBadge && (
         <CreatorRankBadge rank={rankKey} size="sm" />
       )}
 
-      {showRoleBadge && role && role !== 'USER' && (
-        <RoleBadge role={role} />
+      {showRoleBadge && resolvedRole && resolvedRole !== 'USER' && (
+        <RoleBadge role={resolvedRole} variant={roleVariant} />
       )}
 
       {enableCard && showPopover && (

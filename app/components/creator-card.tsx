@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import CreatorRankBadge from './creator-rank-badge';
-import RoleBadge from './role-badge';
+import CreatorUsername from './creator-username';
 import type { UserRole } from '../../lib/roles';
 import { type CreatorRankId, CREATOR_RANKS } from '../../lib/creator-rank';
 
@@ -74,11 +73,7 @@ export default function CreatorCard({ data, onFollowToggle, onClose, className =
         </Link>
         <div className="cardIdentityDetails">
           <div className="cardNameRow">
-            <Link href={`/users/${encodeURIComponent(data.username)}`} className="cardDisplayName" onClick={onClose}>
-              {data.displayName}
-            </Link>
-            <CreatorRankBadge rank={rankKey} size="sm" />
-            {data.role && data.role !== 'USER' && <RoleBadge role={data.role} />}
+            <CreatorUsername name={data.displayName} username={data.username} creatorRank={rankKey} staffRole={data.role} className="cardDisplayName"/>
           </div>
           <p className="cardRankTitle">{rankInfo.label}</p>
           <span className="cardHandle">@{data.username}</span>

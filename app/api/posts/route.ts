@@ -8,6 +8,7 @@ import { requirePrincipal } from '../../../lib/authz';
 import { moderationFrames, processSkillshot, publicUploadMessage, SKILLSHOT_MAX_BYTES, uploadError } from '../../../lib/image-processing';
 import { readBoundedImage, stagingType } from '../../../lib/upload-policy';
 import { decodeCursor, encodeCursor, pageSize } from '../../../lib/pagination';
+import { awardXp, XP_REWARDS } from '../../../lib/xp';
 
 const categories = new Set(['Gaming','Development','Design','Photography','Art','Creative','Projects','Other']);
 
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
   const sql = await getReadyDb();
   const rows = await sql.query(`
     SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,p.image_width,p.image_height,p.image_type,
-      u.display_name, u.username, u.email, u.role, u.avatar_url,
+      u.display_name, u.username, u.email, u.role, u.avatar_url, u.creator_rank,
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS reaction_count,
       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.status='VISIBLE') AS comment_count,
       EXISTS(SELECT 1 FROM reactions mine WHERE mine.post_id=p.id AND mine.user_id=$11) AS viewer_liked,
@@ -64,6 +65,7 @@ export async function GET(request: Request) {
     skills: Array.isArray(row.skills) ? row.skills : [], category: row.category || 'Other',
     username: row.username,
     authorRole: normalizeRole(row.role),
+    creatorRank: String(row.creator_rank || 'NEWCOMER'),
     avatarUrl: row.avatar_url ? `/api/avatars/${encodeURIComponent(String(row.username))}?v=${encodeURIComponent(String(row.avatar_url))}` : '',
     createdAt: new Date(row.created_at as string).getTime(),
     reactionCount: Number(row.reaction_count), commentCount: Number(row.comment_count),
@@ -179,6 +181,7 @@ export async function POST(request: Request) {
     if (stagingPath) writes.push(sql.query(`UPDATE upload_sessions SET state='COMPLETE',post_id=$2 WHERE pathname=$1`, [stagingPath, id]));
     await sql.transaction(writes);
     committed = true;
+    if (!held) await awardXp({ userId, amount:XP_REWARDS.SKILLSHOT_PUBLISHED, eventType:'SKILLSHOT_PUBLISHED', reason:'Published an approved Skillshot', actionId:`skillshot-published:${id}`, relatedType:'SKILLSHOT', relatedId:id });
     await recordUpload(userId, held ? 'HELD' : 'SUCCESS', sourceBytes);
     return Response.json({ id, status: held ? 'PENDING_MODERATION' : 'VISIBLE' }, { status: 201 });
   } catch (error) {

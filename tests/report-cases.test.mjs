@@ -34,7 +34,7 @@ async function database() {
   try {await db.transaction(async tx=>{for(const statement of REPORT_CASE_MIGRATION)await tx.query(statement);});}catch(error){await db.close();throw error;}
   const sql={query:async(text,values)=> (await db.query(text,values)).rows};
   const data=await load('lib/report-case-data.ts',{'/db':{getReadyDb:async()=>sql},'/social-links':{safeStoredSocialLinks:()=>({})}});
-  const actions=await load('lib/report-case-actions.ts',{'/db':{getReadyDb:async()=>sql},'/report-case-data':data,'/report-case-policy':policy});
+  const actions=await load('lib/report-case-actions.ts',{'/db':{getReadyDb:async()=>sql},'/report-case-data':data,'/report-case-policy':policy,'/xp':{XP_REWARDS:{SKILLSHOT_PUBLISHED:100},awardXp:async()=>({awarded:true}),reverseXp:async()=>({awarded:false}),reverseCommentXp:async()=>undefined,reverseRelatedXp:async()=>undefined}});
   return {db,sql,data,actions};
 }
 async function report(db,id='report1',reporter='reporter',type='SKILLSHOT',target='shot') {

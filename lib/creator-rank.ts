@@ -31,7 +31,7 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     id: 'CREATOR',
     label: 'Creator',
     symbol: '◆',
-    minXp: 100,
+    minXp: 500,
     nextRank: 'RISING_CREATOR',
     nextRankLabel: 'Rising Creator',
     animationClass: 'rank-creator',
@@ -40,7 +40,7 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     id: 'RISING_CREATOR',
     label: 'Rising Creator',
     symbol: '✦',
-    minXp: 300,
+    minXp: 2000,
     nextRank: 'SKILLED_CREATOR',
     nextRankLabel: 'Skilled Creator',
     animationClass: 'rank-rising-creator',
@@ -49,7 +49,7 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     id: 'SKILLED_CREATOR',
     label: 'Skilled Creator',
     symbol: '✦',
-    minXp: 700,
+    minXp: 5000,
     nextRank: 'ELITE_CREATOR',
     nextRankLabel: 'Elite Creator',
     animationClass: 'rank-skilled-creator',
@@ -58,7 +58,7 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     id: 'ELITE_CREATOR',
     label: 'Elite Creator',
     symbol: '✧',
-    minXp: 1500,
+    minXp: 10000,
     nextRank: 'MASTER_CREATOR',
     nextRankLabel: 'Master Creator',
     animationClass: 'rank-elite-creator',
@@ -67,7 +67,7 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     id: 'MASTER_CREATOR',
     label: 'Master Creator',
     symbol: '♢',
-    minXp: 3000,
+    minXp: 25000,
     nextRank: 'LEGEND',
     nextRankLabel: 'Legend',
     animationClass: 'rank-master-creator',
@@ -76,7 +76,7 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     id: 'LEGEND',
     label: 'Legend',
     symbol: '♛',
-    minXp: 6000,
+    minXp: 50000,
     nextRank: null,
     nextRankLabel: null,
     animationClass: 'rank-legend',
@@ -140,6 +140,11 @@ export function calculateRankProgress(xp: number): RankProgress {
     progressPercent,
     nextRankTitle: nextRank.label,
   };
+}
+
+export function creatorRankId(value: unknown): CreatorRankId {
+  const key = String(value || '').toUpperCase();
+  return key in CREATOR_RANKS ? key as CreatorRankId : 'NEWCOMER';
 }
 
 export type UserActivityStats = {

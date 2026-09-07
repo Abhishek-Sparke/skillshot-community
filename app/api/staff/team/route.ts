@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   if ('error' in auth) return auth.error;
   const q = new URL(request.url).searchParams.get('q')?.trim() || '';
   const rows = await (await getReadyDb()).query(
-    `SELECT id,display_name,username,role,status,custom_permissions,created_at,avatar_url
+    `SELECT id,display_name,username,role,status,custom_permissions,created_at,avatar_url,creator_rank
      FROM users
      WHERE (role IN ('OWNER','ADMIN','HEAD_MODERATOR','MODERATOR')
        OR ($1<>'' AND (username ILIKE $2 OR display_name ILIKE $2)))

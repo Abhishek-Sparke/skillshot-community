@@ -1,9 +1,9 @@
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/immutability, react-hooks/purity */
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import CreatorUsername from './creator-username';
-import CreatorRankBadge from './creator-rank-badge';
 import CommunityFeed from './community-feed';
 import type { CreatorRankId } from '../../lib/creator-rank';
 import type { UserRole } from '../../lib/roles';
@@ -29,6 +29,7 @@ export type CommunityDiscussion = {
   isAnnouncement: boolean;
   isPinned: boolean;
   isLocked: boolean;
+  isNew?: boolean;
   reactionCount: number;
   replyCount: number;
   createdAt: number;
@@ -61,7 +62,6 @@ export type CommunityPageViewProps = {
 
 const CATEGORIES = [
   'All',
-  'Announcements',
   'General',
   'Feedback',
   'Tutorials',
@@ -102,9 +102,8 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (category === 'Announcements') {
-        params.set('category', 'Announcements');
-      } else if (category !== 'All') {
+      params.set('kind', 'discussion');
+      if (category !== 'All') {
         params.set('category', category);
       }
       if (sort !== 'latest') params.set('sort', sort);
@@ -124,10 +123,10 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
 
   const fetchPinned = useCallback(async () => {
     try {
-      const res = await fetch('/api/discussions?pinned=1');
+      const res = await fetch('/api/discussions?kind=announcement');
       if (res.ok) {
         const data = await res.json();
-        setPinnedDiscussions(data.discussions || []);
+        setPinnedDiscussions((data.discussions || []).slice(0, 3));
       }
     } catch (e) {
       console.error('Failed to load pinned discussions', e);
@@ -143,6 +142,10 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
   }, [fetchPinned]);
 
   const openDiscussionModal = async (disc: CommunityDiscussion) => {
+    if (disc.isAnnouncement) {
+      window.location.href = `/announcements/${encodeURIComponent(disc.id)}`;
+      return;
+    }
     setActiveDiscussion(disc);
     setLoadingReplies(true);
     setReplies([]);
@@ -163,7 +166,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
   const handleToggleReaction = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!currentUser) {
-      window.location.href = `/signin?callbackUrl=${encodeURIComponent('/community')}`;
+      window.location.href = `/signin?callbackUrl=${encodeURIComponent('/discussion')}`;
       return;
     }
 
@@ -345,8 +348,9 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
       <section className="communityHero shell">
         <div className="communityHeroInner">
           <div className="communityHeroContent">
-            <h1>Skillshot Community</h1>
-            <p>Connect, share knowledge, give constructive feedback, and explore official announcements.</p>
+            <p className="eyebrow">DISCUSSIONS</p>
+            <h1>Talk, learn, and build together.</h1>
+            <p>Ask questions, share ideas, get feedback, and connect with Skillshot creators.</p>
           </div>
           <div className="communityHeroActions">
             {currentUser ? (
@@ -373,12 +377,12 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                       setIsCreateOpen(true);
                     }}
                   >
-                    📢 Post Announcement
+                  Official announcement
                   </button>
                 )}
               </>
             ) : (
-              <Link href="/signin?callbackUrl=/community" className="button communityHeroBtn">
+              <Link href="/signin?callbackUrl=/discussion" className="button communityHeroBtn">
                 Sign in to participate
               </Link>
             )}
@@ -387,7 +391,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
       </section>
 
       {/* Main Tabs (Discussions vs Portfolio Works) */}
-      <div className="communityMainTabs shell">
+      <div className="communityMainTabs shell" hidden>
         <div className="communityTabsGroup" role="tablist">
           <button
             type="button"
@@ -420,7 +424,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
           {pinnedDiscussions.length > 0 && (
             <div className="communityPinnedSection">
               <div className="pinnedHeader">
-                <span className="pinnedHeaderBadge">📌 PINNED UPDATES & ANNOUNCEMENTS</span>
+                <span className="pinnedHeaderBadge">OFFICIAL ANNOUNCEMENTS</span>
               </div>
               <div className="pinnedCarousel">
                 {pinnedDiscussions.map(item => (
@@ -433,8 +437,9 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                   >
                     <div className="pinnedCardHeader">
                       <span className={`pinnedTypeTag ${item.isAnnouncement ? 'tagAnnouncement' : 'tagPinned'}`}>
-                        {item.isAnnouncement ? '📢 Official' : '📌 Pinned'}
+                        {item.isAnnouncement ? 'Official announcement' : 'Pinned'}
                       </span>
+                      {item.isNew&&<span className="announcementNewBadge">NEW</span>}
                       <span className="pinnedTime">{formatDate(item.createdAt)}</span>
                     </div>
                     <h3 className="pinnedTitle">{item.title}</h3>
@@ -499,7 +504,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
 
           {/* Discussions List */}
           {loading ? (
-            <div className="communityLoadingState">Loading community conversations…</div>
+            <div className="communityLoadingState">Loading discussions…</div>
           ) : discussions.length === 0 ? (
             <div className="communityEmptyState">
               <h3>No discussions found</h3>
@@ -784,7 +789,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                 </form>
               ) : (
                 <div className="replySignInPrompt">
-                  <Link href={`/signin?callbackUrl=/community`}>Sign in</Link> to join this discussion.
+                  <Link href={`/signin?callbackUrl=/discussion`}>Sign in</Link> to join this discussion.
                 </div>
               )}
             </div>

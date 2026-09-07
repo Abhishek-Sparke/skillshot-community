@@ -86,7 +86,7 @@ test('homepage community cards restore green status indicator using database rol
   const globals = await read('app/globals.css');
 
   // HomeFresh uses normalized DB role
-  assert.match(homeFresh, /<RoleBadge role={normalizeRole\(row\.role\)}\s*\/>/);
+  assert.match(homeFresh, /<CreatorUsername[^>]+staffRole={normalizeRole\(row\.role\)}/);
   assert.match(homeFresh, /className="authorName"/);
 
   // RoleBadge maps TRUSTED_CONTRIBUTOR with green indicator
@@ -104,4 +104,3 @@ test('community page renders dual rolling side rails', async () => {
   assert.match(page, /<SideIconRail side="left"\s*\/>/);
   assert.match(page, /<SideIconRail side="right"\s*\/>/);
 });
-

@@ -20,6 +20,7 @@ export async function GET() {
       ru.display_name as recipient_display_name,
       ru.avatar_url as recipient_avatar_url,
       ru.role as recipient_role,
+      ru.creator_rank as recipient_creator_rank,
       ru.status as recipient_status,
       ru.last_seen_at as recipient_last_seen_at,
       (SELECT json_build_object(
@@ -69,6 +70,7 @@ export async function GET() {
         displayName: r.recipient_display_name,
         avatarUrl: r.recipient_avatar_url,
         role: r.recipient_role,
+        creatorRank: r.recipient_creator_rank || 'NEWCOMER',
         status: r.recipient_status,
         lastSeenAt: r.recipient_last_seen_at,
         isBlockedByYou: Boolean(r.is_blocked_by_you),

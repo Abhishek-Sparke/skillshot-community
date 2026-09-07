@@ -1098,6 +1098,8 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   }
 }
 
+.profileXpMeta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:8px;color:var(--muted);font-size:12px}.profileXpMeta button{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:800;cursor:pointer;padding:3px}.xpHistoryCard{max-width:560px}.xpHistoryList{display:grid;max-height:min(62vh,560px);overflow:auto}.xpHistoryList article{display:grid;grid-template-columns:80px 1fr auto;gap:10px;align-items:center;padding:14px 2px;border-bottom:1px solid var(--line)}.xpHistoryList small{color:var(--muted);font-size:11px}.xpPositive{color:#18794e}.xpNegative{color:#b42318}@media(max-width:430px){.creatorUsernameWrapper{max-width:100%;gap:4px}.creatorRankBadge.size-sm{width:18px;height:18px}.roleBadge.compact{width:20px;height:20px}.xpHistoryList article{grid-template-columns:72px 1fr}.xpHistoryList small{grid-column:2}.profileXpMeta{align-items:flex-start;flex-direction:column}}
+
 /* 19. Social Graph & Chat Integration Styles */
 .profileMessageButton {
   min-width: 126px;
@@ -1919,78 +1921,333 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   position: relative;
 }
 
-/* Rank-specific animated username tiers */
-.rank-newcomer {
+/* Rank-specific animated username tiers with themed visual effects directly on text letters */
+.rank-newcomer,
+.rank-newcomer .creatorNameText {
   color: var(--ink);
+  -webkit-text-fill-color: var(--ink);
+  background: none;
+  font-weight: 600;
 }
 
-.rank-creator {
-  background: linear-gradient(135deg, #b45309 0%, #d97706 50%, #92400e 100%);
+/* Creator: Subtle Sparkle Effect */
+.rank-creator,
+.rank-creator .creatorNameText {
+  display: inline-block;
+  background: linear-gradient(
+    110deg,
+    #92400e 0%,
+    #d97706 20%,
+    #fffbeb 40%,
+    #fef08a 48%,
+    #f59e0b 56%,
+    #b45309 75%,
+    #92400e 100%
+  );
+  background-size: 260% 100%;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-size: 200% auto;
-  animation: rankTextShimmer 4s ease infinite;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  animation: rankSparkleGlint 4.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.25));
 }
 
-.rank-rising-creator {
-  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 50%, #0369a1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-size: 200% auto;
-  animation: rankTextShimmer 3.5s ease infinite;
+@keyframes rankSparkleGlint {
+  0%, 15% {
+    background-position: 100% 50%;
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.15));
+  }
+  50% {
+    background-position: 0% 50%;
+    filter: drop-shadow(0 0 7px rgba(254, 240, 138, 0.45));
+  }
+  85%, 100% {
+    background-position: -100% 50%;
+    filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.15));
+  }
 }
 
-.rank-skilled-creator {
-  background: linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%);
+/* Rising Creator: Flowing Energy / Light Effect */
+.rank-rising-creator,
+.rank-rising-creator .creatorNameText {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    #0369a1 0%,
+    #0284c7 20%,
+    #38bdf8 38%,
+    #e0f2fe 48%,
+    #67e8f9 54%,
+    #0ea5e9 72%,
+    #0284c7 88%,
+    #0369a1 100%
+  );
+  background-size: 280% 100%;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-size: 200% auto;
-  animation: rankTextShimmer 3s ease infinite;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  animation: rankEnergyFlow 3.2s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4)) drop-shadow(0 0 12px rgba(14, 165, 233, 0.2));
 }
 
-.rank-elite-creator {
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #6d28d9 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-size: 200% auto;
-  animation: rankTextShimmer 2.5s ease infinite;
-  text-shadow: 0 0 12px rgba(168, 85, 247, 0.25);
+@keyframes rankEnergyFlow {
+  0% {
+    background-position: 200% 0%;
+  }
+  100% {
+    background-position: -80% 0%;
+  }
 }
 
-.rank-master-creator {
-  background: linear-gradient(135deg, #e11d48 0%, #f43f5e 50%, #be123c 100%);
+/* Skilled Creator: Animated Fire Effect Directly on the Username Letters (No Emojis) */
+.rank-skilled-creator,
+.rank-skilled-creator .creatorNameText {
+  display: inline-block;
+  background: linear-gradient(
+    0deg,
+    #991b1b 0%,
+    #c2410c 18%,
+    #ea580c 35%,
+    #f97316 52%,
+    #f59e0b 70%,
+    #fef08a 88%,
+    #fffbeb 100%
+  );
+  background-size: 100% 260%;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-size: 200% auto;
-  animation: rankTextShimmer 2s ease infinite;
-  text-shadow: 0 0 14px rgba(244, 63, 94, 0.3);
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  animation: rankFireRise 2.4s ease-in-out infinite alternate, rankFireFlicker 1.8s ease-in-out infinite alternate;
+  filter: drop-shadow(0 -1.5px 3px rgba(249, 115, 22, 0.55)) drop-shadow(0 -4px 7px rgba(234, 88, 12, 0.3));
 }
 
-.rank-legend {
-  background: linear-gradient(135deg, #eab308 0%, #f59e0b 25%, #ec4899 50%, #8b5cf6 75%, #eab308 100%);
+@keyframes rankFireRise {
+  0% {
+    background-position: 0% 90%;
+  }
+  50% {
+    background-position: 0% 40%;
+  }
+  100% {
+    background-position: 0% 5%;
+  }
+}
+
+@keyframes rankFireFlicker {
+  0% {
+    filter: drop-shadow(0 -1px 2px rgba(249, 115, 22, 0.45)) drop-shadow(0 -3px 5px rgba(234, 88, 12, 0.25));
+  }
+  50% {
+    filter: drop-shadow(0 -2px 3.5px rgba(251, 146, 60, 0.65)) drop-shadow(0 -5px 9px rgba(234, 88, 12, 0.38));
+  }
+  100% {
+    filter: drop-shadow(0 -1.5px 2.5px rgba(249, 115, 22, 0.5)) drop-shadow(0 -4px 7px rgba(220, 38, 38, 0.3));
+  }
+}
+
+/* Elite Creator: Animated Electric / Lightning Effect */
+.rank-elite-creator,
+.rank-elite-creator .creatorNameText {
+  display: inline-block;
+  background: linear-gradient(
+    105deg,
+    #581c87 0%,
+    #7c3aed 20%,
+    #a855f7 35%,
+    #f3e8ff 46%,
+    #38bdf8 50%,
+    #e0e7ff 54%,
+    #c084fc 68%,
+    #6d28d9 85%,
+    #581c87 100%
+  );
+  background-size: 300% 100%;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-size: 300% auto;
-  animation: rankTextShimmer 3s linear infinite;
-  text-shadow: 0 0 16px rgba(234, 179, 8, 0.35);
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  animation: rankElectricArc 3s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+  filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.55)) drop-shadow(0 0 10px rgba(56, 189, 248, 0.35));
+}
+
+@keyframes rankElectricArc {
+  0% {
+    background-position: 250% 0%;
+    filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.4)) drop-shadow(0 0 8px rgba(56, 189, 248, 0.25));
+  }
+  42% {
+    background-position: 120% 0%;
+    filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.5)) drop-shadow(0 0 10px rgba(56, 189, 248, 0.35));
+  }
+  48% {
+    background-position: 80% 0%;
+    filter: drop-shadow(0 0 8px rgba(243, 232, 255, 0.8)) drop-shadow(0 0 14px rgba(56, 189, 248, 0.6));
+  }
+  54% {
+    background-position: 50% 0%;
+    filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.5)) drop-shadow(0 0 9px rgba(56, 189, 248, 0.3));
+  }
+  100% {
+    background-position: -50% 0%;
+    filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.4)) drop-shadow(0 0 8px rgba(56, 189, 248, 0.25));
+  }
+}
+
+/* Master Creator: Animated Crystal / Diamond Shimmer */
+.rank-master-creator,
+.rank-master-creator .creatorNameText {
+  display: inline-block;
+  background: linear-gradient(
+    125deg,
+    #881337 0%,
+    #be123c 22%,
+    #e11d48 38%,
+    #fda4af 47%,
+    #ffffff 50%,
+    #fecdd3 53%,
+    #f43f5e 68%,
+    #be123c 85%,
+    #881337 100%
+  );
+  background-size: 280% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  animation: rankCrystalRefract 3.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  filter: drop-shadow(0 0 5px rgba(244, 63, 94, 0.45)) drop-shadow(0 0 12px rgba(251, 113, 133, 0.25));
+}
+
+@keyframes rankCrystalRefract {
+  0%, 10% {
+    background-position: 180% 0%;
+    filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.35));
+  }
+  50% {
+    background-position: 20% 0%;
+    filter: drop-shadow(0 0 9px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 16px rgba(244, 63, 94, 0.45));
+  }
+  90%, 100% {
+    background-position: -100% 0%;
+    filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.35));
+  }
+}
+
+/* Legend: Distinctive Royal / Premium Celestial Effect */
+.rank-legend { --creator-rank-tier: legend; }
+.rank-legend,
+.rank-legend .creatorNameText {
+  display: inline-block;
+  background: linear-gradient(
+    115deg,
+    #b45309 0%,
+    #d97706 15%,
+    #f59e0b 28%,
+    #fef08a 38%,
+    #fffbeb 44%,
+    #ec4899 58%,
+    #a855f7 72%,
+    #6366f1 85%,
+    #f59e0b 100%
+  );
+  background-size: 340% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-weight: 800;
+  letter-spacing: -0.015em;
+  animation: rankRoyalAurora 4.2s ease infinite alternate;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.55)) drop-shadow(0 0 14px rgba(236, 72, 153, 0.35)) drop-shadow(0 0 22px rgba(139, 92, 246, 0.25));
 }
 
-@keyframes rankTextShimmer {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+@keyframes rankRoyalAurora {
+  0% {
+    background-position: 0% 50%;
+    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)) drop-shadow(0 0 12px rgba(236, 72, 153, 0.3));
+  }
+  50% {
+    background-position: 60% 50%;
+    filter: drop-shadow(0 0 9px rgba(254, 240, 138, 0.65)) drop-shadow(0 0 18px rgba(236, 72, 153, 0.45)) drop-shadow(0 0 24px rgba(139, 92, 246, 0.3));
+  }
+  100% {
+    background-position: 100% 50%;
+    filter: drop-shadow(0 0 7px rgba(168, 85, 247, 0.55)) drop-shadow(0 0 15px rgba(245, 158, 11, 0.35));
+  }
+}
+.profileMoreMenu{position:relative}.profileMoreButton{min-width:44px;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font-size:22px;cursor:pointer}.profileMoreDropdown{position:absolute;z-index:20;right:0;top:calc(100% + 7px);display:grid;min-width:180px;border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:6px;box-shadow:0 14px 34px #0002}.profileMoreDropdown button{width:100%;border:0;box-shadow:none;background:transparent;color:var(--ink);padding:10px;text-align:left}.profileMoreDropdown button:hover{background:var(--surface)}
+
+/* Management roles take priority over rank animation on the username itself. */
+.management-owner .creatorNameText,
+.management-admin .creatorNameText,
+.management-head-moderator .creatorNameText,
+.management-moderator .creatorNameText,
+.management-trusted-contributor .creatorNameText {
+  display:inline-block;
+  background-size:280% 180%;
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  font-weight:780;
+  filter:none;
+}
+.management-owner .creatorNameText {
+  background-image:linear-gradient(0deg,#8f1d1d 0%,#d9362b 30%,#ff634d 55%,#ffd0b5 72%,#c92d28 100%);
+  animation:managementFlame 3.2s ease-in-out infinite alternate;
+}
+.management-admin .creatorNameText {
+  background-image:linear-gradient(105deg,#4c1d95 0%,#7c3aed 28%,#efe7ff 46%,#a855f7 58%,#5b21b6 100%);
+  animation:managementFlow 4s linear infinite;
+}
+.management-head-moderator .creatorNameText {
+  background-image:linear-gradient(100deg,#075985 0%,#0284c7 25%,#e0f2fe 47%,#38bdf8 54%,#0369a1 100%);
+  animation:managementElectric 3.4s cubic-bezier(.4,0,.2,1) infinite;
+}
+.management-moderator .creatorNameText {
+  background-image:linear-gradient(105deg,#0e7490 0%,#06b6d4 34%,#cffafe 49%,#22d3ee 58%,#155e75 100%);
+  animation:managementFlow 5.2s linear infinite;
+}
+.management-trusted-contributor .creatorNameText {
+  background-image:linear-gradient(105deg,#166534 0%,#16a34a 32%,#dcfce7 49%,#4ade80 60%,#14532d 100%);
+  animation:managementFlow 6s ease-in-out infinite alternate;
+}
+@keyframes managementFlame { from { background-position:0 88%; } to { background-position:0 8%; } }
+@keyframes managementFlow { from { background-position:190% 50%; } to { background-position:-80% 50%; } }
+@keyframes managementElectric {
+  0%,100% { background-position:180% 50%; }
+  46% { background-position:65% 50%; }
+  52% { background-position:40% 50%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .rank-creator,
+  .rank-creator .creatorNameText,
   .rank-rising-creator,
+  .rank-rising-creator .creatorNameText,
   .rank-skilled-creator,
+  .rank-skilled-creator .creatorNameText,
   .rank-elite-creator,
+  .rank-elite-creator .creatorNameText,
   .rank-master-creator,
-  .rank-legend {
+  .rank-master-creator .creatorNameText,
+  .rank-legend,
+  .rank-legend .creatorNameText,
+  .management-owner .creatorNameText,
+  .management-admin .creatorNameText,
+  .management-head-moderator .creatorNameText,
+  .management-moderator .creatorNameText,
+  .management-trusted-contributor .creatorNameText {
     animation: none !important;
-    background-size: 100% auto !important;
+    background-size: 100% 100% !important;
+    background-position: 0% 0% !important;
+    filter: none !important;
   }
 }
 
@@ -2433,6 +2690,11 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   min-height: calc(100vh - 120px);
   padding-bottom: 60px;
 }
+
+.communityDiscoveryHeader{padding-top:clamp(42px,7vw,90px);padding-bottom:28px}.communityDiscoveryHeader h1{max-width:760px;margin:7px 0 10px;font:clamp(34px,5vw,64px)/.98 Georgia,serif;letter-spacing:-.035em}.communityDiscoveryHeader>p:last-child{max-width:670px;color:var(--secondary-text);font-size:clamp(15px,2vw,19px);line-height:1.55}.announcementNewBadge{display:inline-flex;align-items:center;border-radius:999px;background:var(--red);color:#fff;padding:3px 7px;font-size:9px;font-weight:900;letter-spacing:.09em}
+
+.announcementDetail{max-width:1020px;padding-top:clamp(36px,6vw,80px);padding-bottom:100px}.announcementHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.announcementBadges{display:flex;flex-wrap:wrap;gap:8px}.announcementBadges span{border:1px solid var(--line);border-radius:999px;padding:6px 9px;color:var(--secondary-text);font-size:10px;font-weight:900;letter-spacing:.08em}.announcementBadges span:first-child{background:var(--red);border-color:var(--red);color:#fff}.announcementDetail>h1{max-width:850px;margin:22px 0 20px;font:clamp(38px,6vw,72px)/.98 Georgia,serif;letter-spacing:-.04em}.announcementAuthor{display:flex;align-items:center;gap:12px}.announcementAuthor>img,.announcementAuthor>span{display:grid;width:48px;height:48px;place-items:center;overflow:hidden;border-radius:50%;background:#eee2d5;object-fit:cover;font-weight:900}.announcementAuthor>div{display:grid;gap:4px}.announcementAuthor small{color:var(--secondary-text)}.announcementSummary{max-width:800px;margin:38px 0 28px;border-left:4px solid var(--red);padding:18px 22px;background:color-mix(in srgb,var(--red) 7%,var(--paper));font:600 clamp(18px,2.5vw,24px)/1.45 Georgia,serif}.announcementContent{max-width:800px;font-size:17px;line-height:1.8}.announcementContent p{white-space:pre-wrap}.announcementMedia{max-width:900px;margin:34px 0;overflow:hidden;border-radius:18px}.announcementMedia img{display:block;width:100%;height:auto}.announcementStats{display:flex;gap:22px;max-width:800px;margin-top:35px;border-top:1px solid var(--line);padding-top:20px;color:var(--secondary-text);font-weight:800}.announcementLocked{max-width:800px;border-radius:10px;background:var(--surface);padding:12px 14px}.announcementManagement{position:relative;display:flex;gap:8px}.announcementManagement>button{border:1px solid var(--line);border-radius:9px;background:var(--paper);padding:9px 13px;font-weight:800;cursor:pointer}.announcementMenu{position:absolute;z-index:20;right:0;top:calc(100% + 6px);display:grid;min-width:190px;border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:6px;box-shadow:0 15px 35px #0002}.announcementMenu button{border:0;border-radius:8px;background:transparent;padding:10px;text-align:left;cursor:pointer}.announcementMenu button:hover{background:var(--surface)}.announcementMenu .danger{color:#c32929}.announcementEdit{width:min(680px,calc(100vw - 28px));max-height:90vh;overflow:auto;border:1px solid var(--line);border-radius:18px;background:var(--paper);padding:24px}.announcementEdit>div:first-child{display:flex;align-items:center;justify-content:space-between}.announcementEdit>div:first-child button{border:0;background:transparent;font-size:26px;cursor:pointer}.announcementEdit label{display:grid;gap:7px;margin-top:16px;font-weight:800}.announcementEdit input,.announcementEdit textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);padding:12px;font:inherit;font-weight:400}.announcementEdit .checkboxLabel{display:flex}
+@media(max-width:600px){.communityDiscoveryHeader{padding-top:30px}.announcementDetail{padding-top:28px}.announcementHeader{align-items:center}.announcementDetail>h1{font-size:38px}.announcementManagement>button:first-child{display:none}.announcementSummary{margin-top:28px}.announcementEdit{padding:18px}}
 
 .communityHero {
   padding: 36px 0 24px;

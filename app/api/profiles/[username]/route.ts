@@ -3,7 +3,7 @@ import { getReadyDb } from '../../../../lib/db';
 import { normalizeRole } from '../../../../lib/roles';
 import { safeStoredSocialLinks } from '../../../../lib/social-links';
 import { canUserMessage, isBlockBetween } from '../../../../lib/chat';
-import { calculateRankProgress, calculateXpFromActivity } from '../../../../lib/creator-rank';
+import { calculateRankProgress } from '../../../../lib/creator-rank';
 import { calculateAchievements } from '../../../../lib/achievements';
 
 export async function GET(_: Request, { params }: { params: Promise<{ username: string }> }) {
@@ -11,7 +11,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
   const viewer = await getChatGPTUser();
   const rows = await (await getReadyDb()).query(`
     SELECT u.id, u.email, u.display_name, u.username, u.bio, u.website, u.location,
-      u.skills, u.social_links, u.avatar_url, u.banner_url, u.banner_type, u.role, u.created_at,
+      u.skills, u.social_links, u.avatar_url, u.banner_url, u.banner_type, u.role, u.creator_xp, u.created_at,
       (SELECT COUNT(*) FROM posts p WHERE p.user_id=u.id AND p.status='VISIBLE') AS post_count,
       (SELECT COUNT(*) FROM reactions r JOIN posts p ON p.id=r.post_id WHERE p.user_id=u.id) AS likes_received,
       (SELECT COUNT(*) FROM follows f WHERE f.followed_id=u.id) AS follower_count,
@@ -45,13 +45,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
   const commentCount = Number(row.comment_count);
   const skillsList = Array.isArray(row.skills) ? row.skills.map(String) : [];
 
-  const xp = calculateXpFromActivity({
-    visiblePostCount: postCount,
-    reactionCount: likesReceived,
-    commentCount,
-    saveCount: 0,
-    followerCount,
-  });
+  const xp = Math.max(0, Number(row.creator_xp || 0));
   const rankProgress = calculateRankProgress(xp);
 
   const reputation = Math.min(9999, likesReceived * 3 + followerCount * 5 + postCount * 10 + commentCount * 2);

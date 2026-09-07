@@ -4,6 +4,7 @@ import { isStaffRole, normalizeRole } from '../../../lib/roles';
 import { moderateText, moderateImage } from '../../../lib/moderation';
 import { moderationFrames } from '../../../lib/image-processing';
 import { put } from '@vercel/blob';
+import { awardXp, XP_REWARDS } from '../../../lib/xp';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -11,6 +12,7 @@ export async function GET(request: Request) {
   const sort = url.searchParams.get('sort') || 'latest';
   const query = url.searchParams.get('q')?.trim().toLowerCase() || '';
   const pinnedOnly = url.searchParams.get('pinned') === '1';
+  const kind = url.searchParams.get('kind');
 
   const auth = await requirePrincipal();
   const viewerId = 'principal' in auth && auth.principal ? auth.principal.id : null;
@@ -23,6 +25,9 @@ export async function GET(request: Request) {
   if (pinnedOnly) {
     whereClause += ` AND d.is_pinned = true`;
   }
+
+  if (kind === 'announcement') whereClause += ` AND d.is_announcement = true`;
+  if (kind === 'discussion') whereClause += ` AND d.is_announcement = false`;
 
   if (category && category !== 'All') {
     whereClause += ` AND lower(d.category) = lower($${paramIdx++})`;
@@ -47,6 +52,7 @@ export async function GET(request: Request) {
       d.reaction_count, d.reply_count, d.created_at, d.updated_at,
       u.display_name, u.username, u.role, u.avatar_url,
       u.creator_rank,
+      (d.is_announcement AND NOT EXISTS(SELECT 1 FROM announcement_reads ar WHERE ar.announcement_id=d.id AND ar.user_id=$${paramIdx})) AS is_new,
       EXISTS(SELECT 1 FROM discussion_reactions dr WHERE dr.discussion_id = d.id AND dr.user_id = $${paramIdx}) AS viewer_reacted,
       EXISTS(SELECT 1 FROM saved_discussions sd WHERE sd.discussion_id = d.id AND sd.user_id = $${paramIdx}) AS viewer_saved
     FROM discussions d
@@ -64,12 +70,13 @@ export async function GET(request: Request) {
       summary: String(r.summary || ''),
       content: String(r.content),
       category: String(r.category || 'General'),
-      imageUrl: r.image_url ? String(r.image_url) : null,
+      imageUrl: r.image_url ? `/api/discussions/${encodeURIComponent(String(r.id))}/image` : null,
       imageType: r.image_type ? String(r.image_type) : null,
       isGif: Boolean(r.is_gif),
       isAnnouncement: Boolean(r.is_announcement),
       isPinned: Boolean(r.is_pinned),
       isLocked: Boolean(r.is_locked),
+      isNew: Boolean(r.is_new),
       reactionCount: Number(r.reaction_count || 0),
       replyCount: Number(r.reply_count || 0),
       createdAt: new Date(r.created_at as string).getTime(),
@@ -202,6 +209,11 @@ export async function POST(request: Request) {
     ]);
 
     const row = inserted[0];
+    await awardXp({userId:user.id,amount:XP_REWARDS.DISCUSSION_CREATED,eventType:'DISCUSSION_CREATED',reason:'Created a discussion',actionId:`discussion-created:${row.id}`,relatedType:'DISCUSSION',relatedId:String(row.id)});
+    if (isAnnouncement) {
+      await sql.query(`INSERT INTO audit_logs(id,actor_id,action,target_type,target_id,metadata) VALUES($1,$2,'ANNOUNCEMENT_CREATED','ANNOUNCEMENT',$3,$4::jsonb)`,[crypto.randomUUID(),user.id,String(row.id),JSON.stringify({title,isPinned})]);
+      await sql.query(`INSERT INTO notifications(id,user_id,type,title,body,target_url) SELECT gen_random_uuid()::text,id,'ANNOUNCEMENT','New Skillshot announcement',$1,$2 FROM users WHERE status='ACTIVE' AND id<>$3`,[title.slice(0,150),`/announcements/${row.id}`,user.id]);
+    }
     return Response.json({
       discussion: {
         id: String(row.id),
