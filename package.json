@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint . --ignore-pattern .next",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/core.test.ts tests/staff-api.test.mjs tests/auth-ui.test.mjs tests/social-ui.test.mjs tests/upload-flow.test.mjs tests/report-cases.test.mjs tests/platform.test.mjs tests/chat.test.mjs tests/side-icon-rail.test.mjs"
+    "test": "node --experimental-strip-types --test tests/core.test.ts tests/staff-api.test.mjs tests/auth-ui.test.mjs tests/social-ui.test.mjs tests/upload-flow.test.mjs tests/report-cases.test.mjs tests/platform.test.mjs tests/chat.test.mjs tests/side-icon-rail.test.mjs tests/creator-community.test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",

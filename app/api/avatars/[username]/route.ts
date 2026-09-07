@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
   try {
     const result = await get(String(rows[0].avatar_url), { access: 'private' });
     if (result?.statusCode !== 200) return new Response('Avatar not found', { status: 404 });
-    const contentType = ['image/png', 'image/jpeg', 'image/webp'].includes(result.blob.contentType)
+    const contentType = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(result.blob.contentType)
       ? result.blob.contentType
       : String(rows[0].avatar_type || 'image/jpeg');
     return new Response(result.stream, { headers: {

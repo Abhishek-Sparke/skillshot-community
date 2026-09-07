@@ -35,10 +35,27 @@ export default function ImageViewer({ src, alt, title, subtitle, onClose, onPrev
   }, []);
 
   useEffect(() => {
+    const scrollY = window.scrollY;
     const previousOverflow = document.body.style.overflow;
+    const previousPosition = document.body.style.position;
+    const previousTop = document.body.style.top;
+    const previousWidth = document.body.style.width;
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+
     closeButton.current?.focus();
+
+    // Browser back button handling
+    window.history.pushState({ skillshotPreview: true }, '');
+    const onPopState = () => {
+      onClose();
+    };
+    window.addEventListener('popstate', onPopState);
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
       if (event.key === 'ArrowLeft') onPrevious?.();
@@ -55,8 +72,17 @@ export default function ImageViewer({ src, alt, title, subtitle, onClose, onPrev
       }
     };
     window.addEventListener('keydown', onKeyDown);
+
     return () => {
+      window.removeEventListener('popstate', onPopState);
+      if (window.history.state?.skillshotPreview) {
+        window.history.back();
+      }
       document.body.style.overflow = previousOverflow;
+      document.body.style.position = previousPosition;
+      document.body.style.top = previousTop;
+      document.body.style.width = previousWidth;
+      window.scrollTo(0, scrollY);
       window.removeEventListener('keydown', onKeyDown);
       previousFocus?.focus();
     };

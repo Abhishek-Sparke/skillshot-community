@@ -4,14 +4,19 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import CommunityFeed from './community-feed';
 import RoleBadge from './role-badge';
+import CreatorRankBadge from './creator-rank-badge';
+import CollectionsManager from './collections-manager';
 import type { UserRole } from '../../lib/roles';
+import type { RankProgress, CreatorRankId } from '../../lib/creator-rank';
 import ReportButton from './report-button';
 import { requireClientAuth, signInPath } from '../../lib/auth-path';
 
 type FeaturedPost = { id: string; title: string; description: string; createdAt: number; reactionCount: number; commentCount: number; imageUrl: string };
 type Profile = {
   displayName: string; username: string; bio: string; website: string; location: string; skills: string[];
-  socialLinks: Record<string, string>; avatarUrl: string; role: UserRole; joinedAt: number; postCount: number;
+  socialLinks: Record<string, string>; avatarUrl: string; bannerUrl?: string; bannerType?: string;
+  creatorRank?: CreatorRankId | string; rankProgress?: RankProgress;
+  role: UserRole; joinedAt: number; postCount: number;
   likesReceived: number; followerCount: number; followingCount: number; isFollowing: boolean; isSelf: boolean;
   signedIn: boolean; featuredPosts: FeaturedPost[]; reputation: number; achievements: { key: string; label: string; description: string }[];
   canMessage?: boolean; canMessageReason?: string; isBlocked?: boolean; isBlockedByThem?: boolean;
@@ -235,33 +240,58 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
   return <main className="profilePage">
     {saved && <div className="saveToast" role="status">✓ Profile updated</div>}
     <section className="profileHero shell">
-      <div className="profileCover"><span>SKILLSHOT CREATOR</span></div>
+      <div className="profileCover">
+        {profile.bannerUrl ? (
+          <img
+            src={profile.bannerUrl}
+            alt={`${profile.displayName}'s banner`}
+            className="profileCoverImage"
+          />
+        ) : null}
+        <div className="profileCoverOverlay" />
+        <span>SKILLSHOT CREATOR</span>
+      </div>
       <div className="profileSummary">
-        <div className="profileAvatar">{profile.avatarUrl && !avatarFailed ? <img src={profile.avatarUrl} alt={`${profile.displayName}'s avatar`} onError={() => setAvatarFailed(true)}/> : initials(profile.displayName)}</div>
+        <div className="profileAvatar">
+          {profile.avatarUrl && !avatarFailed ? (
+            <img
+              src={profile.avatarUrl}
+              alt={`${profile.displayName}'s avatar`}
+              className="animatedPfp"
+              onError={() => setAvatarFailed(true)}
+            />
+          ) : (
+            initials(profile.displayName)
+          )}
+        </div>
         <div className="profileMainInfo">
-          <div className="profileNameLine"><h1>{profile.displayName}</h1><RoleBadge role={profile.role} variant="profile"/></div>
-          <p className="profileUsername">@{profile.username}</p>
-          <p className="profileBio">{profile.bio || 'This creator is building something worth sharing.'}</p>
-          
-          {/* Live Followers / Following Counts right on profile */}
-          <div className="profileFollowCounts">
-            <button
-              type="button"
-              className="profileFollowCountBtn"
-              onClick={() => openModal('followers')}
-              aria-label={`View ${profile.followerCount} followers`}
-            >
-              <strong>{compactNumber(profile.followerCount)}</strong> <span>Followers</span>
-            </button>
-            <button
-              type="button"
-              className="profileFollowCountBtn"
-              onClick={() => openModal('following')}
-              aria-label={`View ${profile.followingCount} following`}
-            >
-              <strong>{compactNumber(profile.followingCount)}</strong> <span>Following</span>
-            </button>
+          <div className="profileNameLine">
+            <h1>{profile.displayName}</h1>
+            <CreatorRankBadge rank={profile.creatorRank || 'NEWCOMER'} />
+            {profile.role && profile.role !== 'USER' && <RoleBadge role={profile.role} variant="profile" />}
           </div>
+          <p className="profileUsername">@{profile.username}</p>
+          {profile.bio && <p className="profileBio">{profile.bio}</p>}
+
+          {profile.rankProgress && (
+            <div className="profileRankBarBlock">
+              <div className="profileRankBarHeader">
+                <span className="profileRankTitle">
+                  {profile.rankProgress.rank.label} {profile.rankProgress.rank.symbol}
+                </span>
+                {profile.rankProgress.nextRankTitle && (
+                  <span className="profileRankNext">Next: {profile.rankProgress.nextRankTitle}</span>
+                )}
+                <span className="profileRankPct">{profile.rankProgress.progressPercent}%</span>
+              </div>
+              <div className="profileRankBarTrack">
+                <div
+                  className="profileRankBarFill"
+                  style={{ width: `${profile.rankProgress.progressPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="profileDetails">
             {profile.location && <span>⌖ {profile.location}</span>}
@@ -272,9 +302,12 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         </div>
         <div className="profilePrimaryAction">
           {profile.isSelf ? (
-            <Link className="profileEditButton" href="/profile/edit">✎ Edit profile</Link>
+            <div className="profileActionButtonsRow">
+              <Link className="profileEditButton" href="/profile/edit">✎ Edit Profile</Link>
+              <button className="shareProfileButton" type="button" onClick={shareProfile}>↗ {shareLabel}</button>
+            </div>
           ) : (
-            <>
+            <div className="profileActionButtonsRow">
               <button
                 className={`followButton ${profile.isFollowing ? 'following' : ''}`}
                 onClick={toggleFollow}
@@ -300,13 +333,9 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
                   💬 Message
                 </button>
               )}
-            </>
-          )}
 
-          <button className="shareProfileButton" type="button" onClick={shareProfile}>↗ {shareLabel}</button>
+              <button className="shareProfileButton" type="button" onClick={shareProfile}>↗ {shareLabel}</button>
 
-          {!profile.isSelf && (
-            <>
               <button
                 type="button"
                 className={`profileBlockButton ${profile.isBlocked ? 'blocked' : ''}`}
@@ -316,7 +345,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
                 {profile.isBlocked ? 'Unblock' : 'Block'}
               </button>
               <ReportButton targetType="PROFILE" targetId={profile.username}/>
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -459,11 +488,50 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
     )}
 
     {tab === 'skillshots' && <section className="profileWork shell profileTabPanel" role="tabpanel">
-      <div className="featuredSection">
-        <div className="sectionHead"><div><p className="eyebrow">FEATURED</p><h2>Selected work.</h2></div>{profile.isSelf && <Link className="textLink" href="/profile/edit">Choose featured work →</Link>}</div>
-        {profile.featuredPosts.length ? <div className="featuredGrid">{profile.featuredPosts.map(post => <article className="featuredPost" key={post.id}><Link className="featuredImage" href={`/shots/${post.id}`}><img src={post.imageUrl} alt={post.title} loading="lazy" width="900" height="600" onError={event => { event.currentTarget.style.display = 'none'; }}/></Link><div><p className="eyebrow">{new Date(post.createdAt).toLocaleDateString()}</p><h3><Link href={`/shots/${post.id}`}>{post.title}</Link></h3>{post.description && <p>{post.description}</p>}<small>♥ {post.reactionCount} <span>◌ {post.commentCount}</span></small></div></article>)}</div> : <div className="profileEmpty"><span>✦</span><h3>{profile.isSelf ? 'Feature your best work' : 'No featured Skillshots'}</h3>{profile.isSelf && <Link className="primary" href="/profile/edit">Choose featured work →</Link>}</div>}
+      {profile.featuredPosts.length > 0 && (
+        <div className="featuredSection compactFeatured">
+          <div className="sectionHead">
+            <div>
+              <p className="eyebrow">FEATURED</p>
+              <h2>Selected work.</h2>
+            </div>
+            {profile.isSelf && <Link className="textLink" href="/profile/edit">Choose featured work →</Link>}
+          </div>
+          <div className="featuredGrid">
+            {profile.featuredPosts.map(post => (
+              <article className="featuredPost" key={post.id}>
+                <Link className="featuredImage" href={`/shots/${post.id}`}>
+                  <img
+                    src={post.imageUrl}
+                    alt={post.title}
+                    loading="lazy"
+                    width="900"
+                    height="600"
+                    onError={event => { event.currentTarget.style.display = 'none'; }}
+                  />
+                </Link>
+                <div>
+                  <p className="eyebrow">{new Date(post.createdAt).toLocaleDateString()}</p>
+                  <h3><Link href={`/shots/${post.id}`}>{post.title}</Link></h3>
+                  {post.description && <p>{post.description}</p>}
+                  <small>♥ {post.reactionCount} <span>◌ {post.commentCount}</span></small>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="allSkillshots yourWorkSection">
+        <div className="sectionHead">
+          <div>
+            <p className="eyebrow">YOUR WORK</p>
+            <h2>{profile.isSelf ? 'Your published work.' : `${profile.displayName}'s work.`}</h2>
+          </div>
+          {profile.isSelf && <Link className="primary" href="/upload">＋ New post</Link>}
+        </div>
+        <CollectionsManager username={profile.username} isSelf={profile.isSelf} />
       </div>
-      <div className="allSkillshots"><div className="sectionHead"><div><p className="eyebrow">ALL SKILLSHOTS</p><h2>{profile.isSelf ? 'Your published work.' : `${profile.displayName}'s work.`}</h2></div>{profile.isSelf && <Link className="primary" href="/upload">＋ New post</Link>}</div><CommunityFeed username={profile.username} compact emptyTitle="No Skillshots yet." emptyText={profile.isSelf ? 'Share your first one.' : 'No published work yet.'}/></div>
     </section>}
 
     {tab === 'saved' && <section className="profileWork shell profileTabPanel" role="tabpanel">

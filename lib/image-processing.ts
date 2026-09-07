@@ -1,8 +1,8 @@
 import sharp from 'sharp';
-import { AVATAR_MAX_BYTES, IMAGE_TYPES, SKILLSHOT_MAX_BYTES } from './upload-policy.ts';
+import { AVATAR_MAX_BYTES, BANNER_MAX_BYTES, IMAGE_TYPES, AVATAR_TYPES, BANNER_TYPES, SKILLSHOT_MAX_BYTES } from './upload-policy.ts';
 import { SKILLSHOT_TYPES,GIF_MAX_FRAMES,GIF_MAX_TOTAL_PIXELS,sampledFrames } from './upload-policy.ts';
 
-export { AVATAR_MAX_BYTES, IMAGE_TYPES, SKILLSHOT_MAX_BYTES };
+export { AVATAR_MAX_BYTES, BANNER_MAX_BYTES, IMAGE_TYPES, AVATAR_TYPES, BANNER_TYPES, SKILLSHOT_MAX_BYTES };
 export const MAX_IMAGE_WIDTH = 12_000;
 export const MAX_IMAGE_HEIGHT = 12_000;
 export const MAX_IMAGE_PIXELS = 40_000_000;
@@ -33,8 +33,9 @@ function assertDecodedImage(metadata: sharp.Metadata, declaredType?: string, all
   return { width, height };
 }
 
-export function uploadError(file: File, maximumBytes: number) {
-  if (!(maximumBytes===AVATAR_MAX_BYTES?IMAGE_TYPES:SKILLSHOT_TYPES).has(file.type)) return 'UNSUPPORTED_FORMAT' as const;
+export function uploadError(file: File, maximumBytes: number, kind: 'avatar' | 'banner' | 'skillshot' = 'skillshot') {
+  const allowed = kind === 'avatar' ? AVATAR_TYPES : kind === 'banner' ? BANNER_TYPES : SKILLSHOT_TYPES;
+  if (!allowed.has(file.type)) return 'UNSUPPORTED_FORMAT' as const;
   if (file.size <= 0) return 'INVALID_IMAGE' as const;
   if (file.size > maximumBytes) return 'FILE_TOO_LARGE' as const;
   return null;
@@ -81,12 +82,32 @@ export async function processSkillshot(buffer: Buffer, declaredType?: string): P
   return { width: swapped ? height : width, height: swapped ? width : height, display, thumbnail };
 }
 
-export async function processAvatar(buffer: Buffer, declaredType?: string) {
+export async function processAvatar(buffer: Buffer, declaredType?: string, allowGif = false) {
   const source = sharp(buffer, { failOn: 'warning', limitInputPixels: 20_000_000, sequentialRead: true });
   const metadata = await source.metadata();
-  const { width, height } = assertDecodedImage(metadata, declaredType);
+  const { width, height } = assertDecodedImage(metadata, declaredType, allowGif);
   if (width > 8_000 || height > 8_000 || width * height > 20_000_000) throw new Error('HUGE_DIMENSIONS');
+  if (metadata.format === 'gif' && allowGif) {
+    return sharp(buffer, { animated: true, failOn: 'warning', limitInputPixels: GIF_MAX_TOTAL_PIXELS })
+      .resize(512, 512, { fit: 'cover', position: 'attention', withoutEnlargement: false })
+      .gif({ loop: metadata.loop || 0 })
+      .toBuffer();
+  }
   return source.rotate().resize(512, 512, { fit: 'cover', position: 'attention', withoutEnlargement: false }).webp({ quality: 84, effort: 4 }).toBuffer();
+}
+
+export async function processBanner(buffer: Buffer, declaredType?: string) {
+  const source = sharp(buffer, { failOn: 'warning', limitInputPixels: GIF_MAX_TOTAL_PIXELS, sequentialRead: true });
+  const metadata = await source.metadata();
+  const { width, height } = assertDecodedImage(metadata, declaredType, true);
+  if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT || width * height > MAX_IMAGE_PIXELS) throw new Error('HUGE_DIMENSIONS');
+  if (metadata.format === 'gif') {
+    return sharp(buffer, { animated: true, failOn: 'warning', limitInputPixels: GIF_MAX_TOTAL_PIXELS })
+      .resize({ width: 1600, height: 600, fit: 'inside', withoutEnlargement: true })
+      .gif({ loop: metadata.loop || 0 })
+      .toBuffer();
+  }
+  return source.rotate().resize({ width: 1920, height: 720, fit: 'inside', withoutEnlargement: true }).webp({ quality: 86, effort: 4 }).toBuffer();
 }
 
 export function publicUploadMessage(code: string, kind: 'avatar' | 'skillshot' = 'skillshot') {

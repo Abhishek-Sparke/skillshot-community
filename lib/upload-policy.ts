@@ -1,6 +1,9 @@
 export const SKILLSHOT_MAX_BYTES = 10 * 1024 * 1024;
 export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+export const BANNER_MAX_BYTES = 5 * 1024 * 1024;
 export const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+export const AVATAR_TYPES = new Set([...IMAGE_TYPES, 'image/gif']);
+export const BANNER_TYPES = new Set([...IMAGE_TYPES, 'image/gif']);
 export const SKILLSHOT_TYPES = new Set([...IMAGE_TYPES, 'image/gif']);
 // Configurable lower limits; hard ceilings bound decoder memory and scanner work.
 export const GIF_MAX_FRAMES = Math.max(1,Math.min(120,Number(process.env.NEXT_PUBLIC_GIF_MAX_FRAMES)||120));

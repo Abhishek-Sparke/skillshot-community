@@ -3,13 +3,15 @@ import { getReadyDb } from '../../../../lib/db';
 import { normalizeRole } from '../../../../lib/roles';
 import { safeStoredSocialLinks } from '../../../../lib/social-links';
 import { canUserMessage, isBlockBetween } from '../../../../lib/chat';
+import { calculateRankProgress, calculateXpFromActivity } from '../../../../lib/creator-rank';
+import { calculateAchievements } from '../../../../lib/achievements';
 
 export async function GET(_: Request, { params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
   const viewer = await getChatGPTUser();
   const rows = await (await getReadyDb()).query(`
     SELECT u.id, u.email, u.display_name, u.username, u.bio, u.website, u.location,
-      u.skills, u.social_links, u.avatar_url, u.role, u.created_at,
+      u.skills, u.social_links, u.avatar_url, u.banner_url, u.banner_type, u.role, u.created_at,
       (SELECT COUNT(*) FROM posts p WHERE p.user_id=u.id AND p.status='VISIBLE') AS post_count,
       (SELECT COUNT(*) FROM reactions r JOIN posts p ON p.id=r.post_id WHERE p.user_id=u.id) AS likes_received,
       (SELECT COUNT(*) FROM follows f WHERE f.followed_id=u.id) AS follower_count,
@@ -36,14 +38,30 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
       if (['http:', 'https:'].includes(parsed.protocol)) website = parsed.toString();
     } catch { /* Ignore legacy invalid website values. */ }
   }
-  const reputation=Math.min(9999,Number(row.likes_received)*3+Number(row.follower_count)*5+Number(row.post_count)*10+Number(row.comment_count)*2);
-  const achievements=[
-    Number(row.post_count)>=1&&{key:'FIRST_SHOT',label:'First Skillshot',description:'Published a first piece of work.'},
-    Number(row.post_count)>=10&&{key:'MAKER_10',label:'Prolific Maker',description:'Published 10 visible Skillshots.'},
-    Number(row.likes_received)>=25&&{key:'APPRECIATED',label:'Community Favorite',description:'Received 25 reactions.'},
-    Number(row.comment_count)>=10&&{key:'CONVERSATION',label:'Community Voice',description:'Added 10 visible comments.'},
-    Number(row.follower_count)>=25&&{key:'CONNECTED',label:'Connected Creator',description:'Reached 25 followers.'},
-  ].filter(Boolean);
+  const postCount = Number(row.post_count);
+  const likesReceived = Number(row.likes_received);
+  const followerCount = Number(row.follower_count);
+  const followingCount = Number(row.following_count);
+  const commentCount = Number(row.comment_count);
+  const skillsList = Array.isArray(row.skills) ? row.skills.map(String) : [];
+
+  const xp = calculateXpFromActivity({
+    visiblePostCount: postCount,
+    reactionCount: likesReceived,
+    commentCount,
+    saveCount: 0,
+    followerCount,
+  });
+  const rankProgress = calculateRankProgress(xp);
+
+  const reputation = Math.min(9999, likesReceived * 3 + followerCount * 5 + postCount * 10 + commentCount * 2);
+  const achievements = calculateAchievements({
+    postCount,
+    likesReceived,
+    skillsCount: skillsList.length,
+    commentCount,
+    isFeatured: featuredRows.length > 0,
+  });
   let canMessage = true;
   let canMessageReason = '';
   let isBlocked = false;
@@ -64,17 +82,22 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     bio: String(row.bio || ''),
     website,
     location: String(row.location || ''),
-    skills: Array.isArray(row.skills) ? row.skills.map(String) : [],
+    skills: skillsList,
     socialLinks: safeStoredSocialLinks(row.social_links),
     avatarUrl: row.avatar_url ? `/api/avatars/${encodeURIComponent(String(row.username))}?v=${encodeURIComponent(String(row.avatar_url))}` : '',
+    bannerUrl: row.banner_url ? `/api/banners/${encodeURIComponent(String(row.username))}?v=${encodeURIComponent(String(row.banner_url))}` : '',
+    bannerType: String(row.banner_type || ''),
+    creatorRank: rankProgress.rank.id,
+    creatorRankInfo: rankProgress.rank,
+    rankProgress,
     role: normalizeRole(row.role),
     joinedAt: new Date(row.created_at as string).getTime(),
-    postCount: Number(row.post_count),
-    likesReceived: Number(row.likes_received),
+    postCount,
+    likesReceived,
     reputation,
     achievements,
-    followerCount: Number(row.follower_count),
-    followingCount: Number(row.following_count),
+    followerCount,
+    followingCount,
     isFollowing: Boolean(row.viewer_follows),
     isSelf: viewer?.userId === row.id,
     signedIn: Boolean(viewer),

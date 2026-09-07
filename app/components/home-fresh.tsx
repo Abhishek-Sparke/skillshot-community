@@ -14,7 +14,7 @@ export default async function HomeFresh() {
     const id = String(row.id), name = String(row.display_name);
     const profile = '/users/' + encodeURIComponent(String(row.username));
     return <article className="homeFreshCard" key={id} style={{ animationDelay: `${index * 40}ms` }}>
-      <div className="homeFreshMedia">
+      <div className="homeFreshMedia" style={{ aspectRatio: row.image_width && row.image_height ? `${row.image_width} / ${row.image_height}` : undefined }}>
         <Link className="homeFreshImage" href={'/shots/'+id} aria-label={'View '+String(row.title)}>
           <img src={'/api/images/'+id+'?variant=thumbnail'} alt={String(row.title)} loading="lazy" decoding="async" width={Number(row.image_width)||640} height={Number(row.image_height)||480} sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"/>
         </Link>

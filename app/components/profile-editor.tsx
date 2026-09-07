@@ -6,7 +6,7 @@ import { normalizeSocialUrl, SOCIAL_PLATFORMS, type SocialPlatformKey } from '..
 
 type EditorProfile = {
   displayName: string; username: string; bio: string; website: string; location: string;
-  skills: string[]; socialLinks: Record<string, string>; avatarUrl: string;
+  skills: string[]; socialLinks: Record<string, string>; avatarUrl: string; bannerUrl?: string;
 };
 type EditorPost = { id: string; title: string; featured: boolean };
 
@@ -21,24 +21,25 @@ function SocialIcon({ platform }: { platform: SocialPlatformKey }) {
 }
 
 const MAX_SOURCE_AVATAR_SIZE = 2 * 1024 * 1024;
-const AVATAR_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
-
-async function validateAvatar(file: File) {
-  const bitmap = await createImageBitmap(file);
-  try {
-    if (!bitmap.width || !bitmap.height || bitmap.width > 8000 || bitmap.height > 8000 || bitmap.width * bitmap.height > 20_000_000) throw new Error('Invalid dimensions');
-    // Keep the original bytes: the server performs the single final crop/encode.
-    return file;
-  } finally { bitmap.close(); }
-}
+const MAX_SOURCE_BANNER_SIZE = 5 * 1024 * 1024;
+const AVATAR_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+const BANNER_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
 export default function ProfileEditor({ profile, posts }: { profile: EditorProfile; posts: EditorPost[] }) {
+  const [activeTab, setActiveTab] = useState<'info' | 'appearance'>('info');
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatarUrl);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarInputKey, setAvatarInputKey] = useState(0);
   const [removeAvatar, setRemoveAvatar] = useState(false);
+
+  const [bannerPreview, setBannerPreview] = useState(profile.bannerUrl || '');
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerBusy, setBannerBusy] = useState(false);
+  const [bannerInputKey, setBannerInputKey] = useState(0);
+  const [removeBanner, setRemoveBanner] = useState(false);
+
   const [selectedFeatured, setSelectedFeatured] = useState(posts.filter(post => post.featured).map(post => post.id).slice(0, 3));
   const [socialValues, setSocialValues] = useState<Record<SocialPlatformKey, string>>(() => Object.fromEntries(SOCIAL_PLATFORMS.map(platform => [platform.key, profile.socialLinks[platform.key] || ''])) as Record<SocialPlatformKey, string>);
   const [socialErrors, setSocialErrors] = useState<Partial<Record<SocialPlatformKey, string>>>({});
@@ -46,8 +47,12 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
   const [busy, setBusy] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const avatarSelection = useRef(0);
+  const bannerSelection = useRef(0);
 
-  useEffect(() => () => { if (avatarPreview.startsWith('blob:')) URL.revokeObjectURL(avatarPreview); }, [avatarPreview]);
+  useEffect(() => () => {
+    if (avatarPreview.startsWith('blob:')) URL.revokeObjectURL(avatarPreview);
+    if (bannerPreview.startsWith('blob:')) URL.revokeObjectURL(bannerPreview);
+  }, [avatarPreview, bannerPreview]);
 
   async function selectAvatar(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -57,34 +62,59 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
       event.target.value = '';
       setAvatarFile(null);
       setAvatarPreview(profile.avatarUrl);
-      setFeedback('Please upload a PNG, JPG, or WebP image.');
+      setFeedback('Please upload a PNG, JPG, WebP, or GIF image.');
       return;
     }
     if (file.size > MAX_SOURCE_AVATAR_SIZE) {
       event.target.value = '';
       setAvatarFile(null);
       setAvatarPreview(profile.avatarUrl);
-      setFeedback('Image is too large. Please choose a smaller image.');
+      setFeedback('Avatar is too large. Please choose an image of 2 MB or less.');
       return;
     }
 
     setAvatarBusy(true);
-    setFeedback('Preparing your profile picture…');
+    setFeedback('Preparing profile picture…');
     try {
-      await validateAvatar(file);
       if (selection !== avatarSelection.current) return;
       setAvatarFile(file);
       setRemoveAvatar(false);
       setAvatarPreview(URL.createObjectURL(file));
-      setFeedback('Profile picture ready. It will be optimized automatically when saved.');
-    } catch {
-      if (selection !== avatarSelection.current) return;
-      event.target.value = '';
-      setAvatarFile(null);
-      setAvatarPreview(profile.avatarUrl);
-      setFeedback("That image couldn't be read. Please choose another PNG, JPG, or WebP image.");
+      setFeedback('Profile picture ready (animated GIFs will stay animated).');
     } finally {
       if (selection === avatarSelection.current) setAvatarBusy(false);
+    }
+  }
+
+  async function selectBanner(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const selection = ++bannerSelection.current;
+    if (!BANNER_TYPES.has(file.type)) {
+      event.target.value = '';
+      setBannerFile(null);
+      setBannerPreview(profile.bannerUrl || '');
+      setFeedback('Please upload a PNG, JPG, WebP, or GIF banner.');
+      return;
+    }
+    if (file.size > MAX_SOURCE_BANNER_SIZE) {
+      event.target.value = '';
+      setBannerFile(null);
+      setBannerPreview(profile.bannerUrl || '');
+      setFeedback('Banner is too large. Please choose an image of 5 MB or less.');
+      return;
+    }
+
+    setBannerBusy(true);
+    setFeedback('Preparing banner…');
+    try {
+      if (selection !== bannerSelection.current) return;
+      setBannerFile(file);
+      setRemoveBanner(false);
+      setBannerPreview(URL.createObjectURL(file));
+      setFeedback('Banner ready (animated GIFs will loop continuously).');
+    } finally {
+      if (selection === bannerSelection.current) setBannerBusy(false);
     }
   }
 
@@ -98,47 +128,49 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
   }
 
   function validateSocialLinks() {
-    const normalized = {} as Record<SocialPlatformKey, string>;
-    const errors: Partial<Record<SocialPlatformKey, string>> = {};
+    const nextErrors: Partial<Record<SocialPlatformKey, string>> = {};
     for (const platform of SOCIAL_PLATFORMS) {
-      const value = socialValues[platform.key].trim();
-      if (!value) { normalized[platform.key] = ''; continue; }
+      const raw = socialValues[platform.key]?.trim();
+      if (!raw) continue;
       try {
-        normalized[platform.key] = normalizeSocialUrl(platform.key, value);
+        normalizeSocialUrl(platform.key, raw);
       } catch {
-        const original = String(profile.socialLinks[platform.key] || '').trim();
-        if (value === original) normalized[platform.key] = original;
-        else errors[platform.key] = `Enter a valid ${platform.label} profile URL.`;
+        nextErrors[platform.key] = `Please enter a valid ${platform.label} link.`;
       }
     }
-    setSocialErrors(errors);
-    return Object.keys(errors).length ? null : normalized;
+    setSocialErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = event.currentTarget;
-    if (!form.checkValidity()) { form.reportValidity(); return; }
-    if (avatarBusy) { setFeedback('Please wait while your profile picture is prepared.'); return; }
-    const normalizedSocialLinks = validateSocialLinks();
-    if (!normalizedSocialLinks) { setFeedback('Check the highlighted social links and try again.'); return; }
+    if (!validateSocialLinks()) {
+      setFeedback('Please fix the invalid social links before saving.');
+      return;
+    }
     setBusy(true);
     setUploadProgress(0);
-    setFeedback(avatarFile ? 'Uploading your profile picture…' : 'Saving your profile…');
+    setFeedback('Saving profile changes…');
+
+    const form = event.currentTarget;
     const data = new FormData(form);
-    for (const platform of SOCIAL_PLATFORMS) data.set(platform.key, normalizedSocialLinks[platform.key]);
+
     data.delete('avatar');
     if (avatarFile && !removeAvatar) data.set('avatar', avatarFile);
+
+    data.delete('banner');
+    if (bannerFile && !removeBanner) data.set('banner', bannerFile);
+
     try {
       const response = await new Promise<{ url: string; ok: boolean }>((resolve, reject) => {
         const request = new XMLHttpRequest();
         request.open('POST', '/api/profile');
         request.timeout = 120_000;
-        request.upload.onprogress = event => {
-          if (!event.lengthComputable) return;
-          const progress = Math.round(event.loaded / event.total * 100);
+        request.upload.onprogress = ev => {
+          if (!ev.lengthComputable) return;
+          const progress = Math.round(ev.loaded / ev.total * 100);
           setUploadProgress(progress);
-          if (avatarFile) setFeedback(progress < 100 ? `Uploading your profile picture… ${progress}%` : 'Optimizing and saving your profile picture…');
+          setFeedback(`Saving profile changes… ${progress}%`);
         };
         request.onload = () => resolve({ url: request.responseURL, ok: request.status >= 200 && request.status < 300 });
         request.onerror = () => reject(new Error('Network error'));
@@ -149,12 +181,17 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
       const error = destination.searchParams.get('error');
       if (error) {
         const messages: Record<string, string> = {
-          'avatar-size': 'Image is too large. Please choose an image smaller than 2 MB.',
-          'avatar-type': 'Please upload a PNG, JPG, or WebP image.',
+          'avatar-size': 'Avatar is too large. Please choose an image of 2 MB or less.',
+          'avatar-type': 'Please upload a PNG, JPG, WebP, or GIF image.',
           'avatar-rate': 'You have changed your profile picture several times today. Please try again later.',
-          'avatar-invalid': "That image couldn't be read. Please choose another PNG, JPG, or WebP image.",
+          'avatar-invalid': "That image couldn't be read. Please choose another image or GIF.",
           'avatar-upload': "Couldn't upload your profile picture. Please try again.",
-          'avatar-moderation': 'This profile image could not be approved. Try another image or contact the Skillshot team.',
+          'avatar-moderation': 'This profile image could not be approved. Try another image or contact the team.',
+          'banner-size': 'Banner is too large. Please choose an image of 5 MB or less.',
+          'banner-type': 'Please upload a PNG, JPG, WebP, or GIF banner.',
+          'banner-invalid': "That banner couldn't be read. Please choose another image or GIF.",
+          'banner-upload': "Couldn't upload your banner. Please try again.",
+          'banner-moderation': 'This banner could not be approved. Try another image or contact the team.',
         };
         setFeedback(messages[error] || 'Your profile could not be saved. Please check the fields and try again.');
         setBusy(false);
@@ -168,39 +205,164 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
     }
   }
 
-  return <form action="/api/profile" method="post" encType="multipart/form-data" onSubmit={submit}>
-    <fieldset className="avatarEditor">
-      <legend>Profile picture</legend>
-      <div className="avatarPreview">{avatarPreview ? <img src={avatarPreview} alt="Avatar preview" onError={() => setAvatarPreview('')}/> : <span>{initials(displayName)}</span>}</div>
-      <div><label className="avatarUploadButton">{avatarBusy ? 'Preparing…' : 'Choose image'}<input key={avatarInputKey} name="avatar" type="file" accept="image/png,image/jpeg,image/webp" disabled={avatarBusy || busy} onChange={selectAvatar}/></label><small>PNG, JPG, or WebP · 2 MB maximum · automatically optimized for you</small></div>
-      {(avatarPreview || profile.avatarUrl) && <button type="button" className="removeAvatarButton" disabled={avatarBusy || busy} onClick={() => { avatarSelection.current += 1; setAvatarFile(null); setAvatarInputKey(value => value + 1); setAvatarPreview(''); setRemoveAvatar(true); setAvatarBusy(false); setFeedback('Profile picture will be removed when you save.'); }}>Remove</button>}
-      <input type="hidden" name="removeAvatar" value={removeAvatar ? '1' : '0'}/>
-    </fieldset>
-    <label>Display name<input required name="displayName" maxLength={80} value={displayName} onChange={event => setDisplayName(event.target.value)}/></label>
-    <label>Username<span className="inputPrefix"><b>@</b><input required name="username" maxLength={30} pattern="[a-zA-Z0-9_-]+" title="Use letters, numbers, underscores, or hyphens." defaultValue={profile.username}/></span></label>
-    <label>Professional bio<textarea name="bio" maxLength={500} defaultValue={profile.bio} placeholder="What do you create, and what are you great at?"/></label>
-    <label>Location<input name="location" maxLength={100} defaultValue={profile.location} placeholder="City, Country"/></label>
-    <label>Profile skills<input name="skills" maxLength={400} defaultValue={profile.skills.join(', ')} placeholder="UI/UX, React, Photography"/><small>These describe your creator profile, not individual Skillshot titles. Separate skills with commas. Up to 12 skills.</small></label>
-    <label>Website<input name="website" type="url" maxLength={300} defaultValue={profile.website} placeholder="https://yourportfolio.com"/></label>
-    <fieldset className="socialEditor"><legend>Social links</legend>
-      <p className="socialHelp">Optional profile links. You can enter them with or without https://.</p>
-      {SOCIAL_PLATFORMS.map(platform => {
-        const errorId = `${platform.key}-error`;
-        return <div className="socialField" key={platform.key}>
-          <label htmlFor={`social-${platform.key}`}>{platform.label}</label>
-          <div className={`socialInput ${socialErrors[platform.key] ? 'hasError' : ''}`}>
-            <span className="socialInputIcon"><SocialIcon platform={platform.key}/></span>
-            <input id={`social-${platform.key}`} name={platform.key} type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={socialValues[platform.key]} placeholder={platform.placeholder} aria-invalid={Boolean(socialErrors[platform.key])} aria-describedby={socialErrors[platform.key] ? errorId : undefined} onChange={event => { setSocialValues(current => ({ ...current, [platform.key]: event.target.value })); setSocialErrors(current => ({ ...current, [platform.key]: undefined })); }} onBlur={validateSocialLinks}/>
+  return (
+    <form action="/api/profile" method="post" encType="multipart/form-data" onSubmit={submit}>
+      {/* Editor Sub-Navigation Tabs */}
+      <div className="editorSubTabs">
+        <button
+          type="button"
+          className={`editorSubTab ${activeTab === 'info' ? 'active' : ''}`}
+          onClick={() => setActiveTab('info')}
+        >
+          Profile Information
+        </button>
+        <button
+          type="button"
+          className={`editorSubTab ${activeTab === 'appearance' ? 'active' : ''}`}
+          onClick={() => setActiveTab('appearance')}
+        >
+          Profile Appearance (PFP & Banner)
+        </button>
+      </div>
+
+      {activeTab === 'appearance' ? (
+        <div className="appearanceSection">
+          {/* Live Preview Card */}
+          <div className="appearanceLivePreview">
+            <h4>Live Appearance Preview</h4>
+            <div className="previewCoverWrap">
+              {bannerPreview && !removeBanner ? (
+                <img src={bannerPreview} alt="Banner preview" className="previewBannerImg" />
+              ) : (
+                <div className="previewBannerFallback"><span>SKILLSHOT CREATOR</span></div>
+              )}
+              <div className="previewBannerOverlay" />
+              <div className="previewAvatarWrap">
+                {avatarPreview && !removeAvatar ? (
+                  <img src={avatarPreview} alt="Avatar preview" className="previewAvatarImg animatedPfp" />
+                ) : (
+                  <span className="previewAvatarFallback">{initials(displayName)}</span>
+                )}
+              </div>
+            </div>
+            <div className="previewIdentityRow">
+              <strong>{displayName || 'Creator Name'}</strong>
+              <span>@{profile.username}</span>
+            </div>
           </div>
-          {socialErrors[platform.key] && <p className="socialError" id={errorId} role="alert">{socialErrors[platform.key]}</p>}
-        </div>;
-      })}
-    </fieldset>
-    <fieldset className="featuredEditor"><legend>Featured Skillshots <small>{selectedFeatured.length}/3 selected</small></legend>
-      {posts.length ? <div className="featuredChoices">{posts.map(post => <label key={post.id} className={selectedFeatured.includes(post.id) ? 'selected' : ''}><input type="checkbox" name="featuredPost" value={post.id} checked={selectedFeatured.includes(post.id)} onChange={() => toggleFeatured(post.id)}/><span>✓</span><b>{post.title}</b></label>)}</div> : <p>Publish your first Skillshot, then return here to feature your best work.</p>}
-    </fieldset>
-    <p className="editorFeedback" role="status" aria-live="polite">{feedback}</p>
-    {busy && avatarFile && <div className="uploadProgress" role="progressbar" aria-label="Profile image upload" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}><span style={{ width: `${uploadProgress}%` }}/></div>}
-    <div className="editorActions"><button className="primary" disabled={busy || avatarBusy}>{busy ? (avatarFile ? 'Uploading…' : 'Saving…') : avatarBusy ? 'Preparing image…' : 'Save changes'}</button><Link className="quietButton" href="/profile">Cancel</Link></div>
-  </form>;
+
+          {/* Banner Upload Controls */}
+          <fieldset className="appearanceFieldset">
+            <legend>Profile Banner (GIF or Static Image)</legend>
+            <p className="appearanceHint">Recommended: 1920 × 600 px. Max 5 MB. Animated GIFs loop continuously.</p>
+            <div className="appearanceToolsRow">
+              <label className="primary uploadToolBtn">
+                {bannerBusy ? 'Preparing…' : 'Change Banner'}
+                <input
+                  key={bannerInputKey}
+                  name="banner"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  disabled={bannerBusy || busy}
+                  onChange={selectBanner}
+                />
+              </label>
+              {(bannerPreview || profile.bannerUrl) && !removeBanner && (
+                <button
+                  type="button"
+                  className="quietButton"
+                  onClick={() => {
+                    bannerSelection.current += 1;
+                    setBannerFile(null);
+                    setBannerInputKey(v => v + 1);
+                    setBannerPreview('');
+                    setRemoveBanner(true);
+                    setFeedback('Banner will be removed when you save.');
+                  }}
+                >
+                  Remove Banner
+                </button>
+              )}
+            </div>
+            <input type="hidden" name="removeBanner" value={removeBanner ? '1' : '0'} />
+          </fieldset>
+
+          {/* Profile Picture Upload Controls */}
+          <fieldset className="appearanceFieldset">
+            <legend>Profile Picture (GIF or Static Image)</legend>
+            <p className="appearanceHint">PNG, JPG, WebP, or GIF · 2 MB max. Animated GIFs stay animated everywhere.</p>
+            <div className="appearanceToolsRow">
+              <label className="primary uploadToolBtn">
+                {avatarBusy ? 'Preparing…' : 'Change PFP'}
+                <input
+                  key={avatarInputKey}
+                  name="avatar"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  disabled={avatarBusy || busy}
+                  onChange={selectAvatar}
+                />
+              </label>
+              {(avatarPreview || profile.avatarUrl) && !removeAvatar && (
+                <button
+                  type="button"
+                  className="quietButton"
+                  onClick={() => {
+                    avatarSelection.current += 1;
+                    setAvatarFile(null);
+                    setAvatarInputKey(v => v + 1);
+                    setAvatarPreview('');
+                    setRemoveAvatar(true);
+                    setFeedback('Profile picture will be removed when you save.');
+                  }}
+                >
+                  Remove PFP
+                </button>
+              )}
+            </div>
+            <input type="hidden" name="removeAvatar" value={removeAvatar ? '1' : '0'} />
+          </fieldset>
+        </div>
+      ) : (
+        <div className="infoSection">
+          <label>Display name<input required name="displayName" maxLength={80} value={displayName} onChange={event => setDisplayName(event.target.value)}/></label>
+          <label>Username<span className="inputPrefix"><b>@</b><input required name="username" maxLength={30} pattern="[a-zA-Z0-9_-]+" title="Use letters, numbers, underscores, or hyphens." defaultValue={profile.username}/></span></label>
+          <label>Professional bio<textarea name="bio" maxLength={500} defaultValue={profile.bio} placeholder="What do you create, and what are you great at?"/></label>
+          <label>Location<input name="location" maxLength={100} defaultValue={profile.location} placeholder="City, Country"/></label>
+          <label>Profile skills<input name="skills" maxLength={400} defaultValue={profile.skills.join(', ')} placeholder="UI/UX, React, Photography"/><small>These describe your creator profile, not individual Skillshot titles. Separate skills with commas. Up to 12 skills.</small></label>
+          <label>Website<input name="website" type="url" maxLength={300} defaultValue={profile.website} placeholder="https://yourportfolio.com"/></label>
+          <fieldset className="socialEditor"><legend>Social links</legend>
+            <p className="socialHelp">Optional profile links. You can enter them with or without https://.</p>
+            {SOCIAL_PLATFORMS.map(platform => {
+              const errorId = `${platform.key}-error`;
+              return <div className="socialField" key={platform.key}>
+                <label htmlFor={`social-${platform.key}`}>{platform.label}</label>
+                <div className={`socialInput ${socialErrors[platform.key] ? 'hasError' : ''}`}>
+                  <span className="socialInputIcon"><SocialIcon platform={platform.key}/></span>
+                  <input id={`social-${platform.key}`} name={platform.key} type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={socialValues[platform.key]} placeholder={platform.placeholder} aria-invalid={Boolean(socialErrors[platform.key])} aria-describedby={socialErrors[platform.key] ? errorId : undefined} onChange={event => { setSocialValues(current => ({ ...current, [platform.key]: event.target.value })); setSocialErrors(current => ({ ...current, [platform.key]: undefined })); }} onBlur={validateSocialLinks}/>
+                </div>
+                {socialErrors[platform.key] && <p className="socialError" id={errorId} role="alert">{socialErrors[platform.key]}</p>}
+              </div>;
+            })}
+          </fieldset>
+          <fieldset className="featuredEditor"><legend>Featured Skillshots <small>{selectedFeatured.length}/3 selected</small></legend>
+            {posts.length ? <div className="featuredChoices">{posts.map(post => <label key={post.id} className={selectedFeatured.includes(post.id) ? 'selected' : ''}><input type="checkbox" name="featuredPost" value={post.id} checked={selectedFeatured.includes(post.id)} onChange={() => toggleFeatured(post.id)}/><span>✓</span><b>{post.title}</b></label>)}</div> : <p>Publish your first Skillshot, then return here to feature your best work.</p>}
+          </fieldset>
+        </div>
+      )}
+
+      <p className="editorFeedback" role="status" aria-live="polite">{feedback}</p>
+      {busy && (avatarFile || bannerFile) && (
+        <div className="uploadProgress" role="progressbar" aria-label="Media upload" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
+          <span style={{ width: `${uploadProgress}%` }}/>
+        </div>
+      )}
+      <div className="editorActions">
+        <button className="primary" disabled={busy || avatarBusy || bannerBusy}>
+          {busy ? 'Saving changes…' : avatarBusy || bannerBusy ? 'Preparing media…' : 'Save changes'}
+        </button>
+        <Link className="quietButton" href="/profile">Cancel</Link>
+      </div>
+    </form>
+  );
 }

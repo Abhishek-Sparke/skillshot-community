@@ -19,6 +19,11 @@ const messages: Record<string, string> = {
   'avatar-moderation': 'This profile image could not be approved. Try another image or contact the Skillshot team.',
   'avatar-invalid': "That image couldn't be read. Please choose another PNG, JPG, or WebP image.",
   'avatar-upload': "Couldn't upload your profile picture. Please try again.",
+  'banner-size': 'Banner image is too large. Please choose an image smaller than 5 MB.',
+  'banner-type': 'Please upload a PNG, JPG, WebP, or animated GIF banner.',
+  'banner-moderation': 'This banner image could not be approved. Try another image or contact the Skillshot team.',
+  'banner-invalid': "That banner couldn't be read. Please choose another image or animated GIF.",
+  'banner-upload': "Couldn't upload your profile banner. Please try again.",
   save: 'Your profile could not be saved. Please try again.',
 };
 
@@ -44,6 +49,7 @@ export default async function EditProfile({ searchParams }: { searchParams: Prom
         skills: Array.isArray(profile.skills) ? profile.skills.map(String) : [],
         socialLinks: profile.social_links && typeof profile.social_links === 'object' ? profile.social_links as Record<string, string> : {},
         avatarUrl: profile.avatar_url ? `/api/avatars/${encodeURIComponent(String(profile.username))}?v=${encodeURIComponent(String(profile.avatar_url))}` : '',
+        bannerUrl: profile.banner_url ? `/api/banners/${encodeURIComponent(String(profile.username))}?v=${encodeURIComponent(String(profile.banner_url))}` : '',
       }} posts={posts.map(post => ({ id: String(post.id), title: String(post.title), featured: Boolean(post.featured) }))}/>
       <div className="profileLinks"><Link className="backHome" href="/">← Back to home</Link></div>
     </section>

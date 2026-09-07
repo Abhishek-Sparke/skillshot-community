@@ -285,19 +285,23 @@ export async function POST(
   const notificationBody = content ? (content.length > 80 ? content.slice(0, 77) + '…' : content) : 'Sent you an attachment';
   const eventKey = `chat:${conversationId}:${recipientId}`;
 
-  await sql.query(
-    `INSERT INTO notifications (id, user_id, type, title, body, event_key, target_url, created_at, read_at)
-     VALUES (gen_random_uuid()::text, $1, 'SYSTEM', $2, $3, $4, $5, now(), NULL)
-     ON CONFLICT (event_key) DO UPDATE
-     SET body = EXCLUDED.body, read_at = NULL, created_at = now()`,
-    [
-      recipientId,
-      `${senderDisplayName} sent you a message`,
-      notificationBody,
-      eventKey,
-      `/chats?id=${conversationId}`,
-    ]
-  );
+  try {
+    await sql.query(
+      `INSERT INTO notifications (id, user_id, type, title, body, event_key, target_url, created_at, read_at)
+       VALUES (gen_random_uuid()::text, $1, 'SYSTEM', $2, $3, $4, $5, now(), NULL)
+       ON CONFLICT (event_key) WHERE event_key IS NOT NULL DO UPDATE
+       SET body = EXCLUDED.body, read_at = NULL, created_at = now()`,
+      [
+        recipientId,
+        `${senderDisplayName} sent you a message`,
+        notificationBody,
+        eventKey,
+        `/chats?id=${conversationId}`,
+      ]
+    );
+  } catch (notifErr) {
+    console.error('Failed to create in-app notification for chat message:', notifErr);
+  }
 
   return Response.json({
     id: msg.id,

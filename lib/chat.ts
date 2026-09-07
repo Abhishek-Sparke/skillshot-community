@@ -87,8 +87,8 @@ export async function canUserMessage(senderId: string, recipientId: string): Pro
   const userRows = await sql.query(`SELECT id, status, preferences FROM users WHERE id IN ($1, $2)`, [senderId, recipientId]);
   const sender = userRows.find(u => u.id === senderId);
   const recipient = userRows.find(u => u.id === recipientId);
-  if (!sender || sender.status !== 'ACTIVE') return { allowed: false, reason: 'Your account is not active.' };
-  if (!recipient || recipient.status !== 'ACTIVE') return { allowed: false, reason: 'User account is not active.' };
+  if (!sender || (sender.status && sender.status !== 'ACTIVE')) return { allowed: false, reason: 'Your account is not active.' };
+  if (!recipient || (recipient.status && recipient.status !== 'ACTIVE')) return { allowed: false, reason: 'User account is not active.' };
   
   const blocks = await isBlockBetween(senderId, recipientId);
   if (blocks.isBlockedByYou) return { allowed: false, reason: 'You have blocked this user.' };

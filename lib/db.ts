@@ -6,6 +6,8 @@ import { SETTINGS_MIGRATION } from './settings-schema';
 import { TRUSTED_MIGRATION } from './trusted-schema';
 import { COMMENT_MIGRATION } from './comment-schema';
 import { CHAT_MIGRATION } from './chat-schema';
+import { COMMUNITY_MIGRATION } from './community-schema';
+import { COLLECTION_MIGRATION } from './collection-schema';
 
 let client: NeonQueryFunction<false, false> | null = null;
 let initialization: Promise<unknown> | null = null;
@@ -35,6 +37,11 @@ export async function getReadyDb() {
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text`);
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_type text`);
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_size integer`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_url text`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_type text`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS banner_size integer`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS creator_rank text NOT NULL DEFAULT 'NEWCOMER'`);
+    await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS creator_xp integer NOT NULL DEFAULT 0`);
     if (PRIMARY_ADMIN_EMAIL) await sql.query(`UPDATE users SET role='ADMIN' WHERE lower(email)=$1 AND role NOT IN ('OWNER','ADMIN')`, [PRIMARY_ADMIN_EMAIL]);
     if (OWNER_EMAIL) await sql.query(`UPDATE users SET role='OWNER' WHERE lower(email)=$1`, [OWNER_EMAIL]);
     await sql.query(`CREATE TABLE IF NOT EXISTS posts (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, title text NOT NULL, description text NOT NULL DEFAULT '', tags jsonb NOT NULL DEFAULT '[]'::jsonb, image_url text NOT NULL, image_type text NOT NULL, image_size integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`);
@@ -95,6 +102,8 @@ export async function getReadyDb() {
     await sql.transaction(TRUSTED_MIGRATION.map(statement=>sql.query(statement)));
     await sql.transaction(COMMENT_MIGRATION.map(statement=>sql.query(statement)));
     await sql.transaction(CHAT_MIGRATION.map(statement=>sql.query(statement)));
+    await sql.transaction(COMMUNITY_MIGRATION.map(statement=>sql.query(statement)));
+    await sql.transaction(COLLECTION_MIGRATION.map(statement=>sql.query(statement)));
   })();
   await initialization;
   return sql;

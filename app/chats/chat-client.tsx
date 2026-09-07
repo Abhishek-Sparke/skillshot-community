@@ -275,9 +275,15 @@ export default function ChatClient({ currentUserId }: { currentUserId: string })
         }),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        // Non-JSON response (e.g. server error page)
+      }
+
       if (!res.ok) {
-        setStatusError(data.error || 'Failed to send message.');
+        setStatusError(data?.error || `Failed to send message (${res.status}). Please try again.`);
         return;
       }
 
@@ -847,7 +853,10 @@ export default function ChatClient({ currentUserId }: { currentUserId: string })
                     className="composerTextarea"
                     placeholder="Type a message…"
                     value={composerText}
-                    onChange={e => setComposerText(e.target.value)}
+                    onChange={e => {
+                      setComposerText(e.target.value);
+                      if (statusError) setStatusError('');
+                    }}
                     onKeyDown={e => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
