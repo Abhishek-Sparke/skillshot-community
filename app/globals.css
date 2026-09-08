@@ -4749,18 +4749,18 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   margin-top: 2px;
   line-height: 1.2;
 }
-/* Username badges sit beside avatars, so their tooltip opens outward instead of
-   underneath the overlapping avatar or on top of the creator name. */
+/* Username badges sit beside avatars, so their tooltip opens above and outward
+   over the visual instead of covering the avatar, creator name, or card title. */
 .creatorUsernameWrapper .iconBadgeTooltip{
   left:calc(100% + 7px);
-  top:50%;
-  bottom:auto;
-  translate:-4px -50%;
+  top:auto;
+  bottom:calc(100% + 7px);
+  translate:-4px 4px;
 }
 .creatorUsernameWrapper .iconBadge:hover .iconBadgeTooltip,
 .creatorUsernameWrapper .iconBadge:focus-visible .iconBadgeTooltip,
 .creatorUsernameWrapper .iconBadge.tooltipOpen .iconBadgeTooltip{
-  translate:0 -50%;
+  translate:0 0;
 }
 .roleBadge[data-tooltip]::after{content:none}
 .roleBadgeLabel{display:inline-flex;align-items:center;gap:6px;color:inherit;font:800 12px/1 'Plus Jakarta Sans',Arial,sans-serif}
