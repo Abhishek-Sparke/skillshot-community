@@ -23,6 +23,7 @@ type Props = {
   asSpan?: boolean;
   prefix?: string;
   roleVariant?: 'profile'|'compact';
+  layout?: 'inline'|'profile';
 };
 
 export default function CreatorUsername({
@@ -40,6 +41,7 @@ export default function CreatorUsername({
   asSpan = false,
   prefix = '',
   roleVariant = 'compact',
+  layout = 'inline',
 }: Props) {
   const [showPopover, setShowPopover] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -86,22 +88,35 @@ export default function CreatorUsername({
     ...cardData,
   };
 
+  const nameElement = asSpan
+    ? <span className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></span>
+    : <Link href={profileUrl} className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></Link>;
+  const rankBadge = showRankBadge
+    ? <CreatorRankBadge rank={rankKey} showLabel={layout === 'profile'} size={layout === 'profile' ? 'md' : 'sm'} />
+    : null;
+  const roleBadge = showRoleBadge && resolvedRole && resolvedRole !== 'USER'
+    ? <RoleBadge role={resolvedRole} variant={layout === 'profile' ? 'profile' : roleVariant} />
+    : null;
+
   return (
     <span
       ref={containerRef}
-      className={`creatorUsernameWrapper ${className}`}
+      className={`creatorUsernameWrapper ${layout === 'profile' ? 'creatorProfileIdentity' : ''} ${className}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {asSpan ? <span className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></span> : <Link href={profileUrl} className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></Link>}
-
-      {showRankBadge && (
-        <CreatorRankBadge rank={rankKey} size="sm" />
-      )}
-
-      {showRoleBadge && resolvedRole && resolvedRole !== 'USER' && (
-        <RoleBadge role={resolvedRole} variant={roleVariant} />
-      )}
+      {layout === 'profile' ? <>
+        <span className="creatorProfileNameRow">{nameElement}</span>
+        <span className="creatorProfileMetaRow">
+          <span className="creatorProfileHandle">@{username}</span>
+          {rankBadge}
+          {roleBadge}
+        </span>
+      </> : <>
+        {nameElement}
+        {rankBadge}
+        {roleBadge}
+      </>}
 
       {enableCard && showPopover && (
         <div className="creatorPopoverCard">

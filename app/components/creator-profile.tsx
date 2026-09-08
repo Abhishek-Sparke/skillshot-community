@@ -275,9 +275,8 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         </div>
         <div className="profileMainInfo">
           <div className="profileNameLine">
-            <h1><CreatorUsername asSpan name={profile.displayName} username={profile.username} creatorRank={profile.creatorRank} staffRole={profile.role} roleVariant="profile"/></h1>
+            <CreatorUsername asSpan layout="profile" name={profile.displayName} username={profile.username} creatorRank={profile.creatorRank} staffRole={profile.role} roleVariant="profile"/>
           </div>
-          <p className="profileUsername">@{profile.username}</p>
           {profile.bio && <p className="profileBio">{profile.bio}</p>}
 
           {profile.rankProgress && (
