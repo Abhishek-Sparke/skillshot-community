@@ -78,28 +78,43 @@ export default function IconBadge({
     </span>
   );
 
-  const common = {
-    ref: badgeRef,
-    className: `iconBadge iconBadge-${size} ${className} ${isOpen ? 'tooltipOpen' : ''}`,
-    'aria-label': ariaLabel || tooltip,
-    onMouseEnter: () => setIsOpen(true),
-    onMouseLeave: () => setIsOpen(false),
-    onFocus: () => setIsOpen(true),
-    onBlur: () => setIsOpen(false),
-    onKeyDown: (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false);
-    },
-    onClick: (e: React.MouseEvent) => {
-      if ('ontouchstart' in window || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)) {
-        setIsOpen(prev => !prev);
-      }
-      if (onClick) onClick();
-    },
+  const badgeClassName = `iconBadge iconBadge-${size} ${className} ${isOpen ? 'tooltipOpen' : ''}`;
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') setIsOpen(false);
+  };
+  const handleClick = () => {
+    if ('ontouchstart' in window || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)) {
+      setIsOpen(prev => !prev);
+    }
+    onClick?.();
   };
 
   return onClick ? (
-    <button type="button" {...(common as any)}>{children}{tooltipElement}</button>
+    <button
+      ref={node => { badgeRef.current = node; }}
+      type="button"
+      className={badgeClassName}
+      aria-label={ariaLabel || tooltip}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+      onFocus={() => setIsOpen(true)}
+      onBlur={() => setIsOpen(false)}
+      onKeyDown={handleKeyDown}
+      onClick={handleClick}
+    >{children}{tooltipElement}</button>
   ) : (
-    <span {...(common as any)} role="img" tabIndex={0}>{children}{tooltipElement}</span>
+    <span
+      ref={node => { badgeRef.current = node; }}
+      className={badgeClassName}
+      aria-label={ariaLabel || tooltip}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+      onFocus={() => setIsOpen(true)}
+      onBlur={() => setIsOpen(false)}
+      onKeyDown={handleKeyDown}
+      onClick={handleClick}
+      role="img"
+      tabIndex={0}
+    >{children}{tooltipElement}</span>
   );
 }

@@ -55,7 +55,7 @@ export default function RoleTooltip({
       onFocus={() => setIsOpen(true)}
       onBlur={() => setIsOpen(false)}
       onKeyDown={handleKeyDown}
-      onClick={(e) => {
+      onClick={() => {
         // Toggle on mobile touch/tap
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
           setIsOpen((prev) => !prev);

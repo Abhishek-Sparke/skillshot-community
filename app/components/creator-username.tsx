@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import CreatorRankBadge from './creator-rank-badge';
 import RoleBadge from './role-badge';
-import { getStaffEffectClass } from './staff-visual-effect';
 import CreatorCard, { type CreatorCardData } from './creator-card';
 import type { UserRole } from '../../lib/roles';
-import { type CreatorRankId, creatorRankId } from '../../lib/creator-rank';
+import type { CreatorRankId } from '../../lib/creator-rank';
+import { getUsernameEffect } from '../../lib/username-effect';
 
 type Props = {
   name: string;
@@ -35,7 +35,7 @@ export default function CreatorUsername({
   role = 'USER',
   staffRole,
   creatorRank = 'NEWCOMER',
-  showRankBadge = true,
+  showRankBadge,
   showRoleBadge = true,
   enableCard = false,
   cardData,
@@ -52,13 +52,10 @@ export default function CreatorUsername({
   const containerRef = useRef<HTMLSpanElement>(null);
   const closeTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Separate Creator Rank (progression) from Staff Role (authority/permissions)
-  const rankKey = creatorRankId(creatorRank);
-  const effectiveStaffRole = staffRole !== undefined ? staffRole : (role !== 'USER' ? role : undefined);
-
-  // Critical requirement: ONLY staff roles activate the special username visual effect.
-  // Creator Rank must NEVER activate the staff visual effect.
-  const nameEffectClass = getStaffEffectClass(effectiveStaffRole);
+  const usernameEffect = getUsernameEffect({ creatorRank, staffRole, role });
+  const rankKey = usernameEffect.creatorRank;
+  const effectiveStaffRole = usernameEffect.staffRole === 'USER' ? undefined : usernameEffect.staffRole;
+  const shouldShowRankBadge = showRankBadge ?? layout === 'profile';
 
   const profileUrl = href ?? (username ? `/users/${encodeURIComponent(username)}` : '#');
 
@@ -91,14 +88,14 @@ export default function CreatorUsername({
   };
 
   const nameElement = asSpan
-    ? <span className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-staff-role={effectiveStaffRole ? effectiveStaffRole.toLowerCase() : 'none'}><span className="creatorNameText">{prefix}{name}</span></span>
-    : <Link href={profileUrl} className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-staff-role={effectiveStaffRole ? effectiveStaffRole.toLowerCase() : 'none'}><span className="creatorNameText">{prefix}{name}</span></Link>;
+    ? <span className={`creatorUsernameLink ${usernameEffect.className}`} data-effect-source={usernameEffect.source} data-rank={rankKey.toLowerCase()} data-staff-role={effectiveStaffRole ? effectiveStaffRole.toLowerCase() : 'none'}><span className="creatorNameText">{prefix}{name}</span></span>
+    : <Link href={profileUrl} className={`creatorUsernameLink ${usernameEffect.className}`} data-effect-source={usernameEffect.source} data-rank={rankKey.toLowerCase()} data-staff-role={effectiveStaffRole ? effectiveStaffRole.toLowerCase() : 'none'}><span className="creatorNameText">{prefix}{name}</span></Link>;
 
-  const rankBadge = showRankBadge
+  const rankBadge = shouldShowRankBadge
     ? <CreatorRankBadge rank={rankKey} size={layout === 'profile' ? 'md' : 'sm'} onClick={onRankClick} level={rankLevel} />
     : null;
 
-  const roleBadge = showRoleBadge && effectiveStaffRole && effectiveStaffRole !== 'USER'
+  const roleBadge = showRoleBadge && effectiveStaffRole
     ? <RoleBadge role={effectiveStaffRole} variant={layout === 'profile' ? 'profile' : roleVariant} showLabel={false} />
     : null;
 

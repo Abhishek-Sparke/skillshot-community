@@ -4443,11 +4443,11 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 }
 :root[data-theme=light] .profilePage .profileStats{background:#faf8f4}
 
-/* Server-driven Creator Rank badge styles. These exact static classes come from CREATOR_RANKS. */
+/* Username effects are resolved once in getUsernameEffect: rank for users, staff for staff. */
 .creatorUsernameLink{position:relative;overflow:visible;isolation:isolate;opacity:1}
 .creatorUsernameLink .creatorNameText{position:relative;display:inline-block;overflow:visible;color:inherit;font-weight:750;line-height:inherit}
 
-/* Creator rank color tokens used for badge accents (strictly NOT applied to username animations) */
+/* Creator Rank effects also provide the matching badge color tokens. */
 .creator-rank-newcomer{--rank-solid:#8b66c9;--rank-glow:#8b66c933}
 .creator-rank-creator{--rank-solid:#d99a24;--rank-glow:#f7b73342;--rank-glow-size:3px;--rank-text-speed:5.8s;--rank-text-gradient:linear-gradient(105deg,#a75d08 0%,#e3a31d 35%,#fff1a8 49%,#e3a31d 62%,#9a5107 100%)}
 .creator-rank-rising{--rank-solid:#24b8e8;--rank-glow:#38bdf866;--rank-text-speed:4.6s;--rank-text-gradient:linear-gradient(105deg,#087dac 0%,#20b6e8 30%,#e4fbff 48%,#62e3ff 54%,#0782b5 100%)}
@@ -4455,77 +4455,50 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .creator-rank-elite{--rank-solid:#ae6cff;--rank-glow:#b66cff80;--rank-glow-size:6px;--rank-text-speed:3.7s;--rank-text-gradient:linear-gradient(105deg,#6530a4 0%,#a65df2 27%,#f7edff 46%,#d996ff 53%,#7136b5 100%)}
 .creator-rank-master{--rank-solid:#ff607f;--rank-glow:#ff668880;--rank-glow-size:7px;--rank-text-speed:3.4s;--rank-text-gradient:linear-gradient(105deg,#a7133e 0%,#ef365f 26%,#fff0f4 47%,#ff8da5 54%,#a7133e 100%)}
 .creator-rank-legend{--rank-solid:#f5bd42;--rank-glow:#f5bd4299;--rank-glow-size:8px;--rank-text-speed:3.2s;--rank-text-gradient:linear-gradient(105deg,#a96908 0%,#efb72d 24%,#fff7bd 42%,#ef8dbd 52%,#b47aff 67%,#efb72d 86%,#a96908 100%)}
+.creatorUsernameLink.creator-rank-newcomer .creatorNameText{color:#fff;text-shadow:0 1px 2px #000,0 0 6px #0009}
+.creatorUsernameLink:is(.creator-rank-creator,.creator-rank-rising,.creator-rank-skilled,.creator-rank-elite,.creator-rank-master,.creator-rank-legend) .creatorNameText{
+  color:var(--rank-solid);
+  background-image:var(--rank-text-gradient);
+  background-position:100% 50%;
+  background-size:260% 100%;
+  background-repeat:no-repeat;
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 var(--rank-glow-size,4px) var(--rank-glow));
+  animation:creatorRankTextFlow var(--rank-text-speed,4.8s) ease-in-out infinite;
+  will-change:background-position;
+}
+:root[data-theme=light] .creatorUsernameLink.creator-rank-newcomer .creatorNameText{color:#fff;text-shadow:0 1px 2px #000,0 0 5px #000}
 @keyframes creatorRankTextFlow{0%,12%{background-position:100% 50%}55%{background-position:18% 50%}88%,100%{background-position:-90% 50%}}
 
 /* ==========================================================================
    STAFF ROLE VISUAL EFFECTS (ONLY STAFF ROLES ACTIVATE USERNAME EFFECTS)
    ========================================================================== */
-.staff-effect-admin .creatorNameText,
-.staff-effect-owner .creatorNameText,
-.staff-effect-head_moderator .creatorNameText,
-.staff-effect-moderator .creatorNameText,
-.staff-effect-trusted_contributor .creatorNameText {
+.creatorUsernameLink:is(.staff-effect-admin,.staff-effect-owner,.staff-effect-head_moderator,.staff-effect-moderator,.staff-effect-trusted_contributor) .creatorNameText {
   position: relative;
   display: inline-block;
   font-weight: 750;
   line-height: inherit;
-  transition: filter 0.2s ease, text-shadow 0.2s ease, color 0.2s ease;
+  color:var(--staff-solid);
+  background-image:var(--staff-gradient);
+  background-position:100% 50%;
+  background-size:240% 100%;
+  background-repeat:no-repeat;
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 3px var(--staff-glow));
+  animation:staffUsernameFlow var(--staff-speed,4.4s) ease-in-out infinite;
+  will-change:background-position;
 }
 
-/* Admin: Sleek purple glow / subtle shimmer */
-.staff-effect-admin .creatorNameText {
-  color: #c084fc;
-  text-shadow: 0 0 10px rgba(192, 132, 252, 0.5), 0 0 22px rgba(168, 85, 247, 0.25);
-  filter: drop-shadow(0 0 3px rgba(192, 132, 252, 0.35));
-}
-:root[data-theme=light] .staff-effect-admin .creatorNameText {
-  color: #7e22ce;
-  text-shadow: 0 0 8px rgba(126, 34, 206, 0.3);
-}
-
-/* Owner: Distinguished warm golden shimmer */
-.staff-effect-owner .creatorNameText {
-  color: #fbbf24;
-  text-shadow: 0 0 10px rgba(251, 191, 36, 0.55), 0 0 24px rgba(245, 158, 11, 0.3);
-  filter: drop-shadow(0 0 3px rgba(251, 191, 36, 0.4));
-}
-:root[data-theme=light] .staff-effect-owner .creatorNameText {
-  color: #b45309;
-  text-shadow: 0 0 8px rgba(180, 83, 9, 0.35);
-}
-
-/* Head Moderator: Rich amber/bronze glow */
-.staff-effect-head_moderator .creatorNameText {
-  color: #f59e0b;
-  text-shadow: 0 0 9px rgba(245, 158, 11, 0.45);
-  filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.35));
-}
-:root[data-theme=light] .staff-effect-head_moderator .creatorNameText {
-  color: #92400e;
-  text-shadow: 0 0 7px rgba(146, 64, 14, 0.3);
-}
-
-/* Moderator: Crisp azure glow */
-.staff-effect-moderator .creatorNameText {
-  color: #38bdf8;
-  text-shadow: 0 0 9px rgba(56, 189, 248, 0.45);
-  filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.35));
-}
-:root[data-theme=light] .staff-effect-moderator .creatorNameText {
-  color: #0284c7;
-  text-shadow: 0 0 7px rgba(2, 132, 199, 0.3);
-}
-
-/* Trusted Contributor: Refined emerald glow */
-.staff-effect-trusted_contributor .creatorNameText {
-  color: #34d399;
-  text-shadow: 0 0 9px rgba(52, 211, 153, 0.45);
-  filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.35));
-}
-:root[data-theme=light] .staff-effect-trusted_contributor .creatorNameText {
-  color: #059669;
-  text-shadow: 0 0 7px rgba(5, 150, 105, 0.3);
-}
+.staff-effect-owner{--staff-solid:#ff765f;--staff-glow:#ff5d4680;--staff-speed:3.8s;--staff-gradient:linear-gradient(105deg,#b82f26 0%,#ff5d46 30%,#ffd3c9 47%,#ff725c 58%,#b82f26 100%)}
+.staff-effect-admin{--staff-solid:#b46cff;--staff-glow:#a855f780;--staff-speed:4s;--staff-gradient:linear-gradient(105deg,#6724a7 0%,#a855f7 30%,#f0dcff 48%,#c486ff 58%,#6724a7 100%)}
+.staff-effect-head_moderator{--staff-solid:#5caeff;--staff-glow:#328cff80;--staff-speed:3.7s;--staff-gradient:linear-gradient(105deg,#075ba8 0%,#3694ed 29%,#d9f3ff 47%,#62bdff 58%,#075ba8 100%)}
+.staff-effect-moderator{--staff-solid:#2bc9e8;--staff-glow:#21c8e866;--staff-speed:4.8s;--staff-gradient:linear-gradient(105deg,#087d9b 0%,#20b9d8 32%,#d9fbff 48%,#54d9ed 58%,#087d9b 100%)}
+.staff-effect-trusted_contributor{--staff-solid:#34d399;--staff-glow:#24b98266;--staff-speed:5.2s;--staff-gradient:linear-gradient(105deg,#087d58 0%,#25b982 32%,#dffff3 48%,#57dca9 58%,#087d58 100%)}
+@keyframes staffUsernameFlow{0%,15%{background-position:100% 50%}55%{background-position:12% 50%}90%,100%{background-position:-90% 50%}}
 
 .creatorRankBadge[class*="creator-rank-"]{position:relative;overflow:visible;color:var(--rank-solid);border-color:color-mix(in srgb,var(--rank-solid) 48%,transparent);background:color-mix(in srgb,var(--rank-solid) 12%,transparent);box-shadow:0 0 var(--badge-glow,0) var(--rank-glow);isolation:isolate}
 .creatorRankBadge[class*="creator-rank-"] .rankIconContainer{position:relative;z-index:1;display:grid;place-items:center;transform-origin:center}
@@ -4546,7 +4519,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .profileProgressTrack>span::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 15%,#ffffff7d 48%,transparent 72%);background-size:220% 100%;animation:creatorXpHighlight 2.8s ease-in-out 1}
 @keyframes creatorXpHighlight{from{background-position:130% 0}to{background-position:-100% 0}}
 @media(prefers-reduced-motion:reduce){
-  .creatorUsernameLink[class*="creator-rank-"] .creatorNameText,.creatorRankBadge[class*="creator-rank-"] .rankIconContainer,.creatorRankBadge[class*="creator-rank-"]::after,.profileProgressTrack>span::after{animation:none!important;will-change:auto}
+  .creatorUsernameLink .creatorNameText,.creatorRankBadge[class*="creator-rank-"] .rankIconContainer,.creatorRankBadge[class*="creator-rank-"]::after,.profileProgressTrack>span::after{animation:none!important;will-change:auto}
   .profileProgressTrack>span{transition:none}
 }
 

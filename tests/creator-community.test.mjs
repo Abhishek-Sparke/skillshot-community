@@ -64,7 +64,7 @@ test('public identity surfaces delegate rank and staff indicators to one shared 
   }
 });
 
-test('all creator ranks use a static shared production effect class', async () => {
+test('all creator ranks use the centralized username effect resolver', async () => {
   assert.equal(creatorRankId('elite'), 'ELITE_CREATOR');
   assert.equal(creatorRankId('Rising Creator'), 'RISING_CREATOR');
   assert.equal(creatorRankId('master-creator'), 'MASTER_CREATOR');
@@ -76,28 +76,21 @@ test('all creator ranks use a static shared production effect class', async () =
   const username = await read('app/components/creator-username.tsx');
   const badge = await read('app/components/creator-rank-badge.tsx');
   const css = await read('app/globals.css');
-  const { getStaffEffectClass } = await import('../lib/roles.ts');
+  const { getUsernameEffect } = await import('../lib/username-effect.ts');
 
-  // Creator rank NEVER activates staff visual effect; only staff role does
-  assert.match(username, /getStaffEffectClass\(effectiveStaffRole\)/);
-  assert.doesNotMatch(username, /nameEffectClass = rankInfo\.animationClass/);
+  assert.match(username, /getUsernameEffect\(\{ creatorRank, staffRole, role \}\)/);
+  assert.match(username, /className:` creatorUsernameLink \$\{usernameEffect\.className\}`|creatorUsernameLink \$\{usernameEffect\.className\}/);
   assert.match(badge, /info\.badgeClass/);
 
-  // Acceptance combinations test:
-  assert.equal(getStaffEffectClass('USER'), '');
-  assert.equal(getStaffEffectClass(undefined), '');
-  assert.equal(getStaffEffectClass(null), '');
-  assert.equal(getStaffEffectClass('ADMIN'), 'staff-effect-admin');
-  assert.equal(getStaffEffectClass('MODERATOR'), 'staff-effect-moderator');
-  assert.equal(getStaffEffectClass('HEAD_MODERATOR'), 'staff-effect-head_moderator');
-  assert.equal(getStaffEffectClass('TRUSTED_CONTRIBUTOR'), 'staff-effect-trusted_contributor');
-  assert.equal(getStaffEffectClass('OWNER'), 'staff-effect-owner');
+  assert.equal(getUsernameEffect({ creatorRank: 'SKILLED_CREATOR', staffRole: 'USER' }).className, 'creator-rank-skilled');
+  assert.equal(getUsernameEffect({ creatorRank: 'SKILLED_CREATOR', staffRole: 'MODERATOR' }).className, 'staff-effect-moderator');
 
   for (const rank of Object.values(CREATOR_RANKS)) assert.match(css, new RegExp(`\\.${rank.animationClass}\\b`));
   assert.match(css, /\.staff-effect-admin/);
   assert.match(css, /\.staff-effect-owner/);
   assert.match(css, /\.staff-effect-moderator/);
   assert.match(css, /@keyframes creatorRankTextFlow/);
+  assert.match(css, /@keyframes staffUsernameFlow/);
   assert.match(css, /@keyframes creatorRankLegend/);
   assert.match(css, /prefers-reduced-motion:reduce/);
 });
