@@ -30,6 +30,15 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     FROM featured_posts fp JOIN posts p ON p.id=fp.post_id
     WHERE fp.user_id=$1 AND p.status='VISIBLE' ORDER BY fp.position ASC LIMIT 3
   `, [row.id]);
+  const collectionRows = await (await getReadyDb()).query(`
+    SELECT c.id, c.name, c.description, c.cover_url, c.is_private,
+      (SELECT COUNT(*) FROM collection_posts cp JOIN posts p ON p.id=cp.post_id
+       WHERE cp.collection_id=c.id AND p.status='VISIBLE') AS post_count
+    FROM collections c
+    WHERE c.user_id=$1 ${viewer?.userId === row.id ? '' : 'AND c.is_private=false'}
+    ORDER BY c.is_featured DESC, c.position ASC, c.created_at DESC
+    LIMIT 4
+  `, [row.id]);
   const storedWebsite = String(row.website || '');
   let website = '';
   if (storedWebsite) {
@@ -105,6 +114,11 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
       id: String(post.id), title: String(post.title), description: String(post.description || ''),
       createdAt: new Date(post.created_at as string).getTime(), reactionCount: Number(post.reaction_count),
       commentCount: Number(post.comment_count), imageUrl: `/api/images/${post.id}?variant=thumbnail`,
+    })),
+    collections: collectionRows.map(collection => ({
+      id: String(collection.id), name: String(collection.name), description: String(collection.description || ''),
+      coverUrl: collection.cover_url ? String(collection.cover_url) : null, isPrivate: Boolean(collection.is_private),
+      postCount: Number(collection.post_count),
     })),
   } });
 }

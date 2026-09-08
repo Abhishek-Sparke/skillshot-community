@@ -3982,4 +3982,73 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 :root[data-theme=light] .rankCardClose{border-color:#d9d3df;background:#fff;color:#222}.rankCard :is(h2,.rankCardNumbers b,.rankCardNext b){color:inherit}:root[data-theme=light] .rankTimeline small{color:#555c68}
 @media(prefers-reduced-motion:reduce){.rankCardTrack span{transition:none}}
 
+/* Profile polish: deliberate header hierarchy, compact overview and clean SVG metadata. */
+.uiIcon{display:inline-block;flex:none;vertical-align:-.16em}
+.profileCoverEdit,.profileActionButtonsRow :is(button,a),.profileDetails :is(span,a),.profileMiniDetails :is(span,a),.profileOverviewActions :is(button,a),.portfolioCounters span{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.roleBadgeIcon{display:grid;place-items:center}.roleBadgeIcon svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.profilePage .profileSummary{align-items:start}
+.profilePage .profileMainInfo{display:grid;gap:10px;min-width:0}
+.profileHeaderAside{display:grid;gap:14px;min-width:0}
+.profilePage .profilePrimaryAction{position:static;margin:0}
+.profilePage .profileStats{width:100%;margin:0;padding:0;gap:8px;border:0;background:transparent}
+.profilePage .profileStats>div,.profilePage .profileStats>button{min-width:0;min-height:62px;padding:9px 5px}
+.profilePage .profileStats strong{font-size:18px}
+.profileProgress{display:grid;gap:10px;width:100%;padding:15px 16px;border:1px solid #273342;border-radius:14px;background:linear-gradient(145deg,#131c28,#0d141e)}
+.profileProgressTop,.profileProgressNumbers,.profileProgressNext{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.profileProgressRank{display:grid;gap:2px}.profileProgressRank small{color:#8f9baa;font-size:9px;font-weight:850;letter-spacing:.12em;text-transform:uppercase}.profileProgressRank b{color:#f3f6fa;font-size:14px}
+.profileProgressTop>strong{color:#ffb1c7;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+.profileProgressNumbers{color:#aeb9c7;font-size:12px}.profileProgressNumbers b{color:#f4f7fb;font-size:13px}
+.profileProgressTrack{height:9px;overflow:hidden;border-radius:99px;background:#273241}.profileProgressTrack>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ff638a,#d85dff,#955aff);box-shadow:0 0 14px #d55dff88;transition:width .45s ease}
+.profileProgressNext{color:#9faaba;font-size:11px}.profileProgressNext b{color:#eef2f7}.profileProgressNext button{flex:none;border:0;background:transparent;color:#ff91ad;font:inherit;font-weight:800;cursor:pointer}
+.profileDashboardCard{min-height:210px;padding:18px}.profileAboutCard>p{min-height:0}
+.profileMiniDetails svg{width:13px;height:13px}
+.profileCollectionPreview>button{display:grid;grid-template-columns:42px minmax(0,1fr) 16px;gap:10px;align-items:center;width:100%;padding:5px;border:0;border-radius:9px;background:transparent;color:#fff;text-align:left;cursor:pointer}.profileCollectionPreview>button:hover{background:#ffffff08}.profileCollectionPreview>button>svg{color:#9ca9b8}.profileCollectionPreview img,.profileCollectionPlaceholder{display:grid;width:42px;height:42px;place-items:center;object-fit:cover;border-radius:8px;background:#192331;color:#aeb9c7}.profileCollectionEmpty{display:grid;place-items:center;gap:12px;min-height:120px;color:var(--profile-muted);text-align:center}.profileCollectionEmpty p{margin:0}.profileCollectionEmpty button{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid #3d3046;border-radius:9px;background:#1d1522;color:#ff9ab3;font-weight:800;cursor:pointer}
+.profileAchievementPreview>div>span,.profileAchievementFull article>span{color:#ffb557}.profileAchievementPreview svg,.profileAchievementFull svg{display:block}
+.profileOverviewWork .sectionHead .eyebrow{margin:0 0 5px;color:#ff83a2;font-size:10px;letter-spacing:.14em}.profileOverviewActions>button{display:inline-flex}
+.collectionsManager .createCollectionBtn,.collectionsManager .primary{display:inline-flex;align-items:center;justify-content:center;gap:7px}.privateBadge{display:inline-flex}.chipDeleteBtn{display:grid;place-items:center}
+.portfolioHoverActions :is(button,a){display:grid;place-items:center}.portfolioCardTitle{font-weight:750}.portfolioCounters span{gap:4px}.portfolioTag{border-radius:999px;padding:4px 7px;font-size:10px}
+
+@media(min-width:1050px){
+  .profilePage .profileSummary{grid-template-columns:190px minmax(320px,1fr) minmax(360px,440px);gap:26px;padding:24px 28px}
+  .profilePage .profileAvatar{grid-column:1;grid-row:1;width:174px;height:174px}
+  .profilePage .profileMainInfo{grid-column:2;grid-template-columns:1fr;align-self:start}
+  .profilePage .profileNameLine,.profilePage .profileBio,.profilePage .profileProgress,.profilePage .profileDetails,.profilePage .profileSkills{grid-column:1;grid-row:auto}
+  .profileHeaderAside{grid-column:3;align-self:stretch;align-content:center}
+  .profilePage .profilePrimaryAction{grid-column:auto;justify-self:stretch;margin:0}
+  .profilePage .profileActionButtonsRow{justify-content:flex-end;flex-wrap:wrap}
+}
+@media(max-width:1049px){
+  .profileHeaderAside{grid-column:2}
+  .profilePage .profilePrimaryAction{grid-column:auto}
+}
+@media(max-width:700px){
+  .profilePage .profileMainInfo{display:contents}
+  .profilePage .profileNameLine{grid-column:2}
+  .profilePage .profileBio,.profilePage .profileProgress,.profilePage .profileDetails,.profilePage .profileSkills,.profileHeaderAside{grid-column:1/-1}
+  .profilePage .profileProgress{margin-top:3px;padding:13px}
+  .profileProgressNext{align-items:flex-start}.profileProgressNext>span{line-height:1.45}
+  .profilePage .profileStats{padding:0;gap:6px}
+  .profilePage .profilePrimaryAction{width:100%}
+  .profilePage .profileActionButtonsRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+  .profilePage .profileActionButtonsRow>*,.profilePage .profileActionButtonsRow>.profileMoreMenu{width:100%}
+  .profilePage .profileMoreButton{width:100%}
+  .profileOverviewWork .sectionHead{display:flex}.profileOverviewActions{width:auto}
+  .profileDashboardCard{min-height:0}
+}
+@media(max-width:420px){
+  .profileProgressTop{align-items:flex-start}.profileProgressTop .creatorRankBadge{max-width:70%}
+  .profileProgressNext{display:grid}.profileProgressNext button{justify-self:start;padding:0}
+  .profilePage .profileStats>div,.profilePage .profileStats>button{min-height:56px}
+  .profileOverviewWork .sectionHead{align-items:stretch}.profileOverviewActions{width:100%;gap:8px}.profileOverviewActions>*{flex:1}
+}
+:root[data-theme=light] .profileProgress{border-color:#ded8e6;background:linear-gradient(145deg,#fff,#f8f4fb)}
+:root[data-theme=light] .profileProgressNumbers,:root[data-theme=light] .profileProgressNext{color:#69717e}
+:root[data-theme=light] .profileProgressNumbers b,:root[data-theme=light] .profileProgressNext b,:root[data-theme=light] .profileProgressRank b{color:#191c22}
+:root[data-theme=light] .profileProgressTrack{background:#e5e0e9}
+:root[data-theme=light] .profileCollectionPreview>button{color:#191c22}
+:root[data-theme=light] .profileCollectionPreview>button:hover{background:#20182b08}
+:root[data-theme=light] .profileCollectionPlaceholder{background:#f0ede6;color:#68707b}
+:root[data-theme=light] .profileCollectionEmpty button{border-color:#dfd2e5;background:#fbf5fc;color:#bd315c}
+@media(prefers-reduced-motion:reduce){.profileProgressTrack>span{transition:none}}
+
 

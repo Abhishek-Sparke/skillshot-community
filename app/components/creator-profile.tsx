@@ -6,13 +6,17 @@ import Link from 'next/link';
 import CommunityFeed from './community-feed';
 import CreatorUsername from './creator-username';
 import CreatorRankCard from './creator-rank-card';
+import CreatorProgress from './creator-progress';
 import CollectionsManager from './collections-manager';
+import AchievementIcon from './achievement-icon';
+import UiIcon from './ui-icon';
 import type { UserRole } from '../../lib/roles';
 import type { RankProgress, LevelProgress, CreatorRankId } from '../../lib/creator-rank';
 import ReportButton from './report-button';
 import { requireClientAuth, signInPath } from '../../lib/auth-path';
 
 type FeaturedPost = { id: string; title: string; description: string; createdAt: number; reactionCount: number; commentCount: number; imageUrl: string };
+type ProfileCollection = { id: string; name: string; description: string; coverUrl: string | null; isPrivate: boolean; postCount: number };
 type Profile = {
   displayName: string; username: string; bio: string; website: string; location: string; skills: string[];
   socialLinks: Record<string, string>; avatarUrl: string; bannerUrl?: string; bannerType?: string;
@@ -21,6 +25,7 @@ type Profile = {
   role: UserRole; joinedAt: number; postCount: number;
   likesReceived: number; followerCount: number; followingCount: number; isFollowing: boolean; isSelf: boolean;
   signedIn: boolean; featuredPosts: FeaturedPost[]; reputation: number; achievements: { key: string; label: string; description: string }[];
+  collections: ProfileCollection[];
   canMessage?: boolean; canMessageReason?: string; isBlocked?: boolean; isBlockedByThem?: boolean;
 };
 type Tab = 'overview' | 'skillshots' | 'collections' | 'achievements' | 'activity' | 'saved' | 'liked' | 'about';
@@ -256,7 +261,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         ) : null}
         <div className="profileCoverOverlay" />
         <span>SHOW YOUR SKILLS. IN ONE SHOT.</span>
-        {profile.isSelf && <Link className="profileCoverEdit" href="/profile/edit">✎ Edit Profile</Link>}
+        {profile.isSelf && <Link className="profileCoverEdit" href="/profile/edit"><UiIcon name="edit"/> Edit Profile</Link>}
       </div>
       <div className="profileSummary">
         <div className="profileAvatar">
@@ -277,39 +282,20 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
           </div>
           {profile.bio && <p className="profileBio">{profile.bio}</p>}
 
-          {profile.rankProgress && (
-            <div className="profileRankBarBlock" aria-label="Creator progress">
-              <div className="profileRankBarHeader">
-                <span className="profileRankTitle">
-                  {profile.rankProgress.rank.label}
-                </span>
-                {profile.levelProgress && <span className="profileLevelLabel">Level {profile.levelProgress.level}</span>}
-                {profile.rankProgress.nextRankTitle && (
-                  <span className="profileRankNext">Next: {profile.rankProgress.nextRankTitle}</span>
-                )}
-                <span className="profileRankPct">{profile.levelProgress?.progressPercent ?? profile.rankProgress.progressPercent}%</span>
-              </div>
-              <div className="profileRankBarTrack">
-                <div
-                  className="profileRankBarFill"
-                  style={{ width: `${profile.levelProgress?.progressPercent ?? profile.rankProgress.progressPercent}%` }}
-                />
-              </div>
-              <div className="profileXpMeta"><span>{profile.rankProgress.xp.toLocaleString()} / {(profile.levelProgress?.nextLevelXp ?? profile.rankProgress.nextTierXp)?.toLocaleString()||'50,000+'} XP</span>{profile.rankProgress.nextTierXp&&<span>{Math.max(0,profile.rankProgress.nextTierXp-profile.rankProgress.xp).toLocaleString()} XP to {profile.rankProgress.nextRankTitle}</span>} <button type="button" onClick={() => setRankCardOpen(true)}>Rank details →</button></div>
-            </div>
-          )}
+          {profile.rankProgress && <CreatorProgress rankProgress={profile.rankProgress} levelProgress={profile.levelProgress} onOpen={() => setRankCardOpen(true)}/>}
 
           <div className="profileDetails">
-            {profile.location && <span>⌖ {profile.location}</span>}
-            {profile.website && <a href={profile.website} target="_blank" rel="noreferrer">↗ {websiteLabel(profile.website)}</a>}
+            {profile.location && <span><UiIcon name="location"/> {profile.location}</span>}
+            {profile.website && <a href={profile.website} target="_blank" rel="noreferrer"><UiIcon name="link"/> {websiteLabel(profile.website)}</a>}
             <span>Joined {joined}</span>
           </div>
           {profile.skills.length > 0 && <div className="profileSkills" aria-label="Skills">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div>}
         </div>
+        <aside className="profileHeaderAside">
         <div className="profilePrimaryAction">
           {profile.isSelf ? (
             <div className="profileActionButtonsRow">
-              <button className="shareProfileButton" type="button" onClick={shareProfile}>↗ {shareLabel}</button>
+              <button className="shareProfileButton" type="button" onClick={shareProfile}><UiIcon name="share"/> {shareLabel}</button>
             </div>
           ) : (
             <div className="profileActionButtonsRow">
@@ -318,7 +304,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
                 onClick={toggleFollow}
                 disabled={busy}
               >
-                {busy ? 'Saving…' : profile.isFollowing ? 'Following' : '＋ Follow'}
+                {busy ? 'Saving…' : profile.isFollowing ? 'Following' : <><UiIcon name="plus"/> Follow</>}
               </button>
 
               {profile.canMessage !== false ? (
@@ -326,7 +312,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
                   className="profileMessageButton"
                   href={`/chats?user=${encodeURIComponent(profile.username)}`}
                 >
-                  💬 Message
+                  <UiIcon name="message"/> Message
                 </Link>
               ) : (
                 <button
@@ -335,14 +321,14 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
                   disabled
                   title={profile.canMessageReason || 'Messaging is unavailable'}
                 >
-                  💬 Message
+                  <UiIcon name="message"/> Message
                 </button>
               )}
 
-              <button className="shareProfileButton" type="button" onClick={shareProfile}>↗ {shareLabel}</button>
+              <button className="shareProfileButton" type="button" onClick={shareProfile}><UiIcon name="share"/> {shareLabel}</button>
 
               <div className="profileMoreMenu">
-                <button type="button" className="profileMoreButton" aria-label="More profile actions" aria-expanded={profileMenuOpen} onClick={()=>setProfileMenuOpen(value=>!value)}>⋯</button>
+                <button type="button" className="profileMoreButton" aria-label="More profile actions" aria-expanded={profileMenuOpen} onClick={()=>setProfileMenuOpen(value=>!value)}><UiIcon name="more"/></button>
                 {profileMenuOpen&&<div className="profileMoreDropdown">
                   <button type="button" className={`profileBlockButton ${profile.isBlocked ? 'blocked' : ''}`} onClick={()=>{setProfileMenuOpen(false);toggleBlock()}}>{profile.isBlocked ? 'Unblock creator' : 'Block creator'}</button>
                   <ReportButton targetType="PROFILE" targetId={profile.username}/>
@@ -351,8 +337,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
             </div>
           )}
         </div>
-      </div>
-      <div className="profileStats" aria-label="Profile statistics">
+        <div className="profileStats" aria-label="Profile statistics">
         <div><strong>{compactNumber(profile.postCount)}</strong><span>Skillshots</span></div>
         <div><strong>{compactNumber(profile.likesReceived)}</strong><span>Likes</span></div>
         <button
@@ -371,6 +356,8 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         >
           <strong>{compactNumber(profile.followingCount)}</strong><span>Following</span>
         </button>
+      </div>
+      </aside>
       </div>
       {error && <p className="profileActionError" role="status">{error}</p>}
       <div className="profileTabs" role="tablist" aria-label="Profile sections">
@@ -410,9 +397,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
               className="socialModalClose"
               onClick={() => { setModalTab(null); setModalSearch(''); }}
               aria-label="Close"
-            >
-              ×
-            </button>
+            ><UiIcon name="close"/></button>
           </div>
 
           <div className="socialModalSearch">
@@ -497,8 +482,8 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
           <div className="profileCardHeading"><h2>About Me</h2>{profile.isSelf && <Link href="/profile/edit">Edit →</Link>}</div>
           <p>{profile.bio || 'This creator has not added a bio yet.'}</p>
           <div className="profileMiniDetails">
-            {profile.location && <span>⌖ {profile.location}</span>}
-            {profile.website && <a href={profile.website} target="_blank" rel="noreferrer">↗ {websiteLabel(profile.website)}</a>}
+            {profile.location && <span><UiIcon name="location"/> {profile.location}</span>}
+            {profile.website && <a href={profile.website} target="_blank" rel="noreferrer"><UiIcon name="link"/> {websiteLabel(profile.website)}</a>}
             <span>Joined {joined}</span>
           </div>
           {profile.skills.length > 0 && <div className="profileSkills">{profile.skills.slice(0, 8).map(skill => <span key={skill}>{skill}</span>)}</div>}
@@ -506,27 +491,27 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
 
         <article className="profileDashboardCard profileAchievementsCard">
           <div className="profileCardHeading"><h2>Achievements</h2><button type="button" onClick={() => setTab('achievements')}>View all →</button></div>
-          {profile.achievements.length ? <div className="profileAchievementPreview">{profile.achievements.slice(0, 8).map((item, index) => <div key={item.key} title={item.description}><span>{['✦','◆','♥','★'][index % 4]}</span><small>{item.label}</small></div>)}</div> : <p className="profileCardEmpty">Achievements appear as this creator contributes.</p>}
+          {profile.achievements.length ? <div className="profileAchievementPreview">{profile.achievements.slice(0, 8).map(item => <div key={item.key} title={item.description}><span><AchievementIcon achievementKey={item.key}/></span><small>{item.label}</small></div>)}</div> : <p className="profileCardEmpty">Achievements appear as this creator contributes.</p>}
         </article>
 
         <article className="profileDashboardCard profileCollectionsCard">
           <div className="profileCardHeading"><h2>Collections</h2><button type="button" onClick={() => setTab('collections')}>View all →</button></div>
           <div className="profileCollectionPreview">
-            {profile.featuredPosts.slice(0, 4).map(post => <Link href={`/shots/${post.id}`} key={post.id}><img src={post.imageUrl} alt="" loading="lazy"/><span><b>{post.title}</b><small>{post.reactionCount} likes · {post.commentCount} comments</small></span><i>›</i></Link>)}
-            {!profile.featuredPosts.length && <p className="profileCardEmpty">Curated work will appear here.</p>}
+            {profile.collections.map(collection => <button type="button" onClick={() => setTab('collections')} key={collection.id}>{collection.coverUrl ? <img src={collection.coverUrl} alt="" loading="lazy"/> : <span className="profileCollectionPlaceholder"><UiIcon name="eye"/></span>}<span><b>{collection.name}</b><small>{collection.postCount} {collection.postCount === 1 ? 'Skillshot' : 'Skillshots'}</small></span><UiIcon name="arrow-up-right"/></button>)}
+            {!profile.collections.length && <div className="profileCollectionEmpty"><p>No collections yet.</p>{profile.isSelf && <button type="button" onClick={() => setTab('collections')}><UiIcon name="plus"/> Create collection</button>}</div>}
           </div>
         </article>
       </div>
 
       <div className="profileOverviewWork">
-        <div className="sectionHead"><div><h2>{profile.isSelf ? 'Your Work' : `${profile.displayName}'s Work`}</h2><p>A collection of ideas, moments and creations.</p></div><div className="profileOverviewActions">{profile.isSelf && <Link className="primary" href="/upload">＋ New Skillshot</Link>}<button type="button" onClick={() => setTab('skillshots')}>View all →</button></div></div>
+        <div className="sectionHead"><div><p className="eyebrow">YOUR WORK</p><h2>{profile.isSelf ? 'Your published work.' : `${profile.displayName}'s published work.`}</h2></div><div className="profileOverviewActions">{profile.isSelf && <Link className="primary" href="/upload"><UiIcon name="plus"/> New Skillshot</Link>}<button type="button" onClick={() => setTab('skillshots')}>View all <UiIcon name="arrow-up-right"/></button></div></div>
         <CollectionsManager username={profile.username} isSelf={profile.isSelf} />
       </div>
     </section>}
 
     {tab === 'collections' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">CURATED WORK</p><h2>Collections.</h2></div></div><CollectionsManager username={profile.username} isSelf={profile.isSelf}/></section>}
 
-    {tab === 'achievements' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">MILESTONES</p><h2>Achievements.</h2></div></div><div className="profileAchievementFull">{profile.achievements.length ? profile.achievements.map((item,index)=><article key={item.key}><span>{['✦','◆','♥','★'][index%4]}</span><div><h3>{item.label}</h3><p>{item.description}</p></div></article>) : <p>No achievements yet.</p>}</div></section>}
+    {tab === 'achievements' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">MILESTONES</p><h2>Achievements.</h2></div></div><div className="profileAchievementFull">{profile.achievements.length ? profile.achievements.map(item=><article key={item.key}><span><AchievementIcon achievementKey={item.key}/></span><div><h3>{item.label}</h3><p>{item.description}</p></div></article>) : <p>No achievements yet.</p>}</div></section>}
 
     {tab === 'activity' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">CREATOR ACTIVITY</p><h2>Progress at a glance.</h2></div></div><div className="profileActivityGrid"><article><strong>{compactNumber(profile.reputation)}</strong><span>Reputation</span></article><article><strong>{compactNumber(profile.likesReceived)}</strong><span>Likes received</span></article><article><strong>{compactNumber(profile.postCount)}</strong><span>Published Skillshots</span></article><article><strong>{joined}</strong><span>Member since</span></article></div></section>}
 
@@ -571,7 +556,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
             <p className="eyebrow">YOUR WORK</p>
             <h2>{profile.isSelf ? 'Your published work.' : `${profile.displayName}'s work.`}</h2>
           </div>
-          {profile.isSelf && <Link className="primary" href="/upload">＋ New post</Link>}
+          {profile.isSelf && <Link className="primary" href="/upload"><UiIcon name="plus"/> New post</Link>}
         </div>
         <CollectionsManager username={profile.username} isSelf={profile.isSelf} />
       </div>
@@ -584,6 +569,6 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
 
     {tab === 'liked' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">APPRECIATED WORK</p><h2>Skillshots {profile.displayName} likes.</h2></div></div><CommunityFeed likedBy={profile.username} compact emptyTitle="No liked Skillshots yet." emptyText="Work this creator appreciates will appear here."/></section>}
 
-    {tab === 'about' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="aboutProfile"><div><p className="eyebrow">ABOUT</p><h2>About {profile.displayName}.</h2><p className="aboutBio">{profile.bio || 'This creator has not added a bio yet.'}</p></div><dl><div><dt>Location</dt><dd>{profile.location || 'Not added'}</dd></div><div><dt>Website</dt><dd>{profile.website ? <a href={profile.website} target="_blank" rel="noopener noreferrer">{websiteLabel(profile.website)}</a> : 'Not added'}</dd></div><div><dt>Joined</dt><dd>{joined}</dd></div><div><dt>Reputation</dt><dd>{compactNumber(profile.reputation)} points</dd></div></dl>{profile.achievements.length>0&&<div><h3>Achievements</h3><div className="achievementGrid">{profile.achievements.map(item=><article key={item.key}><span>✦</span><div><b>{item.label}</b><small>{item.description}</small></div></article>)}</div></div>}{profile.skills.length > 0 && <div><h3>Skills</h3><div className="profileSkills">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div></div>}{Object.keys(profile.socialLinks).length > 0 && <div><h3>Find me online</h3><div className="socialLinks">{Object.entries(profile.socialLinks).map(([name, url]) => <a key={name} href={url} target="_blank" rel="noopener noreferrer">↗ {name}</a>)}</div></div>}</div></section>}
+    {tab === 'about' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="aboutProfile"><div><p className="eyebrow">ABOUT</p><h2>About {profile.displayName}.</h2><p className="aboutBio">{profile.bio || 'This creator has not added a bio yet.'}</p></div><dl><div><dt>Location</dt><dd>{profile.location || 'Not added'}</dd></div><div><dt>Website</dt><dd>{profile.website ? <a href={profile.website} target="_blank" rel="noopener noreferrer">{websiteLabel(profile.website)}</a> : 'Not added'}</dd></div><div><dt>Joined</dt><dd>{joined}</dd></div><div><dt>Reputation</dt><dd>{compactNumber(profile.reputation)} points</dd></div></dl>{profile.achievements.length>0&&<div><h3>Achievements</h3><div className="achievementGrid">{profile.achievements.map(item=><article key={item.key}><span><AchievementIcon achievementKey={item.key}/></span><div><b>{item.label}</b><small>{item.description}</small></div></article>)}</div></div>}{profile.skills.length > 0 && <div><h3>Skills</h3><div className="profileSkills">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div></div>}{Object.keys(profile.socialLinks).length > 0 && <div><h3>Find me online</h3><div className="socialLinks">{Object.entries(profile.socialLinks).map(([name, url]) => <a key={name} href={url} target="_blank" rel="noopener noreferrer"><UiIcon name="arrow-up-right"/> {name}</a>)}</div></div>}</div></section>}
   </main>;
 }

@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ShotThumbnail, { shotFrameRatio } from './shot-thumbnail';
 import ImageViewer from './image-viewer';
+import UiIcon from './ui-icon';
 
 export type Collection = {
   id: string;
@@ -166,7 +167,7 @@ export default function CollectionsManager({ username, isSelf }: Props) {
                 onClick={() => setActiveCollectionId(col.id)}
               >
                 {col.name} <span className="chipCount">({col.postCount})</span>
-                {col.isPrivate && <span className="privateBadge" title="Private">🔒</span>}
+                {col.isPrivate && <span className="privateBadge" title="Private"><UiIcon name="lock" size={12}/></span>}
               </button>
               {isSelf && (
                 <button
@@ -175,7 +176,7 @@ export default function CollectionsManager({ username, isSelf }: Props) {
                   title="Delete collection"
                   onClick={e => handleDeleteCollection(col.id, e)}
                 >
-                  ×
+                  <UiIcon name="close" size={13}/>
                 </button>
               )}
             </div>
@@ -188,7 +189,7 @@ export default function CollectionsManager({ username, isSelf }: Props) {
             className="createCollectionBtn"
             onClick={() => setShowCreateModal(true)}
           >
-            ＋ Collection
+            <UiIcon name="plus"/> Collection
           </button>
         )}
       </div>
@@ -250,10 +251,10 @@ export default function CollectionsManager({ username, isSelf }: Props) {
         </div>
       ) : currentPosts.length === 0 ? (
         <div className="portfolioEmptyState">
-          <span>✦</span>
+          <span><UiIcon name="eye" size={24}/></span>
           <h3>{activeCollectionId ? 'This collection is empty.' : 'No published Skillshots yet.'}</h3>
           <p>{isSelf ? 'Share something you’re proud of with the community.' : 'This creator has not shared any work here yet.'}</p>
-          {isSelf && <Link className="primary" href="/upload">Create a Skillshot →</Link>}
+          {isSelf && <Link className="primary" href="/upload"><UiIcon name="plus"/> Create a Skillshot</Link>}
         </div>
       ) : (
         <div className="portfolioGalleryGrid">
@@ -278,10 +279,10 @@ export default function CollectionsManager({ username, isSelf }: Props) {
                     onClick={() => setPreviewPost(post)}
                     aria-label={`Preview ${post.title}`}
                   >
-                    ↗
+                    <UiIcon name="eye"/>
                   </button>
                   <Link href={`/shots/${post.id}`} aria-label="View Skillshot details">
-                    ●
+                    <UiIcon name="arrow-up-right"/>
                   </Link>
                 </div>
               </div>
@@ -292,8 +293,8 @@ export default function CollectionsManager({ username, isSelf }: Props) {
                 <div className="portfolioCardFooter">
                   <span className="portfolioTag">{post.category || 'Visual'}</span>
                   <div className="portfolioCounters">
-                    <span>♥ {post.reactionCount}</span>
-                    <span>💬 {post.commentCount}</span>
+                    <span><UiIcon name="heart" size={14}/> {post.reactionCount}</span>
+                    <span><UiIcon name="comment" size={14}/> {post.commentCount}</span>
                   </div>
                 </div>
               </div>
