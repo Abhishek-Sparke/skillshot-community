@@ -4112,6 +4112,8 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .communityPageContainer .communityHeroContent>p:last-child{max-width:620px;margin:2px 0 0;color:var(--secondary-text);font-size:clamp(14px,1.4vw,17px);line-height:1.55}
 .communityHeroActions{align-items:center;gap:10px}
 .communityHeroBtn{min-height:44px;padding:10px 17px;border-radius:11px;justify-content:center;box-shadow:none}
+.communityHeroBtn:not(.announcementBtn){border:1px solid var(--red);background:var(--red);color:#fff;box-shadow:0 3px 0 var(--ink)}
+.communityHeroBtn:not(.announcementBtn):hover{background:color-mix(in srgb,var(--red) 88%,#000);border-color:color-mix(in srgb,var(--red) 88%,#000);transform:translateY(-1px)}
 .communityHeroBtn.announcementBtn{background:color-mix(in srgb,var(--red) 7%,var(--surface));border:1px solid color-mix(in srgb,var(--red) 42%,var(--line));color:var(--red)}
 .communityHeroBtn.announcementBtn:hover{background:color-mix(in srgb,var(--red) 13%,var(--surface));border-color:var(--red)}
 .communityDiscussionsBody{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
