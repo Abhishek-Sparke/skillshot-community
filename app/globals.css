@@ -4100,6 +4100,10 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   .profileHeaderAside{grid-column:auto;width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
   .profilePage .profilePrimaryAction{width:auto}
 }
+@media(max-width:900px){
+  .profileHeaderAside{grid-template-columns:1fr;align-items:start}
+  .profilePage .profilePrimaryAction{width:100%}
+}
 @media(max-width:700px){
   .profilePage .profileSummary{display:grid;grid-template-columns:1fr;gap:14px;padding:18px 16px}
   .profileIdentityArea{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px}
