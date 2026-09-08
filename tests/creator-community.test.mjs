@@ -7,6 +7,8 @@ import {
   calculateLevelProgress,
   calculateRankProgress,
   calculateXpFromActivity,
+  CREATOR_RANKS,
+  creatorRankId,
 } from '../lib/creator-rank.ts';
 import { BANNER_MAX_BYTES, AVATAR_TYPES, BANNER_TYPES } from '../lib/upload-policy.ts';
 import { COMMUNITY_MIGRATION } from '../lib/community-schema.ts';
@@ -60,6 +62,27 @@ test('public identity surfaces delegate rank and staff indicators to one shared 
   for(const file of ['app/page.tsx','app/components/home-fresh.tsx','app/components/community-feed.tsx','app/components/comment-conversation.tsx','app/components/shot-detail.tsx','app/components/advanced-search.tsx','app/components/creator-profile.tsx','app/components/related-skillshots.tsx','app/chats/chat-client.tsx']){
     const source=await read(file);assert.match(source,/CreatorUsername/,file);assert.doesNotMatch(source,/<CreatorRankBadge|<RoleBadge/,file);
   }
+});
+
+test('all creator ranks use a static shared production effect class', async () => {
+  assert.equal(creatorRankId('elite'), 'ELITE_CREATOR');
+  assert.equal(creatorRankId('Rising Creator'), 'RISING_CREATOR');
+  assert.equal(creatorRankId('master-creator'), 'MASTER_CREATOR');
+  assert.deepEqual(Object.values(CREATOR_RANKS).map(rank => rank.animationClass), [
+    'creator-rank-newcomer', 'creator-rank-creator', 'creator-rank-rising',
+    'creator-rank-skilled', 'creator-rank-elite', 'creator-rank-master', 'creator-rank-legend',
+  ]);
+  for (const rank of Object.values(CREATOR_RANKS)) assert.equal(rank.badgeClass, rank.animationClass);
+  const username = await read('app/components/creator-username.tsx');
+  const badge = await read('app/components/creator-rank-badge.tsx');
+  const css = await read('app/globals.css');
+  assert.match(username, /nameEffectClass = rankInfo\.animationClass/);
+  assert.match(badge, /info\.badgeClass/);
+  assert.doesNotMatch(username, /managementClass \|\| rankInfo\.animationClass/);
+  for (const rank of Object.values(CREATOR_RANKS)) assert.match(css, new RegExp(`\\.${rank.animationClass}\\b`));
+  assert.match(css, /@keyframes creatorRankTextFlow/);
+  assert.match(css, /@keyframes creatorRankLegend/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
 });
 
 test('server-side XP calculation balances activity and deters spam', () => {

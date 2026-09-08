@@ -4051,4 +4051,52 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 :root[data-theme=light] .profileCollectionEmpty button{border-color:#dfd2e5;background:#fbf5fc;color:#bd315c}
 @media(prefers-reduced-motion:reduce){.profileProgressTrack>span{transition:none}}
 
+/* Server-driven Creator Rank effects. These exact static classes come from CREATOR_RANKS. */
+.creatorUsernameLink[class*="creator-rank-"]{position:relative;overflow:visible;isolation:isolate;opacity:1}
+.creatorUsernameLink[class*="creator-rank-"] .creatorNameText{position:relative;display:inline-block;overflow:visible;color:var(--rank-solid);font-weight:750;line-height:inherit}
+.creatorUsernameLink.creator-rank-newcomer .creatorNameText{--rank-solid:var(--ink);font-weight:650}
+.creatorUsernameLink:not(.creator-rank-newcomer) .creatorNameText{
+  background-image:var(--rank-text-gradient);
+  background-position:0 50%;
+  background-size:260% 100%;
+  background-repeat:no-repeat;
+  background-clip:text;
+  -webkit-background-clip:text;
+  color:var(--rank-solid);
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 var(--rank-glow-size,4px) var(--rank-glow));
+  animation:creatorRankTextFlow var(--rank-text-speed,4.8s) ease-in-out infinite;
+  will-change:background-position;
+}
+.creator-rank-creator{--rank-solid:#d99a24;--rank-glow:#f7b73342;--rank-glow-size:3px;--rank-text-speed:5.8s;--rank-text-gradient:linear-gradient(105deg,#a75d08 0%,#e3a31d 35%,#fff1a8 49%,#e3a31d 62%,#9a5107 100%)}
+.creator-rank-rising{--rank-solid:#24b8e8;--rank-glow:#38bdf866;--rank-text-speed:4.6s;--rank-text-gradient:linear-gradient(105deg,#087dac 0%,#20b6e8 30%,#e4fbff 48%,#62e3ff 54%,#0782b5 100%)}
+.creator-rank-skilled{--rank-solid:#28c58b;--rank-glow:#34d39966;--rank-text-speed:4.1s;--rank-text-gradient:linear-gradient(105deg,#087c58 0%,#24bd83 30%,#e5fff4 48%,#59e8b5 56%,#087c58 100%)}
+.creator-rank-elite{--rank-solid:#ae6cff;--rank-glow:#b66cff80;--rank-glow-size:6px;--rank-text-speed:3.7s;--rank-text-gradient:linear-gradient(105deg,#6530a4 0%,#a65df2 27%,#f7edff 46%,#d996ff 53%,#7136b5 100%)}
+.creator-rank-master{--rank-solid:#ff607f;--rank-glow:#ff668880;--rank-glow-size:7px;--rank-text-speed:3.4s;--rank-text-gradient:linear-gradient(105deg,#a7133e 0%,#ef365f 26%,#fff0f4 47%,#ff8da5 54%,#a7133e 100%)}
+.creator-rank-legend{--rank-solid:#f5bd42;--rank-glow:#f5bd4299;--rank-glow-size:8px;--rank-text-speed:3.2s;--rank-text-gradient:linear-gradient(105deg,#a96908 0%,#efb72d 24%,#fff7bd 42%,#ef8dbd 52%,#b47aff 67%,#efb72d 86%,#a96908 100%)}
+@keyframes creatorRankTextFlow{0%,12%{background-position:100% 50%}55%{background-position:18% 50%}88%,100%{background-position:-90% 50%}}
+
+.creatorRankBadge[class*="creator-rank-"]{position:relative;overflow:visible;color:var(--rank-solid);border-color:color-mix(in srgb,var(--rank-solid) 48%,transparent);background:color-mix(in srgb,var(--rank-solid) 12%,transparent);box-shadow:0 0 var(--badge-glow,0) var(--rank-glow);isolation:isolate}
+.creatorRankBadge[class*="creator-rank-"] .rankIconContainer{position:relative;z-index:1;display:grid;place-items:center;transform-origin:center}
+.creatorRankBadge[class*="creator-rank-"]::after{content:"";position:absolute;z-index:0;inset:-3px;border:1px solid transparent;border-radius:inherit;pointer-events:none}
+.creatorRankBadge.creator-rank-creator{--badge-glow:5px}.creatorRankBadge.creator-rank-creator .rankIconContainer{animation:creatorRankGlow 4.8s ease-in-out infinite}
+.creatorRankBadge.creator-rank-rising{--badge-glow:7px}.creatorRankBadge.creator-rank-rising .rankIconContainer{animation:creatorRankShine 3.6s ease-in-out infinite}
+.creatorRankBadge.creator-rank-skilled{--badge-glow:8px}.creatorRankBadge.creator-rank-skilled::after{border-color:var(--rank-solid);animation:creatorRankRing 2.8s ease-in-out infinite}
+.creatorRankBadge.creator-rank-elite{--badge-glow:11px}.creatorRankBadge.creator-rank-elite .rankIconContainer{animation:creatorRankShine 2.8s ease-in-out infinite}.creatorRankBadge.creator-rank-elite::after{border-color:color-mix(in srgb,var(--rank-solid) 65%,transparent);animation:creatorRankRing 2.8s ease-in-out infinite}
+.creatorRankBadge.creator-rank-master{--badge-glow:14px}.creatorRankBadge.creator-rank-master .rankIconContainer{animation:creatorRankMaster 2.6s ease-in-out infinite}.creatorRankBadge.creator-rank-master::after{border-color:color-mix(in srgb,var(--rank-solid) 72%,transparent);animation:creatorRankRing 2.6s ease-in-out infinite}
+.creatorRankBadge.creator-rank-legend{--badge-glow:17px}.creatorRankBadge.creator-rank-legend .rankIconContainer{animation:creatorRankLegend 3s ease-in-out infinite}.creatorRankBadge.creator-rank-legend::after{border-color:color-mix(in srgb,var(--rank-solid) 78%,transparent);animation:creatorRankLegendRing 3s ease-in-out infinite}
+@keyframes creatorRankGlow{0%,100%{filter:drop-shadow(0 0 1px var(--rank-glow));opacity:.88}50%{filter:drop-shadow(0 0 5px var(--rank-solid));opacity:1}}
+@keyframes creatorRankShine{0%,100%{filter:brightness(.92) drop-shadow(0 0 2px var(--rank-glow));transform:scale(1)}50%{filter:brightness(1.35) drop-shadow(0 0 7px var(--rank-solid));transform:scale(1.06)}}
+@keyframes creatorRankRing{0%,100%{opacity:.24;transform:scale(.92)}50%{opacity:.78;transform:scale(1.04)}}
+@keyframes creatorRankMaster{0%,100%{filter:brightness(.9) drop-shadow(0 0 3px var(--rank-glow));transform:scale(1)}50%{filter:brightness(1.45) drop-shadow(0 0 9px var(--rank-solid));transform:scale(1.08)}}
+@keyframes creatorRankLegend{0%,100%{filter:hue-rotate(-7deg) brightness(1) drop-shadow(0 0 4px var(--rank-glow));transform:scale(1)}50%{filter:hue-rotate(10deg) brightness(1.42) drop-shadow(0 0 11px var(--rank-solid));transform:scale(1.1)}}
+@keyframes creatorRankLegendRing{0%,100%{opacity:.3;transform:scale(.9) rotate(0)}50%{opacity:.9;transform:scale(1.08) rotate(4deg)}}
+.profileProgressTrack>span{position:relative;overflow:hidden;transition:width .7s cubic-bezier(.22,1,.36,1)}
+.profileProgressTrack>span::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 15%,#ffffff7d 48%,transparent 72%);background-size:220% 100%;animation:creatorXpHighlight 2.8s ease-in-out 1}
+@keyframes creatorXpHighlight{from{background-position:130% 0}to{background-position:-100% 0}}
+@media(prefers-reduced-motion:reduce){
+  .creatorUsernameLink[class*="creator-rank-"] .creatorNameText,.creatorRankBadge[class*="creator-rank-"] .rankIconContainer,.creatorRankBadge[class*="creator-rank-"]::after,.profileProgressTrack>span::after{animation:none!important;will-change:auto}
+  .profileProgressTrack>span{transition:none}
+}
+
 

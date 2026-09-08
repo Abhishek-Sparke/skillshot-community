@@ -15,6 +15,7 @@ export type CreatorRankInfo = {
   nextRank: CreatorRankId | null;
   nextRankLabel: string | null;
   animationClass: string;
+  badgeClass: string;
 };
 
 export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
@@ -25,7 +26,8 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     minXp: 0,
     nextRank: 'CREATOR',
     nextRankLabel: 'Creator',
-    animationClass: 'rank-newcomer',
+    animationClass: 'creator-rank-newcomer',
+    badgeClass: 'creator-rank-newcomer',
   },
   CREATOR: {
     id: 'CREATOR',
@@ -34,7 +36,8 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     minXp: 500,
     nextRank: 'RISING_CREATOR',
     nextRankLabel: 'Rising Creator',
-    animationClass: 'rank-creator',
+    animationClass: 'creator-rank-creator',
+    badgeClass: 'creator-rank-creator',
   },
   RISING_CREATOR: {
     id: 'RISING_CREATOR',
@@ -43,7 +46,8 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     minXp: 2000,
     nextRank: 'SKILLED_CREATOR',
     nextRankLabel: 'Skilled Creator',
-    animationClass: 'rank-rising-creator',
+    animationClass: 'creator-rank-rising',
+    badgeClass: 'creator-rank-rising',
   },
   SKILLED_CREATOR: {
     id: 'SKILLED_CREATOR',
@@ -52,7 +56,8 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     minXp: 5000,
     nextRank: 'ELITE_CREATOR',
     nextRankLabel: 'Elite Creator',
-    animationClass: 'rank-skilled-creator',
+    animationClass: 'creator-rank-skilled',
+    badgeClass: 'creator-rank-skilled',
   },
   ELITE_CREATOR: {
     id: 'ELITE_CREATOR',
@@ -61,7 +66,8 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     minXp: 10000,
     nextRank: 'MASTER_CREATOR',
     nextRankLabel: 'Master Creator',
-    animationClass: 'rank-elite-creator',
+    animationClass: 'creator-rank-elite',
+    badgeClass: 'creator-rank-elite',
   },
   MASTER_CREATOR: {
     id: 'MASTER_CREATOR',
@@ -70,7 +76,8 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     minXp: 25000,
     nextRank: 'LEGEND',
     nextRankLabel: 'Legend',
-    animationClass: 'rank-master-creator',
+    animationClass: 'creator-rank-master',
+    badgeClass: 'creator-rank-master',
   },
   LEGEND: {
     id: 'LEGEND',
@@ -79,7 +86,8 @@ export const CREATOR_RANKS: Record<CreatorRankId, CreatorRankInfo> = {
     minXp: 50000,
     nextRank: null,
     nextRankLabel: null,
-    animationClass: 'rank-legend',
+    animationClass: 'creator-rank-legend',
+    badgeClass: 'creator-rank-legend',
   },
 };
 
@@ -172,8 +180,15 @@ export function calculateRankProgress(xp: number): RankProgress {
 }
 
 export function creatorRankId(value: unknown): CreatorRankId {
-  const key = String(value || '').toUpperCase();
-  return key in CREATOR_RANKS ? key as CreatorRankId : 'NEWCOMER';
+  const key = String(value || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+  const aliases: Record<string, CreatorRankId> = {
+    RISING: 'RISING_CREATOR',
+    SKILLED: 'SKILLED_CREATOR',
+    ELITE: 'ELITE_CREATOR',
+    MASTER: 'MASTER_CREATOR',
+  };
+  if (key in CREATOR_RANKS) return key as CreatorRankId;
+  return aliases[key] ?? 'NEWCOMER';
 }
 
 export type UserActivityStats = {

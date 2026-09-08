@@ -6,7 +6,7 @@ import CreatorRankBadge from './creator-rank-badge';
 import RoleBadge from './role-badge';
 import CreatorCard, { type CreatorCardData } from './creator-card';
 import type { UserRole } from '../../lib/roles';
-import { type CreatorRankId, CREATOR_RANKS } from '../../lib/creator-rank';
+import { type CreatorRankId, CREATOR_RANKS, creatorRankId } from '../../lib/creator-rank';
 
 type Props = {
   name: string;
@@ -51,17 +51,12 @@ export default function CreatorUsername({
   const containerRef = useRef<HTMLSpanElement>(null);
   const closeTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const rankKey = (String(creatorRank || '').toUpperCase() in CREATOR_RANKS
-    ? String(creatorRank).toUpperCase()
-    : 'NEWCOMER') as CreatorRankId;
+  const rankKey = creatorRankId(creatorRank);
   const rankInfo = CREATOR_RANKS[rankKey];
   const resolvedRole = staffRole ?? role;
-  const managementClass = resolvedRole && resolvedRole !== 'USER'
-    ? `management-${resolvedRole.toLowerCase().replaceAll('_', '-')}`
-    : '';
-  // A management treatment intentionally replaces (rather than stacks with)
-  // the rank animation. The rank badge remains an independent identity signal.
-  const nameEffectClass = managementClass || rankInfo.animationClass;
+  // Creator Rank is the single source of the username effect. Staff role stays
+  // visually separate in RoleBadge and never overrides or stacks this effect.
+  const nameEffectClass = rankInfo.animationClass;
 
   const profileUrl = href ?? (username ? `/users/${encodeURIComponent(username)}` : '#');
 
