@@ -1,10 +1,10 @@
-/* eslint-disable react-hooks/set-state-in-effect, react-hooks/immutability, react-hooks/purity */
+/* eslint-disable react-hooks/set-state-in-effect, @next/next/no-img-element */
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import CreatorUsername from './creator-username';
-import CommunityFeed from './community-feed';
+import UiIcon from './ui-icon';
 import type { CreatorRankId } from '../../lib/creator-rank';
 import type { UserRole } from '../../lib/roles';
 
@@ -69,8 +69,85 @@ const CATEGORIES = [
   'Questions',
 ];
 
+type DiscussionCardProps = {
+  discussion: CommunityDiscussion;
+  currentUser: CommunityPageViewProps['currentUser'];
+  formatDate: (timestamp: number) => string;
+  onOpen: (discussion: CommunityDiscussion) => void;
+  onReact: (id: string, event?: React.MouseEvent) => void;
+  onPin: (id: string, pinned: boolean, event?: React.MouseEvent) => void;
+  onLock: (id: string, locked: boolean, event?: React.MouseEvent) => void;
+  onDelete: (id: string, event?: React.MouseEvent) => void;
+};
+
+function AnnouncementCard({ item, formatDate, onOpen }: { item: CommunityDiscussion; formatDate: (timestamp: number) => string; onOpen: (item: CommunityDiscussion) => void }) {
+  return <article className="featuredAnnouncementCard">
+    <button type="button" className="featuredAnnouncementHit" onClick={() => onOpen(item)} aria-label={`Read announcement: ${item.title}`} />
+    <div className="featuredAnnouncementCopy">
+      <div className="featuredAnnouncementLabels">
+        <span className="pinnedTypeTag tagAnnouncement"><UiIcon name="announcement" size={14} /> Official announcement</span>
+        {item.isNew && <span className="announcementNewBadge">NEW</span>}
+        {item.isPinned && <span className="pinnedTypeTag tagPinned"><UiIcon name="pin" size={12} /> Pinned</span>}
+      </div>
+      <h2>{item.title}</h2>
+      {item.summary && <p className="featuredAnnouncementSummary">{item.summary}</p>}
+      <div className="featuredAnnouncementAuthor">
+        <span className="discAvatar">
+          {item.author.avatarUrl ? <img src={item.author.avatarUrl} alt="" /> : <span className="avatarFallback">{item.author.displayName.slice(0, 1).toUpperCase()}</span>}
+        </span>
+        <div>
+          <CreatorUsername name={item.author.displayName} username={item.author.username} role={item.author.role} creatorRank={item.author.creatorRank} />
+          <time dateTime={new Date(item.createdAt).toISOString()}>{formatDate(item.createdAt)}</time>
+        </div>
+      </div>
+      <div className="featuredAnnouncementFooter">
+        <span><UiIcon name="comment" size={15} /> {item.replyCount}</span>
+        <span><UiIcon name="heart" size={15} /> {item.reactionCount}</span>
+        <span className="featuredAnnouncementRead">Read announcement <UiIcon name="arrow-up-right" size={14} /></span>
+      </div>
+    </div>
+    {item.imageUrl && <div className="featuredAnnouncementMedia"><img src={item.imageUrl} alt="" />{item.isGif && <span className="gifBadge">GIF</span>}</div>}
+  </article>;
+}
+
+function DiscussionCard({ discussion: disc, currentUser, formatDate, onOpen, onReact, onPin, onLock, onDelete }: DiscussionCardProps) {
+  return <article
+    className={`discussionCard ${disc.isPinned ? 'pinnedBorder' : ''}`}
+    onClick={() => onOpen(disc)}
+    onKeyDown={event => { if (event.key === 'Enter' && event.target === event.currentTarget) onOpen(disc); }}
+    role="button"
+    tabIndex={0}
+    aria-label={`Open discussion: ${disc.title}`}
+  >
+    <div className="discussionCardIdentity">
+      <span className="discAvatar">
+        {disc.author.avatarUrl ? <img src={disc.author.avatarUrl} alt="" /> : <span className="avatarFallback">{disc.author.displayName.slice(0, 1).toUpperCase()}</span>}
+      </span>
+      <div className="discussionCardAuthorCopy">
+        <CreatorUsername name={disc.author.displayName} username={disc.author.username} role={disc.author.role} creatorRank={disc.author.creatorRank} enableCard cardData={{ avatarUrl: disc.author.avatarUrl }} />
+        <span className="discussionCardMeta">{disc.category} <span aria-hidden="true">·</span> <time dateTime={new Date(disc.createdAt).toISOString()}>{formatDate(disc.createdAt)}</time></span>
+      </div>
+      {disc.isPinned && <span className="discussionPinnedIcon" title="Pinned discussion"><UiIcon name="pin" size={15} /></span>}
+    </div>
+    <h3 className="discussionTitle">{disc.title}</h3>
+    <p className="discussionPreview">{disc.summary || disc.content.slice(0, 160) + (disc.content.length > 160 ? '…' : '')}</p>
+    {disc.imageUrl && <div className="discussionImagePreview"><img src={disc.imageUrl} alt={disc.title} loading="lazy" />{disc.isGif && <span className="gifBadge">GIF</span>}</div>}
+    <div className="discussionCardBottom">
+      <div className="discussionInteractions">
+        <button type="button" className={`reactionBtn ${disc.viewerReacted ? 'reacted' : ''}`} onClick={event => onReact(disc.id, event)} aria-label={`${disc.viewerReacted ? 'Remove reaction from' : 'React to'} ${disc.title}`}><UiIcon name="heart" size={16} /><span>{disc.reactionCount}</span></button>
+        <button type="button" className="replyCountBtn" onClick={event => { event.stopPropagation(); onOpen(disc); }} aria-label={`${disc.replyCount} replies`}><UiIcon name="comment" size={16} /><span>{disc.replyCount} {disc.replyCount === 1 ? 'reply' : 'replies'}</span></button>
+        <span className={`discussionSaveState ${disc.viewerSaved ? 'saved' : ''}`} title={disc.viewerSaved ? 'Saved' : 'Save available from discussion'}><UiIcon name="bookmark" size={15} /></span>
+      </div>
+      {currentUser?.isStaff && <div className="staffQuickControls" onClick={event => event.stopPropagation()}>
+        <button type="button" className={`staffActionBtn ${disc.isPinned ? 'active' : ''}`} onClick={event => onPin(disc.id, disc.isPinned, event)} title={disc.isPinned ? 'Unpin post' : 'Pin post to top'}><UiIcon name="pin" size={14} /></button>
+        <button type="button" className={`staffActionBtn ${disc.isLocked ? 'active' : ''}`} onClick={event => onLock(disc.id, disc.isLocked, event)} title={disc.isLocked ? 'Unlock discussion' : 'Lock discussion'}><UiIcon name="lock" size={14} /></button>
+        <button type="button" className="staffActionBtn delete" onClick={event => onDelete(disc.id, event)} title="Delete discussion"><UiIcon name="trash" size={14} /></button>
+      </div>}
+    </div>
+  </article>;
+}
+
 export default function CommunityPageView({ currentUser }: CommunityPageViewProps) {
-  const [activeTab, setActiveTab] = useState<'discussions' | 'works'>('discussions');
   const [discussions, setDiscussions] = useState<CommunityDiscussion[]>([]);
   const [pinnedDiscussions, setPinnedDiscussions] = useState<CommunityDiscussion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -364,7 +441,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                     setIsCreateOpen(true);
                   }}
                 >
-                  <span className="communityPlusIcon">＋</span> New Discussion
+                  <UiIcon name="plus" size={17} /> New Discussion
                 </button>
                 {currentUser.isStaff && (
                   <button
@@ -377,7 +454,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                       setIsCreateOpen(true);
                     }}
                   >
-                  Official announcement
+                    <UiIcon name="announcement" size={17} /> Announcement
                   </button>
                 )}
               </>
@@ -390,77 +467,14 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
         </div>
       </section>
 
-      {/* Main Tabs (Discussions vs Portfolio Works) */}
-      <div className="communityMainTabs shell" hidden>
-        <div className="communityTabsGroup" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'discussions'}
-            className={`communityTabBtn ${activeTab === 'discussions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('discussions')}
-          >
-            💬 Discussions & Announcements
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTab === 'works'}
-            className={`communityTabBtn ${activeTab === 'works' ? 'active' : ''}`}
-            onClick={() => setActiveTab('works')}
-          >
-            🎨 Creative Works
-          </button>
-        </div>
-      </div>
-
-      {activeTab === 'works' ? (
-        <section className="feed communityFeed shell">
-          <CommunityFeed />
-        </section>
-      ) : (
-        <div className="communityDiscussionsBody shell">
-          {/* Pinned Posts Carousel */}
+      <div className="communityDiscussionsBody shell">
+          {/* Featured official announcement */}
           {pinnedDiscussions.length > 0 && (
             <div className="communityPinnedSection">
               <div className="pinnedHeader">
                 <span className="pinnedHeaderBadge">OFFICIAL ANNOUNCEMENTS</span>
               </div>
-              <div className="pinnedCarousel">
-                {pinnedDiscussions.map(item => (
-                  <div
-                    key={`pinned-${item.id}`}
-                    className={`pinnedCard ${item.isAnnouncement ? 'announcementCard' : ''}`}
-                    onClick={() => openDiscussionModal(item)}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div className="pinnedCardHeader">
-                      <span className={`pinnedTypeTag ${item.isAnnouncement ? 'tagAnnouncement' : 'tagPinned'}`}>
-                        {item.isAnnouncement ? 'Official announcement' : 'Pinned'}
-                      </span>
-                      {item.isNew&&<span className="announcementNewBadge">NEW</span>}
-                      <span className="pinnedTime">{formatDate(item.createdAt)}</span>
-                    </div>
-                    <h3 className="pinnedTitle">{item.title}</h3>
-                    {item.summary && <p className="pinnedSummary">{item.summary}</p>}
-                    <div className="pinnedCardFooter">
-                      <div className="pinnedAuthor">
-                        <CreatorUsername
-                          name={item.author.displayName}
-                          username={item.author.username}
-                          role={item.author.role}
-                          creatorRank={item.author.creatorRank}
-                        />
-                      </div>
-                      <div className="pinnedStats">
-                        <span>💬 {item.replyCount}</span>
-                        <span>❤️ {item.reactionCount}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <AnnouncementCard item={pinnedDiscussions[0]} formatDate={formatDate} onOpen={openDiscussionModal} />
             </div>
           )}
 
@@ -481,9 +495,10 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
 
             <div className="communitySearchAndSort">
               <div className="communitySearchWrap">
+                <UiIcon name="search" size={18} />
                 <input
                   type="text"
-                  placeholder="Search topics or posts…"
+                  placeholder="Search discussions, topics, creators, or tags…"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   className="communitySearchInput"
@@ -503,122 +518,48 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
           </div>
 
           {/* Discussions List */}
+          <div className="discussionFeedHeader">
+            <div>
+              <p className="eyebrow">DISCUSSIONS</p>
+              <h2>Creator conversations</h2>
+            </div>
+            {!loading && <span>{discussions.length} {discussions.length === 1 ? 'discussion' : 'discussions'}</span>}
+          </div>
           {loading ? (
             <div className="communityLoadingState">Loading discussions…</div>
           ) : discussions.length === 0 ? (
             <div className="communityEmptyState">
-              <h3>No discussions found</h3>
-              <p>Be the first to start a conversation in this topic!</p>
+              <span className="communityEmptyIcon"><UiIcon name="message" size={24} /></span>
+              <h3>No discussions yet.</h3>
+              <p>Be the first creator to start a conversation.</p>
               {currentUser && (
                 <button
                   type="button"
                   className="button"
                   onClick={() => setIsCreateOpen(true)}
-                  style={{ marginTop: '1rem' }}
                 >
-                  Start Discussion
+                  <UiIcon name="plus" size={16} /> Start Discussion
                 </button>
               )}
             </div>
           ) : (
             <div className="discussionsGrid">
               {discussions.map(disc => (
-                <article
+                <DiscussionCard
                   key={disc.id}
-                  className={`discussionCard ${disc.isAnnouncement ? 'announcementBorder' : ''} ${disc.isPinned ? 'pinnedBorder' : ''}`}
-                  onClick={() => openDiscussionModal(disc)}
-                >
-                  <div className="discussionCardTop">
-                    <div className="discussionMetaTags">
-                      {disc.isAnnouncement && <span className="discTag tagAnnouncement">Announcement</span>}
-                      {disc.isPinned && <span className="discTag tagPinned">Pinned</span>}
-                      <span className="discCategory">{disc.category}</span>
-                      {disc.isLocked && <span className="discTag tagLocked">🔒 Locked</span>}
-                    </div>
-                    <span className="discTimestamp">{formatDate(disc.createdAt)}</span>
-                  </div>
-
-                  <h3 className="discussionTitle">{disc.title}</h3>
-                  <p className="discussionPreview">
-                    {disc.summary ? disc.summary : disc.content.slice(0, 160) + (disc.content.length > 160 ? '…' : '')}
-                  </p>
-
-                  {disc.imageUrl && (
-                    <div className="discussionImagePreview">
-                      <img src={disc.imageUrl} alt={disc.title} loading="lazy" />
-                      {disc.isGif && <span className="gifBadge">GIF</span>}
-                    </div>
-                  )}
-
-                  <div className="discussionCardBottom">
-                    <div className="discussionAuthorRow">
-                      <div className="discAvatar">
-                        {disc.author.avatarUrl ? (
-                          <img src={disc.author.avatarUrl} alt={disc.author.displayName} />
-                        ) : (
-                          <div className="avatarFallback">{disc.author.displayName.slice(0, 1).toUpperCase()}</div>
-                        )}
-                      </div>
-                      <CreatorUsername
-                        name={disc.author.displayName}
-                        username={disc.author.username}
-                        role={disc.author.role}
-                        creatorRank={disc.author.creatorRank}
-                        enableCard={true}
-                        cardData={{ avatarUrl: disc.author.avatarUrl }}
-                      />
-                    </div>
-
-                    <div className="discussionInteractions">
-                      <button
-                        type="button"
-                        className={`reactionBtn ${disc.viewerReacted ? 'reacted' : ''}`}
-                        onClick={e => handleToggleReaction(disc.id, e)}
-                        title="React"
-                      >
-                        ❤️ <span>{disc.reactionCount}</span>
-                      </button>
-                      <button type="button" className="replyCountBtn" title="Replies">
-                        💬 <span>{disc.replyCount}</span>
-                      </button>
-
-                      {/* Staff Moderation & Pin Controls (Direct In-App Button) */}
-                      {currentUser?.isStaff && (
-                        <div className="staffQuickControls" onClick={e => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            className={`staffActionBtn ${disc.isPinned ? 'active' : ''}`}
-                            onClick={e => handleTogglePin(disc.id, disc.isPinned, e)}
-                            title={disc.isPinned ? 'Unpin post' : 'Pin post to top'}
-                          >
-                            📌
-                          </button>
-                          <button
-                            type="button"
-                            className={`staffActionBtn ${disc.isLocked ? 'active' : ''}`}
-                            onClick={e => handleToggleLock(disc.id, disc.isLocked, e)}
-                            title={disc.isLocked ? 'Unlock discussion' : 'Lock discussion'}
-                          >
-                            🔒
-                          </button>
-                          <button
-                            type="button"
-                            className="staffActionBtn delete"
-                            onClick={e => handleDeleteDiscussion(disc.id, e)}
-                            title="Delete discussion"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </article>
+                  discussion={disc}
+                  currentUser={currentUser}
+                  formatDate={formatDate}
+                  onOpen={openDiscussionModal}
+                  onReact={handleToggleReaction}
+                  onPin={handleTogglePin}
+                  onLock={handleToggleLock}
+                  onDelete={handleDeleteDiscussion}
+                />
               ))}
             </div>
           )}
-        </div>
-      )}
+      </div>
 
       {/* Discussion Detail & Replies Modal */}
       {activeDiscussion && (
@@ -629,7 +570,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                 {activeDiscussion.isAnnouncement && <span className="discTag tagAnnouncement">Announcement</span>}
                 {activeDiscussion.isPinned && <span className="discTag tagPinned">Pinned</span>}
                 <span className="discCategory">{activeDiscussion.category}</span>
-                {activeDiscussion.isLocked && <span className="discTag tagLocked">🔒 Locked</span>}
+                {activeDiscussion.isLocked && <span className="discTag tagLocked"><UiIcon name="lock" size={12} /> Locked</span>}
               </div>
               <button
                 type="button"
@@ -637,7 +578,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                 onClick={() => setActiveDiscussion(null)}
                 aria-label="Close dialog"
               >
-                ✕
+                <UiIcon name="close" size={19} />
               </button>
             </div>
 
@@ -672,7 +613,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                     className={`reactionBtn large ${activeDiscussion.viewerReacted ? 'reacted' : ''}`}
                     onClick={() => handleToggleReaction(activeDiscussion.id)}
                   >
-                    ❤️ <span>{activeDiscussion.reactionCount}</span>
+                    <UiIcon name="heart" size={17} /> <span>{activeDiscussion.reactionCount}</span>
                   </button>
 
                   {/* Staff in-app controls */}
@@ -767,7 +708,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
             {/* Reply Input Box */}
             <div className="modalReplyInputWrap">
               {activeDiscussion.isLocked ? (
-                <div className="discussionLockedNotice">🔒 This discussion has been locked by moderators.</div>
+                <div className="discussionLockedNotice"><UiIcon name="lock" size={16} /> This discussion has been locked by moderators.</div>
               ) : currentUser ? (
                 <form onSubmit={handlePostReply} className="replyForm">
                   <input
@@ -802,14 +743,14 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
         <div className="discussionModalOverlay" onClick={() => setIsCreateOpen(false)}>
           <div className="discussionModalDialog createModal" onClick={e => e.stopPropagation()}>
             <div className="discussionModalHeader">
-              <h2>{newIsAnnouncement ? '📢 Create Official Announcement' : '💬 Start a Discussion'}</h2>
+              <h2 className="createDiscussionTitle"><UiIcon name={newIsAnnouncement ? 'announcement' : 'message'} size={20} /> {newIsAnnouncement ? 'Create Official Announcement' : 'Start a Discussion'}</h2>
               <button
                 type="button"
                 className="modalCloseButton"
                 onClick={() => setIsCreateOpen(false)}
                 aria-label="Close modal"
               >
-                ✕
+                <UiIcon name="close" size={19} />
               </button>
             </div>
 

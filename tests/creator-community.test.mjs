@@ -157,13 +157,28 @@ test('mobile profile layout and 2-column portfolio gallery styles are in globals
   assert.match(css, /@media\s*\(max-width:\s*768px\)[\s\S]*\.profileBannerContainer\s*\{[^}]*height:\s*115px/);
 });
 
-test('community page features pinned carousel, discussions grid, and staff pin control', async () => {
+test('discussion page uses a featured announcement, reusable cards, and staff controls', async () => {
   const commView = await read('app/components/community-page-view.tsx');
-  assert.match(commView, /pinnedCarousel/);
+  assert.match(commView, /function AnnouncementCard/);
+  assert.match(commView, /function DiscussionCard/);
+  assert.match(commView, /featuredAnnouncementCard/);
+  assert.match(commView, /Search discussions, topics, creators, or tags/);
+  assert.match(commView, /No discussions yet/);
   assert.match(commView, /discussionsGrid/);
   assert.match(commView, /handleTogglePin/);
   assert.match(commView, /handleToggleReaction/);
   assert.match(commView, /discussionModalOverlay/);
+  assert.match(commView, /<CreatorUsername/);
+  assert.doesNotMatch(commView, /❤️|💬|📌|🗑️|🔒/);
+});
+
+test('discussion polish includes responsive filters and natural media sizing', async () => {
+  const css = await read('app/globals.css');
+  assert.match(css, /\.featuredAnnouncementCard/);
+  assert.match(css, /\.communityCategoriesScroll[\s\S]*overflow-x:\s*auto/);
+  assert.match(css, /@media\(max-width:430px\)/);
+  assert.match(css, /\.discussionImagePreview img\{[^}]*height:auto/);
+  assert.match(css, /\.featuredAnnouncementMedia img\{[^}]*height:auto/);
 });
 
 test('rank details does not expose XP history UI', async () => {
