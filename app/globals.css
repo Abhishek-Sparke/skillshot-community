@@ -176,7 +176,7 @@
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; }
 body { margin:0; background:var(--paper); color:var(--ink); font-family:'Plus Jakarta Sans', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility; }
-.shell { width:100%; max-width:1220px; margin:auto; padding-left:clamp(18px,3vw,32px); padding-right:clamp(18px,3vw,32px); }
+.shell { width:100%; max-width:none; margin:0; padding-left:clamp(16px,2.4vw,38px); padding-right:clamp(16px,2.4vw,38px); }
 .nav { height:78px; display:flex; align-items:center; border-bottom:1px solid var(--line); gap:28px; }
 .brand { display:inline-flex; align-items:center; gap:10px; font-weight:800; font-size:21px; letter-spacing:-.5px; text-decoration:none; color:inherit; transition:transform .15s ease; }
 .brand:hover { transform:scale(1.02); }
@@ -3893,7 +3893,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
    CREATOR PROFILE — premium portfolio dashboard
    ========================================================================== */
 .profilePage{--profile-bg:#080d14;--profile-panel:#101721;--profile-panel-2:#141c28;--profile-line:#222d3b;--profile-text:#f6f8fb;--profile-muted:#a8b3c3;--profile-accent:#ff4f7a;min-height:calc(100vh - 72px);padding:18px 0 80px;background:radial-gradient(circle at 82% 5%,#172234 0,transparent 30%),linear-gradient(180deg,#090e15,#0b121b 66%,#080d14);color:var(--profile-text)}
-.profilePage .shell{width:min(1440px,calc(100% - 32px));max-width:1440px}
+.profilePage .shell{width:100%;max-width:none;padding-left:clamp(14px,1.8vw,30px);padding-right:clamp(14px,1.8vw,30px)}
 .profilePage .profileHero{padding:0;border:1px solid #17202c;border-radius:12px 12px 0 0;background:transparent;box-shadow:0 22px 70px #0007;overflow:visible}
 .profilePage .profileCover{height:clamp(180px,22vw,300px);border-radius:11px 11px 0 0;overflow:hidden;background:linear-gradient(120deg,#36101c,#111b2e 45%,#200914);position:relative}
 .profilePage .profileCover::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 65% 25%,#ff3d6855,transparent 25%),linear-gradient(115deg,transparent 30%,#ff3f6222 55%,transparent 70%);z-index:1;pointer-events:none}

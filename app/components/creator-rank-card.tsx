@@ -5,13 +5,11 @@ import { CREATOR_RANKS, type CreatorRankId, type LevelProgress, type RankProgres
 
 const rankOrder: CreatorRankId[] = ['NEWCOMER', 'CREATOR', 'RISING_CREATOR', 'SKILLED_CREATOR', 'ELITE_CREATOR', 'MASTER_CREATOR', 'LEGEND'];
 
-export default function CreatorRankCard({ rank, rankProgress, levelProgress, isSelf, onClose, onHistory }: {
+export default function CreatorRankCard({ rank, rankProgress, levelProgress, onClose }: {
   rank: CreatorRankId;
   rankProgress: RankProgress;
   levelProgress: LevelProgress;
-  isSelf: boolean;
   onClose: () => void;
-  onHistory: () => void;
 }) {
   const currentIndex = rankOrder.indexOf(rank);
   return <div className="rankCardOverlay" role="dialog" aria-modal="true" aria-label={`${rankProgress.rank.label} creator rank`} onClick={onClose}>
@@ -30,7 +28,6 @@ export default function CreatorRankCard({ rank, rankProgress, levelProgress, isS
           <small>{CREATOR_RANKS[rankId].label}</small>
         </div>)}
       </div>
-      {isSelf && <button className="rankHistoryLink" type="button" onClick={() => { onClose(); onHistory(); }}>View XP History →</button>}
     </section>
   </div>;
 }

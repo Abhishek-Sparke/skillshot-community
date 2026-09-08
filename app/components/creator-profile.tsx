@@ -34,7 +34,6 @@ type SocialUser = {
   creatorRank?: CreatorRankId | string;
   isFollowing: boolean;
 };
-type XpHistoryItem={id:string;amount:number;reason:string;createdAt:number};
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'S';
@@ -61,8 +60,6 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
   const [modalLoading, setModalLoading] = useState(false);
   const [modalSearch, setModalSearch] = useState('');
   const [modalActionBusy, setModalActionBusy] = useState<string | null>(null);
-  const [xpHistory,setXpHistory]=useState<XpHistoryItem[]|null>(null);
-  const [xpHistoryOpen,setXpHistoryOpen]=useState(false);
   const [rankCardOpen,setRankCardOpen]=useState(false);
 
   useEffect(() => {
@@ -125,8 +122,6 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
     setModalTab(type);
     setModalSearch('');
   }
-
-  async function openXpHistory(){setXpHistoryOpen(true);if(xpHistory)return;const response=await fetch('/api/xp/history');if(response.ok)setXpHistory((await response.json()).events||[]);else setXpHistory([]);}
 
   async function toggleFollow() {
     if (!profile || busy) return;
@@ -494,8 +489,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
       </div>
     )}
 
-    {xpHistoryOpen&&<div className="socialModalOverlay" role="dialog" aria-modal="true" aria-label="XP history" onClick={()=>setXpHistoryOpen(false)}><div className="socialModalCard xpHistoryCard" onClick={event=>event.stopPropagation()}><div className="socialModalHeader"><div><p className="eyebrow">CREATOR PROGRESS</p><h2>XP history</h2></div><button type="button" className="socialModalClose" onClick={()=>setXpHistoryOpen(false)} aria-label="Close">×</button></div><div className="xpHistoryList">{xpHistory===null?<p>Loading…</p>:xpHistory.length?xpHistory.map(item=><article key={item.id}><strong className={item.amount>0?'xpPositive':'xpNegative'}>{item.amount>0?'+':''}{item.amount} XP</strong><span>{item.reason}</span><small>{new Date(item.createdAt).toLocaleString()}</small></article>):<p>No XP activity yet. Create and contribute to start earning XP.</p>}</div></div></div>}
-    {rankCardOpen && profile.rankProgress && profile.levelProgress && <CreatorRankCard rank={profile.rankProgress.rank.id} rankProgress={profile.rankProgress} levelProgress={profile.levelProgress} isSelf={profile.isSelf} onClose={() => setRankCardOpen(false)} onHistory={openXpHistory}/>}
+    {rankCardOpen && profile.rankProgress && profile.levelProgress && <CreatorRankCard rank={profile.rankProgress.rank.id} rankProgress={profile.rankProgress} levelProgress={profile.levelProgress} onClose={() => setRankCardOpen(false)}/>}
 
     {tab === 'overview' && <section className="profileWork shell profileTabPanel profileOverview" role="tabpanel">
       <div className="profileOverviewGrid">
@@ -534,7 +528,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
 
     {tab === 'achievements' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">MILESTONES</p><h2>Achievements.</h2></div></div><div className="profileAchievementFull">{profile.achievements.length ? profile.achievements.map((item,index)=><article key={item.key}><span>{['✦','◆','♥','★'][index%4]}</span><div><h3>{item.label}</h3><p>{item.description}</p></div></article>) : <p>No achievements yet.</p>}</div></section>}
 
-    {tab === 'activity' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">CREATOR ACTIVITY</p><h2>Progress at a glance.</h2></div>{profile.isSelf&&<button className="quietButton" type="button" onClick={openXpHistory}>View XP history</button>}</div><div className="profileActivityGrid"><article><strong>{compactNumber(profile.reputation)}</strong><span>Reputation</span></article><article><strong>{compactNumber(profile.likesReceived)}</strong><span>Likes received</span></article><article><strong>{compactNumber(profile.postCount)}</strong><span>Published Skillshots</span></article><article><strong>{joined}</strong><span>Member since</span></article></div></section>}
+    {tab === 'activity' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">CREATOR ACTIVITY</p><h2>Progress at a glance.</h2></div></div><div className="profileActivityGrid"><article><strong>{compactNumber(profile.reputation)}</strong><span>Reputation</span></article><article><strong>{compactNumber(profile.likesReceived)}</strong><span>Likes received</span></article><article><strong>{compactNumber(profile.postCount)}</strong><span>Published Skillshots</span></article><article><strong>{joined}</strong><span>Member since</span></article></div></section>}
 
     {tab === 'skillshots' && <section className="profileWork shell profileTabPanel" role="tabpanel">
       {profile.featuredPosts.length > 0 && (
