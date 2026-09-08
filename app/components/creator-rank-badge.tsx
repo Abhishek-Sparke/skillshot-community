@@ -1,15 +1,15 @@
 import { type CreatorRankId, CREATOR_RANKS, creatorRankId } from '../../lib/creator-rank';
+import IconBadge from './icon-badge';
 
 type Props = {
   rank: CreatorRankId | string;
-  showLabel?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   onClick?: () => void;
   level?: number;
 };
 
-export default function CreatorRankBadge({ rank, showLabel = false, size = 'md', className = '', onClick, level }: Props) {
+export default function CreatorRankBadge({ rank, size = 'md', className = '', onClick, level }: Props) {
   const rankKey = creatorRankId(rank);
   const info = CREATOR_RANKS[rankKey];
 
@@ -67,22 +67,14 @@ export default function CreatorRankBadge({ rank, showLabel = false, size = 'md',
     }
   };
 
-  const content = <>
-    <span className="rankIconContainer">{renderIcon()}</span>
-    {showLabel && <span className="rankLabelText">{info.label}</span>}
-  </>;
   const accessibleLabel = `${info.label}${level ? `, Level ${level}` : ''} — Creator Rank`;
-
-  return onClick ? (
-    <button
-      type="button"
-      className={`creatorRankBadge ${info.badgeClass} size-${size} ${className}`}
-      data-tooltip={accessibleLabel}
-      title={accessibleLabel}
-      aria-label={`Open ${accessibleLabel}`}
-      onClick={onClick}
-    >
-      {content}
-    </button>
-  ) : <span className={`creatorRankBadge ${info.badgeClass} size-${size} ${className}`} data-tooltip={accessibleLabel} title={accessibleLabel} aria-label={accessibleLabel}>{content}</span>;
+  return <IconBadge
+    className={`creatorRankBadge ${info.badgeClass} size-${size} ${className}`}
+    size={size === 'sm' ? 'compact' : size === 'lg' ? 'hero' : 'profile'}
+    tooltip={accessibleLabel}
+    ariaLabel={onClick ? `Open ${accessibleLabel}` : accessibleLabel}
+    onClick={onClick}
+  >
+    <span className="rankIconContainer">{renderIcon()}</span>
+  </IconBadge>;
 }

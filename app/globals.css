@@ -4400,4 +4400,81 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   .discussionFeedHeader>span{display:none}
 }
 
+/* Shared identity icon container for Creator Rank and Staff Role badges. */
+.iconBadge{
+  position:relative;
+  display:inline-flex;
+  flex:none;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  border:1px solid currentColor;
+  border-radius:50%;
+  vertical-align:middle;
+  line-height:1;
+  isolation:isolate;
+}
+.iconBadge-compact{width:18px;height:18px;min-width:18px;min-height:18px}
+.iconBadge-profile{width:20px;height:20px;min-width:20px;min-height:20px}
+.iconBadge-hero{width:62px;height:62px;min-width:62px;min-height:62px;border-radius:18px}
+.iconBadge :is(.rankIconContainer,.roleBadgeIcon){display:grid;width:100%;height:100%;place-items:center}
+.iconBadge-compact :is(.rankIconSvg,.roleBadgeIcon svg){width:11px;height:11px}
+.iconBadge-profile :is(.rankIconSvg,.roleBadgeIcon svg){width:12px;height:12px}
+.iconBadge-hero .rankIconSvg{width:30px;height:30px}
+.iconBadgeTooltip{
+  position:absolute;
+  z-index:80;
+  left:50%;
+  bottom:calc(100% + 7px);
+  width:max-content;
+  max-width:min(220px,calc(100vw - 24px));
+  padding:6px 8px;
+  border-radius:7px;
+  background:#1d1d1d;
+  box-shadow:0 5px 18px #0003;
+  color:#fff;
+  font:700 11px/1.25 Arial,sans-serif;
+  text-align:center;
+  white-space:nowrap;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  translate:-50% 3px;
+  transition:opacity .16s ease,translate .16s ease,visibility .16s;
+}
+.iconBadge:hover .iconBadgeTooltip,.iconBadge:focus-visible .iconBadgeTooltip{opacity:1;visibility:visible;translate:-50% 0}
+.roleBadge[data-tooltip]::after{content:none}
+.roleBadgeLabel{display:inline-flex;align-items:center;gap:6px;color:inherit;font:800 12px/1 'Plus Jakarta Sans',Arial,sans-serif}
+.roleBadgeLabel .roleBadge{margin:0}
+.creatorUsernameWrapper:not(.creatorProfileIdentity){display:inline-flex;align-items:center;gap:4px;min-width:0}
+.profilePage .creatorProfileMetaRow{gap:7px}
+.profilePage .creatorProfileMetaRow .creatorRankBadge,
+.profilePage .creatorProfileMetaRow .roleBadge.profile{
+  width:20px;
+  height:20px;
+  min-width:20px;
+  min-height:20px;
+  padding:0;
+  border-radius:50%;
+  font-size:0;
+}
+.creatorRankBadge.size-sm,.roleBadge.compact{width:18px;height:18px;min-width:18px;min-height:18px;margin:0;padding:0;border-radius:50%}
+.creatorRankBadge.creator-rank-newcomer{--rank-solid:#8b66c9;--rank-glow:#8b66c933;color:#8b66c9;border-color:#8b66c966;background:#8b66c91a;box-shadow:none}
+.creatorRankBadge.creator-rank-creator{--rank-solid:#7b68d8;--rank-glow:#7b68d842}
+.creatorRankBadge.creator-rank-rising{--rank-solid:#25acd2;--rank-glow:#25acd242}
+.creatorRankBadge.creator-rank-skilled{--rank-solid:#8f63dc;--rank-glow:#8f63dc42}
+.creatorRankBadge.creator-rank-elite{--rank-solid:#c35fb5;--rank-glow:#c35fb54d}
+.creatorRankBadge.creator-rank-master{--rank-solid:#d8982e;--rank-glow:#d8982e55}
+.creatorRankBadge.creator-rank-legend{--rank-solid:#d9a92f;--rank-glow:#d9a92f66}
+.creatorRankBadge[class*="creator-rank-"]{background:color-mix(in srgb,var(--rank-solid) 12%,transparent);border-color:color-mix(in srgb,var(--rank-solid) 42%,transparent)}
+.creatorRankBadge[class*="creator-rank-"]::after{inset:-2px;border-radius:50%}
+.rankCard .creatorRankBadge.rankCardHeroIcon,.rankCard>.creatorRankBadge{width:62px;height:62px;min-width:62px;min-height:62px;border-radius:18px}
+@media(max-width:700px){
+  .profilePage .creatorProfileMetaRow .creatorRankBadge,
+  .profilePage .creatorProfileMetaRow .roleBadge.profile{width:20px;height:20px;min-width:20px;min-height:20px;padding:0}
+}
+@media(prefers-reduced-motion:reduce){.iconBadgeTooltip{transition:none}.iconBadge:hover{transform:none}}
+
 

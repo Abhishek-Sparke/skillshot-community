@@ -91,10 +91,10 @@ export default function CreatorUsername({
     ? <span className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></span>
     : <Link href={profileUrl} className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></Link>;
   const rankBadge = showRankBadge
-    ? <CreatorRankBadge rank={rankKey} showLabel={layout === 'profile'} size={layout === 'profile' ? 'md' : 'sm'} onClick={onRankClick} level={rankLevel} />
+    ? <CreatorRankBadge rank={rankKey} size={layout === 'profile' ? 'md' : 'sm'} onClick={onRankClick} level={rankLevel} />
     : null;
   const roleBadge = showRoleBadge && resolvedRole && resolvedRole !== 'USER'
-    ? <RoleBadge role={resolvedRole} variant={layout === 'profile' ? 'profile' : roleVariant} />
+    ? <RoleBadge role={resolvedRole} variant={layout === 'profile' ? 'profile' : roleVariant} showLabel={false} />
     : null;
 
   return (

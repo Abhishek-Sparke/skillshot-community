@@ -220,6 +220,25 @@ test('profile work uses a reusable card with readable metadata and SVG actions',
   assert.match(css, /-webkit-line-clamp:2/);
 });
 
+test('creator rank and staff role share compact circular icon badge geometry', async () => {
+  const rankBadge = await read('app/components/creator-rank-badge.tsx');
+  const roleBadge = await read('app/components/role-badge.tsx');
+  const identity = await read('app/components/creator-username.tsx');
+  const iconBadge = await read('app/components/icon-badge.tsx');
+  const css = await read('app/globals.css');
+
+  assert.match(rankBadge, /import IconBadge/);
+  assert.match(roleBadge, /import IconBadge/);
+  assert.match(rankBadge, /<IconBadge/);
+  assert.match(roleBadge, /<IconBadge/);
+  assert.match(iconBadge, /iconBadge-\$\{size\}/);
+  assert.doesNotMatch(rankBadge, /rankLabelText/);
+  assert.match(identity, /<RoleBadge[\s\S]*showLabel=\{false\}/);
+  assert.match(css, /\.iconBadge-compact\{width:18px;height:18px/);
+  assert.match(css, /\.iconBadge-profile\{width:20px;height:20px/);
+  assert.match(css, /border-radius:50%/);
+});
+
 test('favicon and touch icon assets exist and are properly configured in app metadata', async () => {
   // Verify files exist in public/ and app/
   await fs.access(path.join(root, 'public/favicon.ico'));
