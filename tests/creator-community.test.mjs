@@ -188,6 +188,21 @@ test('rank details does not expose XP history UI', async () => {
   assert.doesNotMatch(css, /rankHistoryLink/);
 });
 
+test('profile header keeps identity and XP together with stats directly below', async () => {
+  const profile = await read('app/components/creator-profile.tsx');
+  const css = await read('app/globals.css');
+  const summaryStart = profile.indexOf('<div className="profileSummary">');
+  const statsStart = profile.indexOf('<div className="profileStats"', summaryStart);
+  const tabsStart = profile.indexOf('<div className="profileTabs"', statsStart);
+
+  assert.ok(summaryStart >= 0 && statsStart > summaryStart && tabsStart > statsStart);
+  assert.match(profile.slice(summaryStart, statsStart), /profileIdentityArea/);
+  assert.match(profile.slice(summaryStart, statsStart), /profileHeaderAside[\s\S]*<CreatorProgress/);
+  assert.doesNotMatch(profile.slice(statsStart, tabsStart), /profileHeaderAside/);
+  assert.match(css, /\.profileIdentityArea\{[\s\S]*grid-template-columns:190px minmax\(0,1fr\)/);
+  assert.match(css, /@media\(max-width:700px\)[\s\S]*\.profileHeaderAside\{display:grid;grid-template-columns:1fr/);
+});
+
 test('favicon and touch icon assets exist and are properly configured in app metadata', async () => {
   // Verify files exist in public/ and app/
   await fs.access(path.join(root, 'public/favicon.ico'));

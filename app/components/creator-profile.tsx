@@ -264,80 +264,83 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         {profile.isSelf && <Link className="profileCoverEdit" href="/profile/edit"><UiIcon name="edit"/> Edit Profile</Link>}
       </div>
       <div className="profileSummary">
-        <div className="profileAvatar">
-          {profile.avatarUrl && !avatarFailed ? (
-            <img
-              src={profile.avatarUrl}
-              alt={`${profile.displayName}'s avatar`}
-              className="animatedPfp"
-              onError={() => setAvatarFailed(true)}
-            />
-          ) : (
-            initials(profile.displayName)
-          )}
-        </div>
-        <div className="profileMainInfo">
-          <div className="profileNameLine">
-            <CreatorUsername asSpan layout="profile" name={profile.displayName} username={profile.username} creatorRank={profile.creatorRank} staffRole={profile.role} roleVariant="profile" onRankClick={() => setRankCardOpen(true)} rankLevel={profile.levelProgress?.level}/>
+        <div className="profileIdentityArea">
+          <div className="profileAvatar">
+            {profile.avatarUrl && !avatarFailed ? (
+              <img
+                src={profile.avatarUrl}
+                alt={`${profile.displayName}'s avatar`}
+                className="animatedPfp"
+                onError={() => setAvatarFailed(true)}
+              />
+            ) : (
+              initials(profile.displayName)
+            )}
           </div>
-          {profile.bio && <p className="profileBio">{profile.bio}</p>}
-
-          {profile.rankProgress && <CreatorProgress rankProgress={profile.rankProgress} levelProgress={profile.levelProgress} onOpen={() => setRankCardOpen(true)}/>}
-
-          <div className="profileDetails">
-            {profile.location && <span><UiIcon name="location"/> {profile.location}</span>}
-            {profile.website && <a href={profile.website} target="_blank" rel="noreferrer"><UiIcon name="link"/> {websiteLabel(profile.website)}</a>}
-            <span>Joined {joined}</span>
+          <div className="profileMainInfo">
+            <div className="profileNameLine">
+              <CreatorUsername asSpan layout="profile" name={profile.displayName} username={profile.username} creatorRank={profile.creatorRank} staffRole={profile.role} roleVariant="profile" onRankClick={() => setRankCardOpen(true)} rankLevel={profile.levelProgress?.level}/>
+            </div>
+            {profile.bio && <p className="profileBio">{profile.bio}</p>}
+            <div className="profileDetails">
+              {profile.location && <span><UiIcon name="location"/> {profile.location}</span>}
+              {profile.website && <a href={profile.website} target="_blank" rel="noreferrer"><UiIcon name="link"/> {websiteLabel(profile.website)}</a>}
+              <span>Joined {joined}</span>
+            </div>
+            {profile.skills.length > 0 && <div className="profileSkills" aria-label="Skills">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div>}
           </div>
-          {profile.skills.length > 0 && <div className="profileSkills" aria-label="Skills">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div>}
         </div>
         <aside className="profileHeaderAside">
-        <div className="profilePrimaryAction">
-          {profile.isSelf ? (
-            <div className="profileActionButtonsRow">
-              <button className="shareProfileButton" type="button" onClick={shareProfile}><UiIcon name="share"/> {shareLabel}</button>
-            </div>
-          ) : (
-            <div className="profileActionButtonsRow">
-              <button
-                className={`followButton ${profile.isFollowing ? 'following' : ''}`}
-                onClick={toggleFollow}
-                disabled={busy}
-              >
-                {busy ? 'Saving…' : profile.isFollowing ? 'Following' : <><UiIcon name="plus"/> Follow</>}
-              </button>
-
-              {profile.canMessage !== false ? (
-                <Link
-                  className="profileMessageButton"
-                  href={`/chats?user=${encodeURIComponent(profile.username)}`}
-                >
-                  <UiIcon name="message"/> Message
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  className="profileMessageButton disabled"
-                  disabled
-                  title={profile.canMessageReason || 'Messaging is unavailable'}
-                >
-                  <UiIcon name="message"/> Message
-                </button>
-              )}
-
-              <button className="shareProfileButton" type="button" onClick={shareProfile}><UiIcon name="share"/> {shareLabel}</button>
-
-              <div className="profileMoreMenu">
-                <button type="button" className="profileMoreButton" aria-label="More profile actions" aria-expanded={profileMenuOpen} onClick={()=>setProfileMenuOpen(value=>!value)}><UiIcon name="more"/></button>
-                {profileMenuOpen&&<div className="profileMoreDropdown">
-                  <button type="button" className={`profileBlockButton ${profile.isBlocked ? 'blocked' : ''}`} onClick={()=>{setProfileMenuOpen(false);toggleBlock()}}>{profile.isBlocked ? 'Unblock creator' : 'Block creator'}</button>
-                  <ReportButton targetType="PROFILE" targetId={profile.username}/>
-                </div>}
+          {profile.rankProgress && <CreatorProgress rankProgress={profile.rankProgress} levelProgress={profile.levelProgress} onOpen={() => setRankCardOpen(true)}/>}
+          <div className="profilePrimaryAction">
+            {profile.isSelf ? (
+              <div className="profileActionButtonsRow">
+                <button className="shareProfileButton" type="button" onClick={shareProfile}><UiIcon name="share"/> {shareLabel}</button>
               </div>
-            </div>
-          )}
-        </div>
-        <div className="profileStats" aria-label="Profile statistics">
+            ) : (
+              <div className="profileActionButtonsRow">
+                <button
+                  className={`followButton ${profile.isFollowing ? 'following' : ''}`}
+                  onClick={toggleFollow}
+                  disabled={busy}
+                >
+                  {busy ? 'Saving…' : profile.isFollowing ? 'Following' : <><UiIcon name="plus"/> Follow</>}
+                </button>
+
+                {profile.canMessage !== false ? (
+                  <Link
+                    className="profileMessageButton"
+                    href={`/chats?user=${encodeURIComponent(profile.username)}`}
+                  >
+                    <UiIcon name="message"/> Message
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    className="profileMessageButton disabled"
+                    disabled
+                    title={profile.canMessageReason || 'Messaging is unavailable'}
+                  >
+                    <UiIcon name="message"/> Message
+                  </button>
+                )}
+
+                <button className="shareProfileButton" type="button" onClick={shareProfile}><UiIcon name="share"/> {shareLabel}</button>
+
+                <div className="profileMoreMenu">
+                  <button type="button" className="profileMoreButton" aria-label="More profile actions" aria-expanded={profileMenuOpen} onClick={()=>setProfileMenuOpen(value=>!value)}><UiIcon name="more"/></button>
+                  {profileMenuOpen&&<div className="profileMoreDropdown">
+                    <button type="button" className={`profileBlockButton ${profile.isBlocked ? 'blocked' : ''}`} onClick={()=>{setProfileMenuOpen(false);toggleBlock()}}>{profile.isBlocked ? 'Unblock creator' : 'Block creator'}</button>
+                    <ReportButton targetType="PROFILE" targetId={profile.username}/>
+                  </div>}
+                </div>
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+      {error && <p className="profileActionError" role="status">{error}</p>}
+      <div className="profileStats" aria-label="Profile statistics">
         <div><strong>{compactNumber(profile.postCount)}</strong><span>Skillshots</span></div>
         <div><strong>{compactNumber(profile.likesReceived)}</strong><span>Likes</span></div>
         <button
@@ -357,9 +360,6 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
           <strong>{compactNumber(profile.followingCount)}</strong><span>Following</span>
         </button>
       </div>
-      </aside>
-      </div>
-      {error && <p className="profileActionError" role="status">{error}</p>}
       <div className="profileTabs" role="tablist" aria-label="Profile sections">
         {tabs.map(value => <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => setTab(value)}>{tabLabels[value]}</button>)}
       </div>

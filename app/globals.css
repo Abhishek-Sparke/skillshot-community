@@ -4051,6 +4051,76 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 :root[data-theme=light] .profileCollectionEmpty button{border-color:#dfd2e5;background:#fbf5fc;color:#bd315c}
 @media(prefers-reduced-motion:reduce){.profileProgressTrack>span{transition:none}}
 
+/* Profile header: two intentional columns followed by compact stats and tabs. */
+.profilePage .profileSummary{
+  grid-template-columns:minmax(0,1fr) minmax(340px,440px);
+  gap:clamp(24px,3vw,48px);
+  align-items:start;
+  min-height:0;
+  padding:24px 28px;
+}
+.profileIdentityArea{
+  display:grid;
+  grid-template-columns:190px minmax(0,1fr);
+  gap:26px;
+  align-items:start;
+  min-width:0;
+}
+.profilePage .profileAvatar{
+  grid-column:auto;
+  grid-row:auto;
+  width:174px;
+  height:174px;
+  margin-top:-84px;
+}
+.profilePage .profileMainInfo{
+  grid-column:auto;
+  align-self:start;
+  padding-top:0;
+}
+.profileHeaderAside{
+  grid-column:auto;
+  align-self:start;
+  align-content:start;
+}
+.profilePage .profileProgress{margin:0}
+.profilePage .profilePrimaryAction{justify-self:stretch}
+.profilePage .profileStats{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  padding:14px 28px 18px;
+  border-bottom:1px solid var(--profile-line);
+  background:#0f1620;
+}
+.profilePage .profileTabs{margin:0}
+
+@media(max-width:1049px){
+  .profilePage .profileSummary{grid-template-columns:1fr;gap:18px}
+  .profileIdentityArea{grid-template-columns:160px minmax(0,1fr);gap:22px}
+  .profilePage .profileAvatar{width:150px;height:150px;margin-top:-72px}
+  .profileHeaderAside{grid-column:auto;width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+  .profilePage .profilePrimaryAction{width:auto}
+}
+@media(max-width:700px){
+  .profilePage .profileSummary{display:grid;grid-template-columns:1fr;gap:14px;padding:18px 16px}
+  .profileIdentityArea{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px}
+  .profilePage .profileAvatar{grid-column:1;grid-row:1;width:92px;height:92px;margin-top:-55px}
+  .profilePage .profileMainInfo{grid-column:2;display:grid;gap:7px}
+  .profilePage .profileNameLine,.profilePage .profileBio,.profilePage .profileDetails,.profilePage .profileSkills{grid-column:auto}
+  .profileHeaderAside{display:grid;grid-template-columns:1fr;gap:12px}
+  .profilePage .profilePrimaryAction{width:100%}
+  .profilePage .profileStats{padding:10px 12px 14px}
+}
+@media(max-width:480px){
+  .profileIdentityArea{grid-template-columns:82px minmax(0,1fr);gap:12px}
+  .profilePage .profileAvatar{width:78px;height:78px;margin-top:-45px}
+  .profilePage .profileBio,.profilePage .profileDetails,.profilePage .profileSkills{grid-column:1/-1}
+  .profilePage .profileStats{gap:5px;padding-inline:8px}
+  .profilePage .profileStats>div,.profilePage .profileStats>button{min-height:54px;padding:7px 2px}
+  .profilePage .profileStats strong{font-size:14px}
+  .profilePage .profileStats span{font-size:8px}
+}
+:root[data-theme=light] .profilePage .profileStats{background:#faf8f4}
+
 /* Server-driven Creator Rank effects. These exact static classes come from CREATOR_RANKS. */
 .creatorUsernameLink[class*="creator-rank-"]{position:relative;overflow:visible;isolation:isolate;opacity:1}
 .creatorUsernameLink[class*="creator-rank-"] .creatorNameText{position:relative;display:inline-block;overflow:visible;color:var(--rank-solid);font-weight:750;line-height:inherit}
