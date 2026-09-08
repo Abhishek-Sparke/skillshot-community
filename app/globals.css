@@ -3941,4 +3941,44 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 @media(max-width:390px){.profilePage .profileCover{height:145px}.profilePage .profileSummary{grid-template-columns:78px 1fr;gap:12px}.profilePage .profileAvatar{width:76px;height:76px;margin-top:-44px}.profilePage .creatorProfileNameRow{font-size:21px}.profilePage .profileStats span{font-size:8px}.profilePage .profileStats strong{font-size:14px}.profileAchievementFull,.profileActivityGrid{grid-template-columns:1fr}.profileOverviewActions .primary{padding:10px 12px;font-size:11px}}
 @media(prefers-reduced-motion:reduce){.profilePage *{scroll-behavior:auto!important}}
 
+/* Creator level + rank details */
+.profileLevelLabel{padding:3px 8px;border:1px solid #ffffff1c;border-radius:999px;color:var(--profile-text);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
+.creatorRankBadge:is(button){font-family:inherit;cursor:pointer}.creatorRankBadge:is(button):focus-visible{outline:2px solid var(--profile-accent,#ff4f7a);outline-offset:3px}
+.rankCardOverlay{position:fixed;z-index:10000;inset:0;display:grid;place-items:center;padding:16px;background:#02050abb;backdrop-filter:blur(10px)}
+.rankCard{position:relative;width:min(540px,100%);max-height:min(760px,92vh);overflow:auto;padding:28px;border:1px solid #283444;border-radius:20px;background:radial-gradient(circle at 50% 0,#2c1746 0,transparent 35%),linear-gradient(150deg,#121a25,#090f17);color:#f8f9fc;text-align:center;box-shadow:0 28px 90px #000a}
+.rankCardClose{position:absolute;right:14px;top:12px;width:34px;height:34px;border:1px solid #ffffff1b;border-radius:10px;background:#ffffff0c;color:#fff;font-size:21px;cursor:pointer}.rankCard .eyebrow{color:#d8a7ff}.rankCard>.creatorRankBadge{width:62px;height:62px;margin:10px auto;border-radius:18px;background:#27173f;color:#d18bff;box-shadow:0 0 35px #a347ff55}.rankCard>.creatorRankBadge svg{width:30px;height:30px}.rankCard h2{margin:12px 0 4px;font-size:28px}.rankCardLevel{display:block;color:#ff94af;font-size:13px;letter-spacing:.12em;text-transform:uppercase}.rankCardNumbers{display:flex;justify-content:space-between;margin:24px 0 8px;color:#bbc5d2;font-size:12px}.rankCardNumbers b{color:#fff}.rankCardTrack{height:11px;overflow:hidden;border-radius:999px;background:#273241}.rankCardTrack span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ff638a,#d85dff,#955aff);box-shadow:0 0 18px #d55dff88;transition:width .55s ease}.rankCardNext{display:grid;gap:4px;margin:18px auto;color:#9fabb9}.rankCardNext>span{font-size:9px;font-weight:900;letter-spacing:.15em;text-transform:uppercase}.rankCardNext b{color:#fff}.rankCardNext small{font-size:11px}.rankTimeline{display:flex;gap:8px;margin:22px -10px 0;padding:6px 10px 12px;overflow-x:auto;scroll-snap-type:x proximity}.rankTimeline>div{display:grid;flex:0 0 62px;justify-items:center;gap:7px;opacity:.38;scroll-snap-align:center}.rankTimeline>div.unlocked{opacity:.72}.rankTimeline>div.current{opacity:1}.rankTimeline>div.current .creatorRankBadge{box-shadow:0 0 0 3px #d663ff33,0 0 18px #bc53ff66}.rankTimeline small{font-size:8px;line-height:1.2;color:#cad2dc}.rankHistoryLink{margin-top:16px;border:0;background:transparent;color:#ff91ad;font-weight:800;cursor:pointer}
+
+/* The profile follows the saved Light/Dark/System preference instead of forcing black. */
+:root[data-theme=light] .profilePage{--profile-bg:#f5f3ef;--profile-panel:#fff;--profile-panel-2:#fbfaf7;--profile-line:#ddd9d1;--profile-text:#17191f;--profile-muted:#6c7280;--profile-accent:#ef466f;background:radial-gradient(circle at 82% 5%,#f9dce5 0,transparent 27%),linear-gradient(180deg,#f8f7f4,#f1efe9 66%,#f7f5f0);color:var(--profile-text)}
+:root[data-theme=light] .profilePage .profileHero{border-color:#ddd8cf;box-shadow:0 22px 60px #44372b18}
+:root[data-theme=light] .profilePage .profileSummary{background:linear-gradient(110deg,#fff,#f9f7f3);border-color:var(--profile-line)}
+:root[data-theme=light] .profilePage .profileAvatar{border-color:#fff;background:#f0ece5;box-shadow:0 0 0 3px #ff6688,0 10px 34px #c7365c2c;color:#20242c}
+:root[data-theme=light] .profilePage .profileBio{color:#404650}
+:root[data-theme=light] .profilePage .profileRankBarBlock{border-color:#ddd6e7;background:linear-gradient(145deg,#fff,#f8f4fb)}
+:root[data-theme=light] .profilePage .profileRankBarTrack{background:#e5e0e9}
+:root[data-theme=light] .profilePage .profileStats{background:#faf8f4;border-color:var(--profile-line)}
+:root[data-theme=light] .profilePage .profileStats>div,:root[data-theme=light] .profilePage .profileStats>button{border-color:#ded9d0;background:linear-gradient(145deg,#fff,#f6f3ed);color:#151820}
+:root[data-theme=light] .profilePage .profileStats strong{color:#c73562}
+:root[data-theme=light] .profilePage .profileTabs{background:#fff;border-color:var(--profile-line)}
+:root[data-theme=light] .profilePage .profileTabs button{color:#656c78}
+:root[data-theme=light] .profilePage .profileTabs button[aria-selected=true]{color:#d52d5a}
+:root[data-theme=light] .profileDashboardCard{border-color:#ded9d1;background:linear-gradient(145deg,#fff,#f8f6f1);box-shadow:0 14px 34px #382f2610}
+:root[data-theme=light] .profileCardHeading h2,:root[data-theme=light] .profileOverviewWork .sectionHead h2,:root[data-theme=light] .profilePage .sectionHead h2{color:#181b21}
+:root[data-theme=light] .profileAboutCard>p{color:#454b55}
+:root[data-theme=light] .profileAchievementPreview small{color:#343944}
+:root[data-theme=light] .profileCollectionPreview>a{color:#191c22}
+:root[data-theme=light] .profilePage .portfolioCard,:root[data-theme=light] .profilePage .portfolioShotCard{border-color:#ddd8cf;background:#fff}
+:root[data-theme=light] .profilePage .portfolioCardTitle,:root[data-theme=light] .profilePage .portfolioCardMeta{color:#16191f}
+:root[data-theme=light] .profilePage .portfolioTag{background:#f0ede6;color:#484e58}
+:root[data-theme=light] .profileAchievementFull article,:root[data-theme=light] .profileActivityGrid article{border-color:#ddd8cf;background:#fff}
+:root[data-theme=light] .profilePage .aboutProfile{border-color:#ddd8cf;background:#fff;color:#181b21}
+:root[data-theme=light] .profilePage .aboutProfile dd,:root[data-theme=light] .profilePage .aboutBio{color:#555c68}
+:root[data-theme=light] .profilePage .shareProfileButton,:root[data-theme=light] .profilePage .profileMessageButton,:root[data-theme=light] .profilePage .profileMoreButton{border-color:#d8d3ca;background:#fff;color:#1b1e24}
+:root[data-theme=light] .profilePage .profileSkills span{border-color:#ddd7cf;background:#f2efe9;color:#343943}
+:root[data-theme=light] .profilePage .creatorProfileMetaRow .roleBadge.profile{filter:saturate(.92)}
+:root[data-theme=light] .rankCardOverlay{background:#352e28a3}
+:root[data-theme=light] .rankCard{border-color:#ddd4e5;background:radial-gradient(circle at 50% 0,#f0ddff 0,transparent 38%),linear-gradient(150deg,#fff,#f7f3fa);color:#181b21;box-shadow:0 28px 90px #3b2d4538}
+:root[data-theme=light] .rankCardClose{border-color:#d9d3df;background:#fff;color:#222}.rankCard :is(h2,.rankCardNumbers b,.rankCardNext b){color:inherit}:root[data-theme=light] .rankTimeline small{color:#555c68}
+@media(prefers-reduced-motion:reduce){.rankCardTrack span{transition:none}}
+
 

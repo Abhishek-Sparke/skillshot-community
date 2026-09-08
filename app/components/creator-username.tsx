@@ -24,6 +24,8 @@ type Props = {
   prefix?: string;
   roleVariant?: 'profile'|'compact';
   layout?: 'inline'|'profile';
+  onRankClick?: () => void;
+  rankLevel?: number;
 };
 
 export default function CreatorUsername({
@@ -42,6 +44,8 @@ export default function CreatorUsername({
   prefix = '',
   roleVariant = 'compact',
   layout = 'inline',
+  onRankClick,
+  rankLevel,
 }: Props) {
   const [showPopover, setShowPopover] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -92,7 +96,7 @@ export default function CreatorUsername({
     ? <span className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></span>
     : <Link href={profileUrl} className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></Link>;
   const rankBadge = showRankBadge
-    ? <CreatorRankBadge rank={rankKey} showLabel={layout === 'profile'} size={layout === 'profile' ? 'md' : 'sm'} />
+    ? <CreatorRankBadge rank={rankKey} showLabel={layout === 'profile'} size={layout === 'profile' ? 'md' : 'sm'} onClick={onRankClick} level={rankLevel} />
     : null;
   const roleBadge = showRoleBadge && resolvedRole && resolvedRole !== 'USER'
     ? <RoleBadge role={resolvedRole} variant={layout === 'profile' ? 'profile' : roleVariant} />

@@ -5,9 +5,11 @@ type Props = {
   showLabel?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  onClick?: () => void;
+  level?: number;
 };
 
-export default function CreatorRankBadge({ rank, showLabel = false, size = 'md', className = '' }: Props) {
+export default function CreatorRankBadge({ rank, showLabel = false, size = 'md', className = '', onClick, level }: Props) {
   const rankKey = (String(rank || '').toUpperCase() in CREATOR_RANKS
     ? String(rank).toUpperCase()
     : 'NEWCOMER') as CreatorRankId;
@@ -67,15 +69,22 @@ export default function CreatorRankBadge({ rank, showLabel = false, size = 'md',
     }
   };
 
-  return (
-    <span
+  const content = <>
+    <span className="rankIconContainer">{renderIcon()}</span>
+    {showLabel && <span className="rankLabelText">{info.label}</span>}
+  </>;
+  const accessibleLabel = `${info.label}${level ? `, Level ${level}` : ''} — Creator Rank`;
+
+  return onClick ? (
+    <button
+      type="button"
       className={`creatorRankBadge rankBadge-${rankKey.toLowerCase()} size-${size} ${className}`}
-      data-tooltip={`${info.label} — Creator Rank`}
-      title={`${info.label} — Creator Rank`}
-      aria-label={`${info.label} Creator Rank`}
+      data-tooltip={accessibleLabel}
+      title={accessibleLabel}
+      aria-label={`Open ${accessibleLabel}`}
+      onClick={onClick}
     >
-      <span className="rankIconContainer">{renderIcon()}</span>
-      {showLabel && <span className="rankLabelText">{info.label}</span>}
-    </span>
-  );
+      {content}
+    </button>
+  ) : <span className={`creatorRankBadge rankBadge-${rankKey.toLowerCase()} size-${size} ${className}`} data-tooltip={accessibleLabel} title={accessibleLabel} aria-label={accessibleLabel}>{content}</span>;
 }

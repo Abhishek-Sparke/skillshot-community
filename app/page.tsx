@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
 import PublicNavbar from './components/public-navbar';
-import SideIconRail from './components/side-icon-rail';
 import CreatorUsername from './components/creator-username';
 import { getChatGPTUser } from './chatgpt-auth';
 import { signInPath } from '../lib/auth-path';
@@ -166,10 +165,6 @@ export default async function Home() {
   return (
     <main style={{ position: 'relative', overflowX: 'clip' }}>
       <PublicNavbar returnTo="/" />
-      {/* Infinite Side Visual Animation Rails */}
-      <SideIconRail side="left" />
-      <SideIconRail side="right" />
-
       {/* 1. HERO (Tighter vertical spacing) */}
       <section className="hero shell">
         <div className="heroEditorial">

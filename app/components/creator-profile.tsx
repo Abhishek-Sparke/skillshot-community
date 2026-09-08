@@ -5,9 +5,10 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import CommunityFeed from './community-feed';
 import CreatorUsername from './creator-username';
+import CreatorRankCard from './creator-rank-card';
 import CollectionsManager from './collections-manager';
 import type { UserRole } from '../../lib/roles';
-import type { RankProgress, CreatorRankId } from '../../lib/creator-rank';
+import type { RankProgress, LevelProgress, CreatorRankId } from '../../lib/creator-rank';
 import ReportButton from './report-button';
 import { requireClientAuth, signInPath } from '../../lib/auth-path';
 
@@ -16,6 +17,7 @@ type Profile = {
   displayName: string; username: string; bio: string; website: string; location: string; skills: string[];
   socialLinks: Record<string, string>; avatarUrl: string; bannerUrl?: string; bannerType?: string;
   creatorRank?: CreatorRankId | string; rankProgress?: RankProgress;
+  levelProgress?: LevelProgress;
   role: UserRole; joinedAt: number; postCount: number;
   likesReceived: number; followerCount: number; followingCount: number; isFollowing: boolean; isSelf: boolean;
   signedIn: boolean; featuredPosts: FeaturedPost[]; reputation: number; achievements: { key: string; label: string; description: string }[];
@@ -61,6 +63,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
   const [modalActionBusy, setModalActionBusy] = useState<string | null>(null);
   const [xpHistory,setXpHistory]=useState<XpHistoryItem[]|null>(null);
   const [xpHistoryOpen,setXpHistoryOpen]=useState(false);
+  const [rankCardOpen,setRankCardOpen]=useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -275,7 +278,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         </div>
         <div className="profileMainInfo">
           <div className="profileNameLine">
-            <CreatorUsername asSpan layout="profile" name={profile.displayName} username={profile.username} creatorRank={profile.creatorRank} staffRole={profile.role} roleVariant="profile"/>
+            <CreatorUsername asSpan layout="profile" name={profile.displayName} username={profile.username} creatorRank={profile.creatorRank} staffRole={profile.role} roleVariant="profile" onRankClick={() => setRankCardOpen(true)} rankLevel={profile.levelProgress?.level}/>
           </div>
           {profile.bio && <p className="profileBio">{profile.bio}</p>}
 
@@ -285,18 +288,19 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
                 <span className="profileRankTitle">
                   {profile.rankProgress.rank.label}
                 </span>
+                {profile.levelProgress && <span className="profileLevelLabel">Level {profile.levelProgress.level}</span>}
                 {profile.rankProgress.nextRankTitle && (
                   <span className="profileRankNext">Next: {profile.rankProgress.nextRankTitle}</span>
                 )}
-                <span className="profileRankPct">{profile.rankProgress.progressPercent}%</span>
+                <span className="profileRankPct">{profile.levelProgress?.progressPercent ?? profile.rankProgress.progressPercent}%</span>
               </div>
               <div className="profileRankBarTrack">
                 <div
                   className="profileRankBarFill"
-                  style={{ width: `${profile.rankProgress.progressPercent}%` }}
+                  style={{ width: `${profile.levelProgress?.progressPercent ?? profile.rankProgress.progressPercent}%` }}
                 />
               </div>
-              <div className="profileXpMeta"><span>{profile.rankProgress.xp.toLocaleString()} / {profile.rankProgress.nextTierXp?.toLocaleString()||'50,000+'} XP</span>{profile.rankProgress.nextTierXp&&<span>{Math.max(0,profile.rankProgress.nextTierXp-profile.rankProgress.xp).toLocaleString()} XP to {profile.rankProgress.nextRankTitle}</span>} {profile.isSelf&&<button type="button" onClick={openXpHistory}>XP history →</button>}</div>
+              <div className="profileXpMeta"><span>{profile.rankProgress.xp.toLocaleString()} / {(profile.levelProgress?.nextLevelXp ?? profile.rankProgress.nextTierXp)?.toLocaleString()||'50,000+'} XP</span>{profile.rankProgress.nextTierXp&&<span>{Math.max(0,profile.rankProgress.nextTierXp-profile.rankProgress.xp).toLocaleString()} XP to {profile.rankProgress.nextRankTitle}</span>} <button type="button" onClick={() => setRankCardOpen(true)}>Rank details →</button></div>
             </div>
           )}
 
@@ -491,6 +495,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
     )}
 
     {xpHistoryOpen&&<div className="socialModalOverlay" role="dialog" aria-modal="true" aria-label="XP history" onClick={()=>setXpHistoryOpen(false)}><div className="socialModalCard xpHistoryCard" onClick={event=>event.stopPropagation()}><div className="socialModalHeader"><div><p className="eyebrow">CREATOR PROGRESS</p><h2>XP history</h2></div><button type="button" className="socialModalClose" onClick={()=>setXpHistoryOpen(false)} aria-label="Close">×</button></div><div className="xpHistoryList">{xpHistory===null?<p>Loading…</p>:xpHistory.length?xpHistory.map(item=><article key={item.id}><strong className={item.amount>0?'xpPositive':'xpNegative'}>{item.amount>0?'+':''}{item.amount} XP</strong><span>{item.reason}</span><small>{new Date(item.createdAt).toLocaleString()}</small></article>):<p>No XP activity yet. Create and contribute to start earning XP.</p>}</div></div></div>}
+    {rankCardOpen && profile.rankProgress && profile.levelProgress && <CreatorRankCard rank={profile.rankProgress.rank.id} rankProgress={profile.rankProgress} levelProgress={profile.levelProgress} isSelf={profile.isSelf} onClose={() => setRankCardOpen(false)} onHistory={openXpHistory}/>}
 
     {tab === 'overview' && <section className="profileWork shell profileTabPanel profileOverview" role="tabpanel">
       <div className="profileOverviewGrid">

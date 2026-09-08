@@ -3,7 +3,7 @@ import { getReadyDb } from '../../../../lib/db';
 import { normalizeRole } from '../../../../lib/roles';
 import { safeStoredSocialLinks } from '../../../../lib/social-links';
 import { canUserMessage, isBlockBetween } from '../../../../lib/chat';
-import { calculateRankProgress } from '../../../../lib/creator-rank';
+import { calculateLevelProgress, calculateRankProgress } from '../../../../lib/creator-rank';
 import { calculateAchievements } from '../../../../lib/achievements';
 
 export async function GET(_: Request, { params }: { params: Promise<{ username: string }> }) {
@@ -47,6 +47,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
 
   const xp = Math.max(0, Number(row.creator_xp || 0));
   const rankProgress = calculateRankProgress(xp);
+  const levelProgress = calculateLevelProgress(xp);
 
   const reputation = Math.min(9999, likesReceived * 3 + followerCount * 5 + postCount * 10 + commentCount * 2);
   const achievements = calculateAchievements({
@@ -84,6 +85,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     creatorRank: rankProgress.rank.id,
     creatorRankInfo: rankProgress.rank,
     rankProgress,
+    levelProgress,
     role: normalizeRole(row.role),
     joinedAt: new Date(row.created_at as string).getTime(),
     postCount,

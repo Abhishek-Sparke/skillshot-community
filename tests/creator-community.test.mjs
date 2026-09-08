@@ -4,6 +4,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import {
   rankFromXp,
+  calculateLevelProgress,
   calculateRankProgress,
   calculateXpFromActivity,
 } from '../lib/creator-rank.ts';
@@ -41,6 +42,15 @@ test('creator ranks match specifications across all 7 tiers', () => {
   assert.equal(newcomerProgress.rank.id, 'NEWCOMER');
   assert.equal(newcomerProgress.progressPercent, 10);
   assert.equal(newcomerProgress.nextRankTitle, 'Creator');
+});
+
+test('creator level progress is derived from server XP and resets at each level', () => {
+  assert.deepEqual(calculateLevelProgress(0), { level: 1, xp: 0, currentLevelXp: 0, nextLevelXp: 100, xpIntoLevel: 0, xpForLevel: 100, progressPercent: 0 });
+  assert.equal(calculateLevelProgress(99).level, 1);
+  assert.equal(calculateLevelProgress(100).level, 2);
+  assert.equal(calculateLevelProgress(100).progressPercent, 0);
+  assert.equal(calculateLevelProgress(399).progressPercent, 99);
+  assert.equal(calculateLevelProgress(-500).xp, 0);
 });
 
 test('public identity surfaces delegate rank and staff indicators to one shared username component',async()=>{

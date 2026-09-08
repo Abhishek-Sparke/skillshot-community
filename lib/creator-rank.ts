@@ -112,6 +112,35 @@ export type RankProgress = {
   nextRankTitle: string | null;
 };
 
+export type LevelProgress = {
+  level: number;
+  xp: number;
+  currentLevelXp: number;
+  nextLevelXp: number;
+  xpIntoLevel: number;
+  xpForLevel: number;
+  progressPercent: number;
+};
+
+/** Server-side level curve. Each level takes progressively more contribution. */
+export function calculateLevelProgress(xp: number): LevelProgress {
+  const safeXp = Math.max(0, Math.floor(Number(xp) || 0));
+  const level = Math.max(1, Math.floor(Math.sqrt(safeXp / 100)) + 1);
+  const currentLevelXp = 100 * (level - 1) ** 2;
+  const nextLevelXp = 100 * level ** 2;
+  const xpForLevel = Math.max(1, nextLevelXp - currentLevelXp);
+  const xpIntoLevel = Math.max(0, safeXp - currentLevelXp);
+  return {
+    level,
+    xp: safeXp,
+    currentLevelXp,
+    nextLevelXp,
+    xpIntoLevel,
+    xpForLevel,
+    progressPercent: Math.min(99, Math.floor((xpIntoLevel / xpForLevel) * 100)),
+  };
+}
+
 export function calculateRankProgress(xp: number): RankProgress {
   const rank = rankFromXp(xp);
   const safeXp = Math.max(0, Math.floor(xp || 0));
