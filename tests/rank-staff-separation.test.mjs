@@ -104,7 +104,8 @@ test('6. Homepage top spacing provides comfortable breathing room', async () => 
   const css = await read('app/globals.css');
 
   // Desktop: 48-64px padding-top
-  assert.match(css, /\.hero\s*\{[^}]*padding:\s*clamp\(48px,\s*5\.5vw,\s*64px\)/);
+  assert.match(css, /\.hero\s*\{[^}]*padding-top:\s*clamp\(48px,\s*5\.5vw,\s*64px\)/);
+  assert.doesNotMatch(css, /\.hero\s*\{[^}]*padding:\s*clamp\(48px,\s*5\.5vw,\s*64px\)\s+0/);
 
   // Mobile: 24-32px padding-top
   assert.match(css, /@media\s*\(max-width:\s*768px\)\s*\{\s*\n?\s*\.hero\s*\{\s*\n?\s*padding-top:\s*clamp\(24px,\s*4vw,\s*32px\);/);

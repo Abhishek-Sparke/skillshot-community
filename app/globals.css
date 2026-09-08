@@ -3694,7 +3694,8 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 
 /* 1. Breathing Hero Top Spacing */
 .hero {
-  padding: clamp(48px, 5.5vw, 64px) 0 clamp(28px, 3.5vw, 40px);
+  padding-top: clamp(48px, 5.5vw, 64px);
+  padding-bottom: clamp(28px, 3.5vw, 40px);
 }
 @media (max-width: 768px) {
   .hero {
