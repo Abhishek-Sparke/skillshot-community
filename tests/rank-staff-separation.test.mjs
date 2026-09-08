@@ -69,6 +69,10 @@ test('3. Badges use compact icon geometry and floating tooltips without layout s
   assert.match(css, /position:\s*absolute;/);
   assert.match(css, /bottom:\s*calc\(100% \+ 8px\);/);
 
+  // Username tooltips open away from the avatar/name instead of covering them.
+  assert.match(css, /\.creatorUsernameWrapper \.iconBadgeTooltip\{[^}]*left:calc\(100% \+ 7px\);[^}]*top:50%;[^}]*bottom:auto;/);
+  assert.match(css, /\.creatorUsernameWrapper \.iconBadge:hover \.iconBadgeTooltip,[\s\S]*?translate:0 -50%;/);
+
   // Multi-line structure
   assert.match(css, /\.roleTooltipTitle/);
   assert.match(css, /\.roleTooltipSubtitle/);
