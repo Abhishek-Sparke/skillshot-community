@@ -203,6 +203,23 @@ test('profile header keeps identity and XP together with stats directly below', 
   assert.match(css, /@media\(max-width:700px\)[\s\S]*\.profileHeaderAside\{display:grid;grid-template-columns:1fr/);
 });
 
+test('profile work uses a reusable card with readable metadata and SVG actions', async () => {
+  const manager = await read('app/components/collections-manager.tsx');
+  const card = await read('app/components/portfolio-skillshot-card.tsx');
+  const css = await read('app/globals.css');
+
+  assert.match(manager, /<PortfolioSkillshotCard/);
+  assert.doesNotMatch(manager, /portfolioHoverActions/);
+  assert.match(card, /portfolioCreatorRow/);
+  assert.match(card, /portfolioCardTitle[\s\S]*portfolioTag[\s\S]*portfolioCardActions/);
+  for (const icon of ['heart', 'comment', 'bookmark', 'share', 'arrow-up-right']) {
+    assert.match(card, new RegExp(`name="${icon}"`));
+  }
+  assert.match(css, /\.profilePage \.portfolioCardTitle\{[\s\S]*font-size:16px/);
+  assert.match(css, /@media\(max-width:700px\)[\s\S]*\.profilePage \.portfolioCardTitle\{font-size:15px/);
+  assert.match(css, /-webkit-line-clamp:2/);
+});
+
 test('favicon and touch icon assets exist and are properly configured in app metadata', async () => {
   // Verify files exist in public/ and app/
   await fs.access(path.join(root, 'public/favicon.ico'));

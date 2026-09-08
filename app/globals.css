@@ -4008,6 +4008,94 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .collectionsManager .createCollectionBtn,.collectionsManager .primary{display:inline-flex;align-items:center;justify-content:center;gap:7px}.privateBadge{display:inline-flex}.chipDeleteBtn{display:grid;place-items:center}
 .portfolioHoverActions :is(button,a){display:grid;place-items:center}.portfolioCardTitle{font-weight:750}.portfolioCounters span{gap:4px}.portfolioTag{border-radius:999px;padding:4px 7px;font-size:10px}
 
+/* Reusable portfolio card: image first, then creator, title, category and actions. */
+.profileOverviewWork{margin-top:18px;padding-top:0}
+.profileOverviewWork .sectionHead{margin-bottom:14px}
+.profileOverviewWork .sectionHead h2{font-size:clamp(27px,2.4vw,36px);line-height:1.08;letter-spacing:-.025em}
+.profileOverviewWork .collectionsManager{margin-top:14px}
+.portfolioCard{
+  display:grid;
+  align-content:start;
+  min-width:0;
+  overflow:hidden;
+  border:1px solid var(--profile-line,#27313d);
+  border-radius:14px;
+  background:#101721;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.portfolioCard:hover{transform:translateY(-2px);border-color:#394658;box-shadow:0 12px 28px #00000024}
+.portfolioThumbWrap{position:relative;width:100%;min-height:0;overflow:hidden;background:#0b1118}
+.portfolioThumbWrap .shotMediaLink{position:relative;display:block;width:100%;height:100%;padding:0;border:0;background:#0b1118;cursor:zoom-in}
+.portfolioThumbWrap .shotMediaLink img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .25s ease}
+.portfolioCard:hover .portfolioThumbWrap .shotMediaLink img{transform:scale(1.018)}
+.portfolioCardMeta{display:grid;gap:8px;padding:13px 14px 14px;min-width:0}
+.portfolioCreatorRow{display:flex;align-items:center;gap:7px;min-width:0;color:#dfe6ef;font-size:12px}
+.portfolioCreatorAvatar{display:grid;flex:0 0 25px;width:25px;height:25px;place-items:center;overflow:hidden;border:1px solid #3a4655;border-radius:50%;background:#1b2633;color:#e7edf5;font-size:9px;font-weight:850}
+.portfolioCreatorAvatar img{display:block;width:100%;height:100%;object-fit:cover}
+.portfolioCreatorRow .creatorUsernameWrapper{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:calc(100% - 32px);font-size:12px}
+.portfolioCreatorRow .creatorUsernameLink{min-width:0;max-width:100%}
+.portfolioCreatorRow .creatorNameText{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.portfolioCreatorRow .creatorRankBadge,.portfolioCreatorRow .roleBadge.compact{flex:none}
+.profilePage .portfolioCardTitle{
+  display:-webkit-box;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  color:#f6f8fb;
+  font-family:var(--font-sans,Arial,sans-serif);
+  font-size:16px;
+  font-weight:720;
+  line-height:1.32;
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+.profilePage .portfolioCardTitle:hover{color:#ff91ad}
+.profilePage .portfolioTag{display:inline-flex;width:max-content;max-width:100%;padding:4px 8px;border:1px solid #2a3644;border-radius:999px;background:#192331;color:#bdc8d6;font-size:12px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.portfolioCardActions{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding-top:2px;color:#aab5c4}
+.portfolioCounters,.portfolioUtilityActions{display:flex;align-items:center;gap:10px;min-width:0}
+.portfolioCounters :is(span,a){display:inline-flex;align-items:center;gap:4px;color:inherit;font-size:12px;line-height:1;text-decoration:none;white-space:nowrap}
+.portfolioCounters svg{width:14px;height:14px}
+.portfolioUtilityActions{gap:3px;margin-left:auto}
+.portfolioUtilityActions :is(button,a){display:grid;width:28px;height:28px;place-items:center;padding:0;border:0;border-radius:8px;background:transparent;color:#aab5c4;cursor:pointer}
+.portfolioUtilityActions :is(button,a):hover{background:#ffffff0d;color:#fff}
+.portfolioUtilityActions button.saved{color:#ff789a;background:#ff638a14}
+.portfolioUtilityActions svg{width:15px;height:15px}
+:root[data-theme=light] .portfolioCard{border-color:#ded9d0;background:#fff;box-shadow:0 8px 22px #3b30260d}
+:root[data-theme=light] .portfolioCard:hover{border-color:#cbc3b7;box-shadow:0 12px 28px #3b302616}
+:root[data-theme=light] .portfolioThumbWrap,:root[data-theme=light] .portfolioThumbWrap .shotMediaLink{background:#eeeae3}
+:root[data-theme=light] .portfolioCreatorRow{color:#303641}
+:root[data-theme=light] .portfolioCreatorAvatar{border-color:#d8d2c8;background:#f0ede7;color:#333943}
+:root[data-theme=light] .profilePage .portfolioCardTitle{color:#16191f}
+:root[data-theme=light] .profilePage .portfolioCardTitle:hover{color:#c8325d}
+:root[data-theme=light] .profilePage .portfolioTag{border-color:#e0dbd3;background:#f3f0ea;color:#5e6570}
+:root[data-theme=light] .portfolioCardActions{color:#69717d}
+:root[data-theme=light] .portfolioUtilityActions :is(button,a):hover{background:#2218250a;color:#171b21}
+
+@media(max-width:700px){
+  .profileOverviewWork{margin-top:15px}
+  .profileOverviewWork .sectionHead{display:flex;gap:12px;margin-bottom:12px}
+  .profileOverviewWork .sectionHead h2{font-size:25px}
+  .profileOverviewWork .collectionsManager{margin-top:10px}
+  .portfolioCardMeta{gap:7px;padding:10px 11px 11px}
+  .profilePage .portfolioCardTitle{font-size:15px;line-height:1.3}
+  .profilePage .portfolioTag{font-size:11px;padding:3px 7px}
+  .portfolioCreatorRow,.portfolioCreatorRow .creatorUsernameWrapper{font-size:11px}
+  .portfolioCreatorAvatar{flex-basis:23px;width:23px;height:23px}
+  .portfolioCounters{gap:8px}.portfolioCounters :is(span,a){font-size:11px}
+  .portfolioUtilityActions :is(button,a){width:26px;height:26px}
+}
+@media(max-width:430px){
+  .profileOverviewWork .sectionHead{align-items:stretch}
+  .profileOverviewActions{display:grid;grid-template-columns:minmax(0,1fr) auto;width:100%}
+  .profileOverviewActions>*{min-width:0}
+  .portfolioCard{border-radius:11px}
+  .portfolioCardMeta{padding:10px;gap:6px}
+  .portfolioCreatorRow .roleBadge.compact{display:none}
+  .portfolioUtilityActions{gap:1px}
+  .portfolioUtilityActions :is(button,a){width:24px;height:24px}
+  .portfolioUtilityActions :is(button,a):nth-child(2){display:none}
+}
+
 @media(min-width:1050px){
   .profilePage .profileSummary{grid-template-columns:190px minmax(320px,1fr) minmax(360px,440px);gap:26px;padding:24px 28px}
   .profilePage .profileAvatar{grid-column:1;grid-row:1;width:174px;height:174px}

@@ -3,9 +3,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import ShotThumbnail, { shotFrameRatio } from './shot-thumbnail';
 import ImageViewer from './image-viewer';
 import UiIcon from './ui-icon';
+import PortfolioSkillshotCard, { type PortfolioCardPost } from './portfolio-skillshot-card';
+import { requireClientAuth, signInPath } from '../../lib/auth-path';
+import type { UserRole } from '../../lib/roles';
+import type { CreatorRankId } from '../../lib/creator-rank';
 
 export type Collection = {
   id: string;
@@ -18,7 +21,7 @@ export type Collection = {
   postCount: number;
 };
 
-export type PortfolioPost = {
+export type PortfolioPost = PortfolioCardPost & {
   id: string;
   title: string;
   description: string;
@@ -32,6 +35,12 @@ export type PortfolioPost = {
   category?: string;
   skills?: string[];
   createdAt: number;
+  author?: string;
+  username?: string;
+  avatarUrl?: string;
+  creatorRank?: CreatorRankId;
+  authorRole?: UserRole;
+  viewerSaved?: boolean;
 };
 
 type Props = {
@@ -53,6 +62,7 @@ export default function CollectionsManager({ username, isSelf }: Props) {
   const [newPrivate, setNewPrivate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [previewPost, setPreviewPost] = useState<PortfolioPost | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
 
   // Load collections
   const loadCollections = useCallback(async () => {
@@ -84,6 +94,7 @@ export default function CollectionsManager({ username, isSelf }: Props) {
         .then(data => {
           if (active) {
             setAllPosts(data.posts || []);
+            setSignedIn(Boolean(data.signedIn));
             setPostsLoading(false);
           }
         })
@@ -146,6 +157,20 @@ export default function CollectionsManager({ username, isSelf }: Props) {
   };
 
   const currentPosts = activeCollectionId ? collectionPosts : allPosts;
+
+  async function toggleSave(post: PortfolioPost) {
+    if (!requireClientAuth(signedIn, `/shots/${post.id}`, 'Sign in to save this Skillshot')) return;
+    const response = await fetch(`/api/posts/${post.id}/save`, { method: 'POST' });
+    if (response.status === 401) {
+      window.location.assign(signInPath(`/shots/${post.id}`, 'Sign in to save this Skillshot'));
+      return;
+    }
+    if (!response.ok) return;
+    const data = await response.json();
+    const update = (items: PortfolioPost[]) => items.map(item => item.id === post.id ? { ...item, viewerSaved: Boolean(data.saved) } : item);
+    setAllPosts(update);
+    setCollectionPosts(update);
+  }
 
   return (
     <div className="collectionsManager">
@@ -254,51 +279,18 @@ export default function CollectionsManager({ username, isSelf }: Props) {
           <span><UiIcon name="eye" size={24}/></span>
           <h3>{activeCollectionId ? 'This collection is empty.' : 'No published Skillshots yet.'}</h3>
           <p>{isSelf ? 'Share something you’re proud of with the community.' : 'This creator has not shared any work here yet.'}</p>
-          {isSelf && <Link className="primary" href="/upload"><UiIcon name="plus"/> Create a Skillshot</Link>}
+          {isSelf && <Link className="primary" href="/upload"><UiIcon name="plus"/> Create your first Skillshot</Link>}
         </div>
       ) : (
         <div className="portfolioGalleryGrid">
           {currentPosts.map(post => (
-            <article key={post.id} className="portfolioCard">
-              <div
-                className="portfolioThumbWrap"
-                style={{ aspectRatio: String(shotFrameRatio(post.imageWidth, post.imageHeight)) }}
-              >
-                <ShotThumbnail
-                  src={post.imageUrl}
-                  title={post.title}
-                  author={username}
-                  width={post.imageWidth}
-                  height={post.imageHeight}
-                  onPreview={() => setPreviewPost(post)}
-                />
-                {post.isGif && <span className="gifBadge" aria-label="Animated GIF">GIF</span>}
-                <div className="portfolioHoverActions">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewPost(post)}
-                    aria-label={`Preview ${post.title}`}
-                  >
-                    <UiIcon name="eye"/>
-                  </button>
-                  <Link href={`/shots/${post.id}`} aria-label="View Skillshot details">
-                    <UiIcon name="arrow-up-right"/>
-                  </Link>
-                </div>
-              </div>
-              <div className="portfolioCardMeta">
-                <Link href={`/shots/${post.id}`} className="portfolioCardTitle">
-                  {post.title}
-                </Link>
-                <div className="portfolioCardFooter">
-                  <span className="portfolioTag">{post.category || 'Visual'}</span>
-                  <div className="portfolioCounters">
-                    <span><UiIcon name="heart" size={14}/> {post.reactionCount}</span>
-                    <span><UiIcon name="comment" size={14}/> {post.commentCount}</span>
-                  </div>
-                </div>
-              </div>
-            </article>
+            <PortfolioSkillshotCard
+              key={post.id}
+              post={post}
+              fallbackUsername={username}
+              onPreview={() => setPreviewPost(post)}
+              onToggleSave={() => toggleSave(post)}
+            />
           ))}
         </div>
       )}
