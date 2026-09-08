@@ -143,6 +143,13 @@ test('community page features pinned carousel, discussions grid, and staff pin c
   assert.match(commView, /discussionModalOverlay/);
 });
 
+test('rank details does not expose XP history UI', async () => {
+  const rankCard = await read('app/components/creator-rank-card.tsx');
+  const css = await read('app/globals.css');
+  assert.doesNotMatch(rankCard, /XP history|xp\/history|rankHistoryLink/i);
+  assert.doesNotMatch(css, /rankHistoryLink/);
+});
+
 test('favicon and touch icon assets exist and are properly configured in app metadata', async () => {
   // Verify files exist in public/ and app/
   await fs.access(path.join(root, 'public/favicon.ico'));
