@@ -31,9 +31,16 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     WHERE fp.user_id=$1 AND p.status='VISIBLE' ORDER BY fp.position ASC LIMIT 3
   `, [row.id]);
   const collectionRows = await (await getReadyDb()).query(`
-    SELECT c.id, c.name, c.description, c.cover_url, c.is_private,
+    SELECT c.id, c.name, c.description, c.is_private,
       (SELECT COUNT(*) FROM collection_posts cp JOIN posts p ON p.id=cp.post_id
-       WHERE cp.collection_id=c.id AND p.status='VISIBLE') AS post_count
+       WHERE cp.collection_id=c.id AND p.status='VISIBLE') AS post_count,
+      COALESCE(
+        c.cover_url,
+        (SELECT CASE WHEN lower(p.image_type) = 'image/gif' THEN '/api/images/' || p.id ELSE '/api/images/' || p.id || '?variant=thumbnail' END
+         FROM collection_posts cp JOIN posts p ON p.id=cp.post_id
+         WHERE cp.collection_id=c.id AND p.status='VISIBLE'
+         ORDER BY cp.position ASC, cp.created_at DESC LIMIT 1)
+      ) AS cover_url
     FROM collections c
     WHERE c.user_id=$1 ${viewer?.userId === row.id ? '' : 'AND c.is_private=false'}
     ORDER BY c.is_featured DESC, c.position ASC, c.created_at DESC

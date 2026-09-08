@@ -76,10 +76,27 @@ test('all creator ranks use a static shared production effect class', async () =
   const username = await read('app/components/creator-username.tsx');
   const badge = await read('app/components/creator-rank-badge.tsx');
   const css = await read('app/globals.css');
-  assert.match(username, /nameEffectClass = rankInfo\.animationClass/);
+  const { getStaffEffectClass } = await import('../lib/roles.ts');
+
+  // Creator rank NEVER activates staff visual effect; only staff role does
+  assert.match(username, /getStaffEffectClass\(effectiveStaffRole\)/);
+  assert.doesNotMatch(username, /nameEffectClass = rankInfo\.animationClass/);
   assert.match(badge, /info\.badgeClass/);
-  assert.doesNotMatch(username, /managementClass \|\| rankInfo\.animationClass/);
+
+  // Acceptance combinations test:
+  assert.equal(getStaffEffectClass('USER'), '');
+  assert.equal(getStaffEffectClass(undefined), '');
+  assert.equal(getStaffEffectClass(null), '');
+  assert.equal(getStaffEffectClass('ADMIN'), 'staff-effect-admin');
+  assert.equal(getStaffEffectClass('MODERATOR'), 'staff-effect-moderator');
+  assert.equal(getStaffEffectClass('HEAD_MODERATOR'), 'staff-effect-head_moderator');
+  assert.equal(getStaffEffectClass('TRUSTED_CONTRIBUTOR'), 'staff-effect-trusted_contributor');
+  assert.equal(getStaffEffectClass('OWNER'), 'staff-effect-owner');
+
   for (const rank of Object.values(CREATOR_RANKS)) assert.match(css, new RegExp(`\\.${rank.animationClass}\\b`));
+  assert.match(css, /\.staff-effect-admin/);
+  assert.match(css, /\.staff-effect-owner/);
+  assert.match(css, /\.staff-effect-moderator/);
   assert.match(css, /@keyframes creatorRankTextFlow/);
   assert.match(css, /@keyframes creatorRankLegend/);
   assert.match(css, /prefers-reduced-motion:reduce/);
@@ -218,6 +235,28 @@ test('profile work uses a reusable card with readable metadata and SVG actions',
   assert.match(css, /\.profilePage \.portfolioCardTitle\{[\s\S]*font-size:16px/);
   assert.match(css, /@media\(max-width:700px\)[\s\S]*\.profilePage \.portfolioCardTitle\{font-size:15px/);
   assert.match(css, /-webkit-line-clamp:2/);
+});
+
+test('profile collections use editable folders and select uploaded Skillshots server-side', async () => {
+  const profile = await read('app/components/creator-profile.tsx');
+  const manager = await read('app/components/collections-manager.tsx');
+  const collectionRoute = await read('app/api/collections/route.ts');
+  const collectionDetailRoute = await read('app/api/collections/[id]/route.ts');
+  const schema = await read('lib/collection-schema.ts');
+  const css = await read('app/globals.css');
+
+  assert.doesNotMatch(profile, /tab === ['"]activity['"]/);
+  assert.doesNotMatch(profile, /['"]Activity['"]/);
+  assert.match(manager, /className="newCollectionBar"/);
+  assert.match(manager, /className="folderGrid"/);
+  assert.match(manager, /Edit collection/);
+  assert.match(manager, /Select Skillshots to include/);
+  assert.match(manager, /postIds:\s*selectedPostIds/);
+  assert.match(collectionRoute, /syncCollectionPosts\(sql, String\(row\.id\), user\.id, body\.postIds\)/);
+  assert.match(collectionDetailRoute, /hasPostIds[\s\S]*syncCollectionPosts\(sql, id, user\.id, body\.postIds\)/);
+  assert.match(schema, /WHERE user_id = \$1 AND status = 'VISIBLE'/);
+  assert.match(css, /\.folderGrid\s*\{[\s\S]*grid-template-columns:/);
+  assert.match(css, /@media \(max-width: 700px\)[\s\S]*\.folderGrid \{ grid-template-columns: repeat\(2/);
 });
 
 test('creator rank and staff role share compact circular icon badge geometry', async () => {

@@ -28,7 +28,7 @@ type Profile = {
   collections: ProfileCollection[];
   canMessage?: boolean; canMessageReason?: string; isBlocked?: boolean; isBlockedByThem?: boolean;
 };
-type Tab = 'overview' | 'skillshots' | 'collections' | 'achievements' | 'activity' | 'saved' | 'liked' | 'about';
+type Tab = 'overview' | 'skillshots' | 'collections' | 'achievements' | 'saved' | 'liked' | 'about';
 type ModalTab = 'followers' | 'following';
 type SocialUser = {
   id: string;
@@ -71,7 +71,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlTab = params.get('tab');
-      if (urlTab === 'overview' || urlTab === 'skillshots' || urlTab === 'collections' || urlTab === 'achievements' || urlTab === 'activity' || urlTab === 'saved' || urlTab === 'liked' || urlTab === 'about') {
+      if (urlTab === 'overview' || urlTab === 'skillshots' || urlTab === 'collections' || urlTab === 'achievements' || urlTab === 'saved' || urlTab === 'liked' || urlTab === 'about') {
         setTab(urlTab);
       }
     }
@@ -245,8 +245,8 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
   if (!profile) return <main className="formPage"><section className="detail"><h1>Creator not found</h1><p>{error}</p><Link className="backHome" href="/community">← Back to community</Link></section></main>;
 
   const joined = new Date(profile.joinedAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-  const tabs: Tab[] = ['overview', 'skillshots', 'collections', 'achievements', 'activity', 'about'];
-  const tabLabels: Record<Tab, string> = { overview: 'Overview', skillshots: 'Skillshots', collections: 'Collections', achievements: 'Achievements', activity: 'Activity', saved: 'Saved', liked: 'Liked', about: 'About' };
+  const tabs: Tab[] = ['overview', 'skillshots', 'collections', 'achievements', 'about'];
+  const tabLabels: Record<Tab, string> = { overview: 'Overview', skillshots: 'Skillshots', collections: 'Collections', achievements: 'Achievements', saved: 'Saved', liked: 'Liked', about: 'About' };
 
   return <main className="profilePage">
     {saved && <div className="saveToast" role="status">✓ Profile updated</div>}
@@ -261,7 +261,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         ) : null}
         <div className="profileCoverOverlay" />
         <span>SHOW YOUR SKILLS. IN ONE SHOT.</span>
-        {profile.isSelf && <Link className="profileCoverEdit" href="/profile/edit"><UiIcon name="edit"/> Edit Profile</Link>}
+        {profile.isSelf && <Link className="profileCoverEdit" href="/profile/edit?tab=appearance"><UiIcon name="edit"/> Edit Profile</Link>}
       </div>
       <div className="profileSummary">
         <div className="profileIdentityArea">
@@ -275,6 +275,11 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
               />
             ) : (
               initials(profile.displayName)
+            )}
+            {profile.isSelf && (
+              <Link className="profileAvatarEditBtn" href="/profile/edit?tab=appearance" title="Change profile picture" aria-label="Change profile picture">
+                <UiIcon name="edit"/>
+              </Link>
             )}
           </div>
           <div className="profileMainInfo">
@@ -497,7 +502,15 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         <article className="profileDashboardCard profileCollectionsCard">
           <div className="profileCardHeading"><h2>Collections</h2><button type="button" onClick={() => setTab('collections')}>View all →</button></div>
           <div className="profileCollectionPreview">
-            {profile.collections.map(collection => <button type="button" onClick={() => setTab('collections')} key={collection.id}>{collection.coverUrl ? <img src={collection.coverUrl} alt="" loading="lazy"/> : <span className="profileCollectionPlaceholder"><UiIcon name="eye"/></span>}<span><b>{collection.name}</b><small>{collection.postCount} {collection.postCount === 1 ? 'Skillshot' : 'Skillshots'}</small></span><UiIcon name="arrow-up-right"/></button>)}
+            {profile.collections.map(collection => (
+              <button type="button" className="profileFolderBox" onClick={() => setTab('collections')} key={collection.id}>
+                <span className="folderTab"><b>{collection.name}</b></span>
+                <span className="folderBody">
+                  {collection.coverUrl ? <img src={collection.coverUrl} alt="" loading="lazy"/> : <span className="profileCollectionPlaceholder"><UiIcon name="bookmark"/></span>}
+                  <small>{collection.postCount} {collection.postCount === 1 ? 'Skillshot' : 'Skillshots'}</small>
+                </span>
+              </button>
+            ))}
             {!profile.collections.length && <div className="profileCollectionEmpty"><p>No collections yet.</p>{profile.isSelf && <button type="button" onClick={() => setTab('collections')}><UiIcon name="plus"/> Create collection</button>}</div>}
           </div>
         </article>
@@ -505,15 +518,13 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
 
       <div className="profileOverviewWork">
         <div className="sectionHead"><div><p className="eyebrow">YOUR WORK</p><h2>{profile.isSelf ? 'Your published work.' : `${profile.displayName}'s published work.`}</h2></div><div className="profileOverviewActions">{profile.isSelf && <Link className="primary" href="/upload"><UiIcon name="plus"/> New Skillshot</Link>}<button type="button" onClick={() => setTab('skillshots')}>View all <UiIcon name="arrow-up-right"/></button></div></div>
-        <CollectionsManager username={profile.username} isSelf={profile.isSelf} />
+        <CollectionsManager username={profile.username} isSelf={profile.isSelf} mode="gallery" />
       </div>
     </section>}
 
-    {tab === 'collections' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">CURATED WORK</p><h2>Collections.</h2></div></div><CollectionsManager username={profile.username} isSelf={profile.isSelf}/></section>}
+    {tab === 'collections' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">CURATED WORK</p><h2>Collections.</h2></div></div><CollectionsManager username={profile.username} isSelf={profile.isSelf} mode="folders"/></section>}
 
     {tab === 'achievements' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">MILESTONES</p><h2>Achievements.</h2></div></div><div className="profileAchievementFull">{profile.achievements.length ? profile.achievements.map(item=><article key={item.key}><span><AchievementIcon achievementKey={item.key}/></span><div><h3>{item.label}</h3><p>{item.description}</p></div></article>) : <p>No achievements yet.</p>}</div></section>}
-
-    {tab === 'activity' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">CREATOR ACTIVITY</p><h2>Progress at a glance.</h2></div></div><div className="profileActivityGrid"><article><strong>{compactNumber(profile.reputation)}</strong><span>Reputation</span></article><article><strong>{compactNumber(profile.likesReceived)}</strong><span>Likes received</span></article><article><strong>{compactNumber(profile.postCount)}</strong><span>Published Skillshots</span></article><article><strong>{joined}</strong><span>Member since</span></article></div></section>}
 
     {tab === 'skillshots' && <section className="profileWork shell profileTabPanel" role="tabpanel">
       {profile.featuredPosts.length > 0 && (
@@ -558,7 +569,7 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
           </div>
           {profile.isSelf && <Link className="primary" href="/upload"><UiIcon name="plus"/> New post</Link>}
         </div>
-        <CollectionsManager username={profile.username} isSelf={profile.isSelf} />
+        <CollectionsManager username={profile.username} isSelf={profile.isSelf} mode="gallery" />
       </div>
     </section>}
 
@@ -569,6 +580,187 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
 
     {tab === 'liked' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="sectionHead"><div><p className="eyebrow">APPRECIATED WORK</p><h2>Skillshots {profile.displayName} likes.</h2></div></div><CommunityFeed likedBy={profile.username} compact emptyTitle="No liked Skillshots yet." emptyText="Work this creator appreciates will appear here."/></section>}
 
-    {tab === 'about' && <section className="profileWork shell profileTabPanel" role="tabpanel"><div className="aboutProfile"><div><p className="eyebrow">ABOUT</p><h2>About {profile.displayName}.</h2><p className="aboutBio">{profile.bio || 'This creator has not added a bio yet.'}</p></div><dl><div><dt>Location</dt><dd>{profile.location || 'Not added'}</dd></div><div><dt>Website</dt><dd>{profile.website ? <a href={profile.website} target="_blank" rel="noopener noreferrer">{websiteLabel(profile.website)}</a> : 'Not added'}</dd></div><div><dt>Joined</dt><dd>{joined}</dd></div><div><dt>Reputation</dt><dd>{compactNumber(profile.reputation)} points</dd></div></dl>{profile.achievements.length>0&&<div><h3>Achievements</h3><div className="achievementGrid">{profile.achievements.map(item=><article key={item.key}><span><AchievementIcon achievementKey={item.key}/></span><div><b>{item.label}</b><small>{item.description}</small></div></article>)}</div></div>}{profile.skills.length > 0 && <div><h3>Skills</h3><div className="profileSkills">{profile.skills.map(skill => <span key={skill}>{skill}</span>)}</div></div>}{Object.keys(profile.socialLinks).length > 0 && <div><h3>Find me online</h3><div className="socialLinks">{Object.entries(profile.socialLinks).map(([name, url]) => <a key={name} href={url} target="_blank" rel="noopener noreferrer"><UiIcon name="arrow-up-right"/> {name}</a>)}</div></div>}</div></section>}
+    {tab === 'about' && (
+      <section className="profileWork shell profileTabPanel aboutTabSection" role="tabpanel">
+        <div className="aboutModernContainer">
+          {/* 1. Header & Bio Showcase */}
+          <div className="aboutHeroCard">
+            <div className="aboutHeroTop">
+              <div className="aboutHeroMeta">
+                <span className="aboutBadgePill">✦ CREATOR STORY</span>
+                <h2 className="aboutHeroTitle">About {profile.displayName}</h2>
+                <span className="aboutHeroHandle">@{profile.username}</span>
+              </div>
+              {profile.isSelf && (
+                <Link href="/profile/edit" className="aboutEditPill">
+                  <UiIcon name="edit" /> Edit bio & details
+                </Link>
+              )}
+            </div>
+
+            <div className="aboutBioWrap">
+              {profile.bio ? (
+                <blockquote className="aboutBioQuote">
+                  <span className="aboutQuoteMark">“</span>
+                  <p className="aboutBioText">{profile.bio}</p>
+                </blockquote>
+              ) : (
+                <div className="aboutBioEmpty">
+                  <p>This creator has not written a public bio yet.</p>
+                  {profile.isSelf && (
+                    <Link href="/profile/edit" className="aboutBioPromptBtn">
+                      <UiIcon name="plus" /> Add your creator story
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 2. Key Details & Stats Grid */}
+          <div className="aboutDetailsGrid">
+            {/* Location */}
+            <div className="aboutDetailCard">
+              <div className="aboutDetailIconWrap">
+                <UiIcon name="location" />
+              </div>
+              <div className="aboutDetailContent">
+                <span className="aboutDetailLabel">LOCATION</span>
+                {profile.location ? (
+                  <strong className="aboutDetailValue">{profile.location}</strong>
+                ) : profile.isSelf ? (
+                  <Link href="/profile/edit" className="aboutActionLink">
+                    + Add location
+                  </Link>
+                ) : (
+                  <span className="aboutDetailMuted">Not specified</span>
+                )}
+              </div>
+            </div>
+
+            {/* Website */}
+            <div className="aboutDetailCard">
+              <div className="aboutDetailIconWrap">
+                <UiIcon name="link" />
+              </div>
+              <div className="aboutDetailContent">
+                <span className="aboutDetailLabel">WEBSITE & PORTFOLIO</span>
+                {profile.website ? (
+                  <a
+                    href={profile.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="aboutLinkAction"
+                  >
+                    <span>{websiteLabel(profile.website)}</span>
+                    <UiIcon name="arrow-up-right" />
+                  </a>
+                ) : profile.isSelf ? (
+                  <Link href="/profile/edit" className="aboutActionLink">
+                    + Add website
+                  </Link>
+                ) : (
+                  <span className="aboutDetailMuted">Not specified</span>
+                )}
+              </div>
+            </div>
+
+            {/* Member Since */}
+            <div className="aboutDetailCard">
+              <div className="aboutDetailIconWrap">
+                <span className="aboutDateBadge">✦</span>
+              </div>
+              <div className="aboutDetailContent">
+                <span className="aboutDetailLabel">MEMBER SINCE</span>
+                <strong className="aboutDetailValue">{joined}</strong>
+              </div>
+            </div>
+
+            {/* Community Reputation & Rank */}
+            <div className="aboutDetailCard aboutReputationCard">
+              <div className="aboutDetailIconWrap">
+                <span className="aboutRepBadge">★</span>
+              </div>
+              <div className="aboutDetailContent">
+                <span className="aboutDetailLabel">COMMUNITY REPUTATION</span>
+                <div className="aboutReputationRow">
+                  <strong className="aboutDetailValue">{compactNumber(profile.reputation)} pts</strong>
+                  {profile.creatorRank && (
+                    <span className="aboutRankPill">{profile.creatorRank.replace(/_/g, ' ')}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Creative Skills */}
+          {profile.skills.length > 0 && (
+            <div className="aboutSectionBlock">
+              <div className="aboutSectionHead">
+                <h3>Skills & Expertise</h3>
+                <span className="aboutCountBadge">{profile.skills.length}</span>
+              </div>
+              <div className="aboutSkillsWrap">
+                {profile.skills.map((skill) => (
+                  <span key={skill} className="aboutSkillChip">
+                    <span className="aboutSkillHash">#</span>
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 4. Social Links */}
+          {Object.keys(profile.socialLinks).length > 0 && (
+            <div className="aboutSectionBlock">
+              <div className="aboutSectionHead">
+                <h3>Find me online</h3>
+              </div>
+              <div className="aboutSocialRow">
+                {Object.entries(profile.socialLinks).map(([name, url]) => (
+                  <a
+                    key={name}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="aboutSocialBtn"
+                  >
+                    <span>{name}</span>
+                    <UiIcon name="arrow-up-right" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 5. Achievements Showcase */}
+          {profile.achievements.length > 0 && (
+            <div className="aboutSectionBlock">
+              <div className="aboutSectionHead">
+                <h3>Achievements & Milestones</h3>
+                <span className="aboutCountBadge">{profile.achievements.length}</span>
+              </div>
+              <div className="aboutAchievementsGrid">
+                {profile.achievements.map((item) => (
+                  <article key={item.key} className="aboutAchievementCard">
+                    <div className="aboutAchievementIcon">
+                      <AchievementIcon achievementKey={item.key} />
+                    </div>
+                    <div className="aboutAchievementInfo">
+                      <h4>{item.label}</h4>
+                      <p>{item.description}</p>
+                    </div>
+                    <span className="aboutUnlockedBadge" title="Unlocked">
+                      <UiIcon name="check" size={14} /> Unlocked
+                    </span>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    )}
   </main>;
 }

@@ -27,7 +27,7 @@ const messages: Record<string, string> = {
   save: 'Your profile could not be saved. Please try again.',
 };
 
-export default async function EditProfile({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function EditProfile({ searchParams }: { searchParams: Promise<{ error?: string; tab?: string }> }) {
   const user = await requireChatGPTUser('/profile/edit');
   const profile = await ensureUser(user);
   const posts = await (await getReadyDb()).query(`
@@ -35,7 +35,7 @@ export default async function EditProfile({ searchParams }: { searchParams: Prom
     FROM posts p LEFT JOIN featured_posts fp ON fp.post_id=p.id AND fp.user_id=p.user_id
     WHERE p.user_id=$1 ORDER BY p.created_at DESC
   `, [user.userId]);
-  const { error } = await searchParams;
+  const { error, tab } = await searchParams;
   return <main className="formPage">
     <nav className="detailNav"><Link className="brand" href="/"><span>S</span> Skillshot</Link><Link className="backHome" href="/profile">← View profile</Link></nav>
     <section className="formCard profileEditor">
@@ -43,7 +43,9 @@ export default async function EditProfile({ searchParams }: { searchParams: Prom
       <h1>Make your profile yours.</h1>
       <p className="profileIntro">Keep your creator identity clear, professional, and easy to discover.</p>
       {error && <p className="formNotice errorState" role="alert">{messages[error] ?? 'Your profile could not be saved.'}</p>}
-      <ProfileEditor profile={{
+      <ProfileEditor
+        initialTab={tab === 'appearance' ? 'appearance' : 'info'}
+        profile={{
         displayName: String(profile.display_name), username: String(profile.username), bio: String(profile.bio || ''),
         website: String(profile.website || ''), location: String(profile.location || ''),
         skills: Array.isArray(profile.skills) ? profile.skills.map(String) : [],

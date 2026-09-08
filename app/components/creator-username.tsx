@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import CreatorRankBadge from './creator-rank-badge';
 import RoleBadge from './role-badge';
+import { getStaffEffectClass } from './staff-visual-effect';
 import CreatorCard, { type CreatorCardData } from './creator-card';
 import type { UserRole } from '../../lib/roles';
-import { type CreatorRankId, CREATOR_RANKS, creatorRankId } from '../../lib/creator-rank';
+import { type CreatorRankId, creatorRankId } from '../../lib/creator-rank';
 
 type Props = {
   name: string;
@@ -51,12 +52,13 @@ export default function CreatorUsername({
   const containerRef = useRef<HTMLSpanElement>(null);
   const closeTimer = useRef<NodeJS.Timeout | null>(null);
 
+  // Separate Creator Rank (progression) from Staff Role (authority/permissions)
   const rankKey = creatorRankId(creatorRank);
-  const rankInfo = CREATOR_RANKS[rankKey];
-  const resolvedRole = staffRole ?? role;
-  // Creator Rank is the single source of the username effect. Staff role stays
-  // visually separate in RoleBadge and never overrides or stacks this effect.
-  const nameEffectClass = rankInfo.animationClass;
+  const effectiveStaffRole = staffRole !== undefined ? staffRole : (role !== 'USER' ? role : undefined);
+
+  // Critical requirement: ONLY staff roles activate the special username visual effect.
+  // Creator Rank must NEVER activate the staff visual effect.
+  const nameEffectClass = getStaffEffectClass(effectiveStaffRole);
 
   const profileUrl = href ?? (username ? `/users/${encodeURIComponent(username)}` : '#');
 
@@ -68,6 +70,7 @@ export default function CreatorUsername({
 
   const handleMouseLeave = () => {
     if (!enableCard) return;
+    if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = setTimeout(() => {
       setShowPopover(false);
     }, 280);
@@ -82,19 +85,21 @@ export default function CreatorUsername({
   const fullCardData: CreatorCardData = {
     username,
     displayName: name,
-    role: resolvedRole,
+    role: effectiveStaffRole || 'USER',
     creatorRank: rankKey,
     ...cardData,
   };
 
   const nameElement = asSpan
-    ? <span className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></span>
-    : <Link href={profileUrl} className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-management-role={resolvedRole.toLowerCase()}><span className="creatorNameText">{prefix}{name}</span></Link>;
+    ? <span className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-staff-role={effectiveStaffRole ? effectiveStaffRole.toLowerCase() : 'none'}><span className="creatorNameText">{prefix}{name}</span></span>
+    : <Link href={profileUrl} className={`creatorUsernameLink ${nameEffectClass}`} data-rank={rankKey.toLowerCase()} data-staff-role={effectiveStaffRole ? effectiveStaffRole.toLowerCase() : 'none'}><span className="creatorNameText">{prefix}{name}</span></Link>;
+
   const rankBadge = showRankBadge
     ? <CreatorRankBadge rank={rankKey} size={layout === 'profile' ? 'md' : 'sm'} onClick={onRankClick} level={rankLevel} />
     : null;
-  const roleBadge = showRoleBadge && resolvedRole && resolvedRole !== 'USER'
-    ? <RoleBadge role={resolvedRole} variant={layout === 'profile' ? 'profile' : roleVariant} showLabel={false} />
+
+  const roleBadge = showRoleBadge && effectiveStaffRole && effectiveStaffRole !== 'USER'
+    ? <RoleBadge role={effectiveStaffRole} variant={layout === 'profile' ? 'profile' : roleVariant} showLabel={false} />
     : null;
 
   return (
@@ -104,18 +109,22 @@ export default function CreatorUsername({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {layout === 'profile' ? <>
-        <span className="creatorProfileNameRow">{nameElement}</span>
-        <span className="creatorProfileMetaRow">
-          <span className="creatorProfileHandle">@{username}</span>
+      {layout === 'profile' ? (
+        <>
+          <span className="creatorProfileNameRow">{nameElement}</span>
+          <span className="creatorProfileMetaRow">
+            <span className="creatorProfileHandle">@{username}</span>
+            {rankBadge}
+            {roleBadge}
+          </span>
+        </>
+      ) : (
+        <>
+          {nameElement}
           {rankBadge}
           {roleBadge}
-        </span>
-      </> : <>
-        {nameElement}
-        {rankBadge}
-        {roleBadge}
-      </>}
+        </>
+      )}
 
       {enableCard && showPopover && (
         <div className="creatorPopoverCard">

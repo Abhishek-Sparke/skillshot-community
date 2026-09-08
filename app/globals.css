@@ -780,7 +780,7 @@ footer a:hover { color:var(--red); }
 .detailImage{border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05)}
 @media(max-width:600px){
   main{padding-bottom:env(safe-area-inset-bottom,28px)}
-  .hero{padding-top:20px}
+  .hero{padding-top:clamp(24px, 4vw, 32px)}
   .heroCard{transform:none;box-shadow:8px 9px 0 #ded8ca}
   .heroCard:hover{transform:none}
 }
@@ -2606,6 +2606,225 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   background: rgba(255, 91, 66, 0.1);
 }
 
+.newCollectionBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  margin-bottom: 18px;
+  border: 1px dashed color-mix(in srgb, var(--profile-line, var(--line)) 80%, #ff6688);
+  border-radius: 14px;
+  background: color-mix(in srgb, #ff6688 8%, transparent);
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.newCollectionBar:hover {
+  background: color-mix(in srgb, #ff6688 14%, transparent);
+}
+.folderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px 16px;
+}
+.folderBox {
+  position: relative;
+  min-width: 0;
+}
+.folderBox.folderSkeleton {
+  height: 168px;
+  border-radius: 0 16px 16px 16px;
+  background: linear-gradient(90deg, #182230, #223044, #182230);
+  background-size: 180% 100%;
+  animation: topRefreshBar 1.2s linear infinite;
+}
+.folderBoxHit {
+  display: grid;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.folderTab,
+.profileFolderBox .folderTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 78%;
+  min-height: 28px;
+  margin: 0;
+  padding: 4px 12px 0;
+  border: 1px solid var(--profile-line, var(--line));
+  border-bottom: 0;
+  border-radius: 12px 14px 0 0;
+  background: #1a2432;
+  color: #fff;
+}
+.folderTab b,
+.profileFolderBox .folderTab b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+}
+.folderTab.mini {
+  max-width: min(280px, 60vw);
+}
+.folderBody,
+.profileFolderBox .folderBody {
+  display: grid;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--profile-line, var(--line));
+  border-radius: 0 16px 16px 16px;
+  background: #121a24;
+  box-shadow: 0 10px 24px #0004;
+}
+.folderBody img,
+.folderPlaceholder,
+.profileFolderBox .folderBody img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.folderPlaceholder {
+  display: grid;
+  place-items: center;
+  color: #8ea0b5;
+}
+.folderBody small,
+.profileFolderBox .folderBody small {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(8, 12, 18, .72);
+  color: #eef3f8;
+  font-size: 10px;
+  font-weight: 800;
+}
+.folderActions {
+  position: absolute;
+  top: 32px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+.folderActions button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid #314155;
+  border-radius: 8px;
+  background: rgba(12, 18, 26, .84);
+  color: #f3f6fa;
+  cursor: pointer;
+}
+.collectionOpenBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.collectionOpenTitle {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+}
+.modalOverlay.collectionFormOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 360;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, .62);
+  backdrop-filter: blur(4px);
+}
+.collectionModal {
+  width: min(640px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper, #fff);
+  color: var(--ink);
+  padding: 22px;
+}
+.collectionModal h3 { margin: 0 0 14px; }
+.collectionModal form { display: grid; gap: 14px; }
+.collectionModal label { display: grid; gap: 7px; font-size: 13px; font-weight: 800; }
+.collectionModal input[type=text],
+.collectionModal textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 11px 12px;
+  font: inherit;
+  font-weight: 400;
+}
+.collectionModal textarea { min-height: 72px; resize: vertical; }
+.collectionModal .checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.collectionPostPicker {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.collectionPostPicker legend { padding: 0 6px; font-weight: 800; }
+.collectionPostPicker p { margin: 0 0 10px; color: var(--secondary-text); font-size: 13px; font-weight: 500; }
+.collectionPostPickerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px;
+}
+.collectionPostPick {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  overflow: hidden;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.collectionPostPick input { position: absolute; opacity: 0; pointer-events: none; }
+.collectionPostPick img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 7px; }
+.collectionPostPick span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 700; }
+.collectionPostPick.selected { border-color: #ff6688; box-shadow: 0 0 0 2px #ff668855; }
+.collectionPostPickerEmpty { display: grid; gap: 8px; padding: 8px 0; }
+.collectionFormError { margin: 0; color: #c32929; font-weight: 700; }
+.modalActions { display: flex; justify-content: flex-end; gap: 12px; }
+.modalActions .quietButton,
+.modalActions .primary { border: 0; min-height: 40px; padding: 0 14px; border-radius: 10px; cursor: pointer; }
+.modalActions .primary { background: var(--ink); color: #fff; font-weight: 800; }
+
+@media (max-width: 700px) {
+  .folderGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; }
+  .collectionOpenBar { flex-wrap: wrap; }
+}
+
 .portfolioGalleryGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -3473,9 +3692,15 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
    HOMEPAGE CONTENT DENSITY & REDESIGNED SECTIONS
    ========================================================================== */
 
-/* 1. Tighter Hero Spacing */
+/* 1. Breathing Hero Top Spacing */
 .hero {
-  padding: 40px 0 24px;
+  padding: clamp(48px, 5.5vw, 64px) 0 clamp(28px, 3.5vw, 40px);
+}
+@media (max-width: 768px) {
+  .hero {
+    padding-top: clamp(24px, 4vw, 32px);
+    padding-bottom: 24px;
+  }
 }
 
 .heroEditorial h1 {
@@ -3929,7 +4154,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .profileCardHeading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}.profileCardHeading h2{margin:0;color:#fff;font-size:16px}.profileCardHeading a,.profileCardHeading button{border:0;background:none;color:#ff8eaa;text-decoration:none;font-size:11px;font-weight:800;cursor:pointer}
 .profileAboutCard>p{min-height:72px;margin:0;color:#c6cfdb;font-size:14px;line-height:1.7}.profileMiniDetails{display:flex;gap:11px;flex-wrap:wrap;margin:12px 0 15px;color:#9eabba;font-size:11px}.profileMiniDetails a{color:#62d8ef}
 .profileAchievementPreview{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 10px}.profileAchievementPreview>div{display:grid;justify-items:center;gap:8px;text-align:center}.profileAchievementPreview>div>span{display:grid;width:48px;height:48px;place-items:center;border:1px solid #71404a;border-radius:50%;background:#211b22;color:#ffbd55;font-size:18px;box-shadow:inset 0 0 16px #ff764017}.profileAchievementPreview small{color:#d7dee8;font-size:10px;line-height:1.3}
-.profileCollectionPreview{display:grid;gap:7px}.profileCollectionPreview>a{display:grid;grid-template-columns:46px 1fr 14px;gap:11px;align-items:center;padding:5px;border-radius:9px;color:#fff;text-decoration:none}.profileCollectionPreview>a:hover{background:#ffffff08}.profileCollectionPreview img{width:46px;height:46px;object-fit:cover;border-radius:8px}.profileCollectionPreview span{display:grid;min-width:0}.profileCollectionPreview b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.profileCollectionPreview small{margin-top:4px;color:#99a5b5;font-size:10px}.profileCollectionPreview i{color:#a6b1c0;font-style:normal;font-size:22px}.profileCardEmpty{color:var(--profile-muted)}
+.profileCollectionPreview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px}.profileCollectionPreview>a{display:grid;grid-template-columns:46px 1fr 14px;gap:11px;align-items:center;padding:5px;border-radius:9px;color:#fff;text-decoration:none}.profileCollectionPreview>a:hover{background:#ffffff08}.profileCardEmpty{color:var(--profile-muted)}
 .profileOverviewWork{margin-top:22px;padding:6px 8px 0}.profileOverviewWork .sectionHead{align-items:flex-end}.profileOverviewWork .sectionHead h2{margin:0;color:#fff;font-size:24px}.profileOverviewWork .sectionHead p{margin:5px 0 0;color:var(--profile-muted)}.profileOverviewActions{display:flex;align-items:center;gap:20px}.profileOverviewActions>button{border:0;background:none;color:#ff91ab;font-weight:800;cursor:pointer}.profileOverviewWork .collectionsTabBar{display:none}.profileOverviewWork .portfolioGalleryGrid{grid-template-columns:repeat(4,minmax(0,1fr))}.profileOverviewWork .portfolioCard:nth-child(n+5){display:none}
 .profilePage .portfolioCard,.profilePage .portfolioShotCard{border-color:var(--profile-line);background:#101721}.profilePage .portfolioCardTitle,.profilePage .portfolioCardMeta{color:#fff}.profilePage .portfolioCardFooter,.profilePage .portfolioCounters{color:#aab5c4}.profilePage .portfolioTag{background:#192331;color:#d5deea}.profilePage .sectionHead h2{color:#fff}.profilePage .sectionHead p{color:var(--profile-muted)}
 .profileAchievementFull,.profileActivityGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.profileAchievementFull article,.profileActivityGrid article{display:flex;align-items:center;gap:14px;min-height:112px;padding:18px;border:1px solid var(--profile-line);border-radius:14px;background:var(--profile-panel)}.profileAchievementFull article>span{display:grid;width:52px;height:52px;flex:none;place-items:center;border-radius:50%;background:#241a20;color:#ffb557;font-size:20px}.profileAchievementFull h3,.profileAchievementFull p{margin:0}.profileAchievementFull p{margin-top:5px;color:var(--profile-muted);font-size:12px}.profileActivityGrid article{display:grid;place-content:center;text-align:center}.profileActivityGrid strong{color:#ffb5c9;font-size:24px}.profileActivityGrid span{color:var(--profile-muted);font-size:12px}
@@ -4002,7 +4227,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .profileProgressNext{color:#9faaba;font-size:11px}.profileProgressNext b{color:#eef2f7}.profileProgressNext button{flex:none;border:0;background:transparent;color:#ff91ad;font:inherit;font-weight:800;cursor:pointer}
 .profileDashboardCard{min-height:210px;padding:18px}.profileAboutCard>p{min-height:0}
 .profileMiniDetails svg{width:13px;height:13px}
-.profileCollectionPreview>button{display:grid;grid-template-columns:42px minmax(0,1fr) 16px;gap:10px;align-items:center;width:100%;padding:5px;border:0;border-radius:9px;background:transparent;color:#fff;text-align:left;cursor:pointer}.profileCollectionPreview>button:hover{background:#ffffff08}.profileCollectionPreview>button>svg{color:#9ca9b8}.profileCollectionPreview img,.profileCollectionPlaceholder{display:grid;width:42px;height:42px;place-items:center;object-fit:cover;border-radius:8px;background:#192331;color:#aeb9c7}.profileCollectionEmpty{display:grid;place-items:center;gap:12px;min-height:120px;color:var(--profile-muted);text-align:center}.profileCollectionEmpty p{margin:0}.profileCollectionEmpty button{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid #3d3046;border-radius:9px;background:#1d1522;color:#ff9ab3;font-weight:800;cursor:pointer}
+.profileCollectionPreview>.profileFolderBox{display:grid;width:100%;padding:0;border:0;background:none;color:#fff;text-align:left;cursor:pointer}.profileCollectionPreview .folderTab{background:#1a2432}.profileCollectionPreview .folderBody{min-height:86px}.profileCollectionPlaceholder{display:grid;width:100%;height:100%;place-items:center;object-fit:cover;background:#192331;color:#aeb9c7}.profileCollectionEmpty{grid-column:1/-1;display:grid;place-items:center;gap:12px;min-height:120px;color:var(--profile-muted);text-align:center}.profileCollectionEmpty p{margin:0}.profileCollectionEmpty button{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid #3d3046;border-radius:9px;background:#1d1522;color:#ff9ab3;font-weight:800;cursor:pointer}
 .profileAchievementPreview>div>span,.profileAchievementFull article>span{color:#ffb557}.profileAchievementPreview svg,.profileAchievementFull svg{display:block}
 .profileOverviewWork .sectionHead .eyebrow{margin:0 0 5px;color:#ff83a2;font-size:10px;letter-spacing:.14em}.profileOverviewActions>button{display:inline-flex}
 .collectionsManager .createCollectionBtn,.collectionsManager .primary{display:inline-flex;align-items:center;justify-content:center;gap:7px}.privateBadge{display:inline-flex}.chipDeleteBtn{display:grid;place-items:center}
@@ -4133,8 +4358,13 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 :root[data-theme=light] .profileProgressNumbers,:root[data-theme=light] .profileProgressNext{color:#69717e}
 :root[data-theme=light] .profileProgressNumbers b,:root[data-theme=light] .profileProgressNext b,:root[data-theme=light] .profileProgressRank b{color:#191c22}
 :root[data-theme=light] .profileProgressTrack{background:#e5e0e9}
-:root[data-theme=light] .profileCollectionPreview>button{color:#191c22}
-:root[data-theme=light] .profileCollectionPreview>button:hover{background:#20182b08}
+:root[data-theme=light] .profileCollectionPreview>.profileFolderBox{color:#191c22}
+:root[data-theme=light] .folderTab,
+:root[data-theme=light] .profileFolderBox .folderTab{background:#efe8dc;color:#191c22;border-color:#d9d3df}
+:root[data-theme=light] .folderBody,
+:root[data-theme=light] .profileFolderBox .folderBody{background:#f7f3ea;border-color:#d9d3df;box-shadow:0 8px 18px #00000014}
+:root[data-theme=light] .folderActions button{border-color:#d9d3df;background:#fff;color:#222}
+:root[data-theme=light] .newCollectionBar{background:#fff4f7;color:#191c22}
 :root[data-theme=light] .profileCollectionPlaceholder{background:#f0ede6;color:#68707b}
 :root[data-theme=light] .profileCollectionEmpty button{border-color:#dfd2e5;background:#fbf5fc;color:#bd315c}
 @media(prefers-reduced-motion:reduce){.profileProgressTrack>span{transition:none}}
@@ -4213,23 +4443,12 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 }
 :root[data-theme=light] .profilePage .profileStats{background:#faf8f4}
 
-/* Server-driven Creator Rank effects. These exact static classes come from CREATOR_RANKS. */
-.creatorUsernameLink[class*="creator-rank-"]{position:relative;overflow:visible;isolation:isolate;opacity:1}
-.creatorUsernameLink[class*="creator-rank-"] .creatorNameText{position:relative;display:inline-block;overflow:visible;color:var(--rank-solid);font-weight:750;line-height:inherit}
-.creatorUsernameLink.creator-rank-newcomer .creatorNameText{--rank-solid:var(--ink);font-weight:650}
-.creatorUsernameLink:not(.creator-rank-newcomer) .creatorNameText{
-  background-image:var(--rank-text-gradient);
-  background-position:0 50%;
-  background-size:260% 100%;
-  background-repeat:no-repeat;
-  background-clip:text;
-  -webkit-background-clip:text;
-  color:var(--rank-solid);
-  -webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 0 var(--rank-glow-size,4px) var(--rank-glow));
-  animation:creatorRankTextFlow var(--rank-text-speed,4.8s) ease-in-out infinite;
-  will-change:background-position;
-}
+/* Server-driven Creator Rank badge styles. These exact static classes come from CREATOR_RANKS. */
+.creatorUsernameLink{position:relative;overflow:visible;isolation:isolate;opacity:1}
+.creatorUsernameLink .creatorNameText{position:relative;display:inline-block;overflow:visible;color:inherit;font-weight:750;line-height:inherit}
+
+/* Creator rank color tokens used for badge accents (strictly NOT applied to username animations) */
+.creator-rank-newcomer{--rank-solid:#8b66c9;--rank-glow:#8b66c933}
 .creator-rank-creator{--rank-solid:#d99a24;--rank-glow:#f7b73342;--rank-glow-size:3px;--rank-text-speed:5.8s;--rank-text-gradient:linear-gradient(105deg,#a75d08 0%,#e3a31d 35%,#fff1a8 49%,#e3a31d 62%,#9a5107 100%)}
 .creator-rank-rising{--rank-solid:#24b8e8;--rank-glow:#38bdf866;--rank-text-speed:4.6s;--rank-text-gradient:linear-gradient(105deg,#087dac 0%,#20b6e8 30%,#e4fbff 48%,#62e3ff 54%,#0782b5 100%)}
 .creator-rank-skilled{--rank-solid:#28c58b;--rank-glow:#34d39966;--rank-text-speed:4.1s;--rank-text-gradient:linear-gradient(105deg,#087c58 0%,#24bd83 30%,#e5fff4 48%,#59e8b5 56%,#087c58 100%)}
@@ -4237,6 +4456,76 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .creator-rank-master{--rank-solid:#ff607f;--rank-glow:#ff668880;--rank-glow-size:7px;--rank-text-speed:3.4s;--rank-text-gradient:linear-gradient(105deg,#a7133e 0%,#ef365f 26%,#fff0f4 47%,#ff8da5 54%,#a7133e 100%)}
 .creator-rank-legend{--rank-solid:#f5bd42;--rank-glow:#f5bd4299;--rank-glow-size:8px;--rank-text-speed:3.2s;--rank-text-gradient:linear-gradient(105deg,#a96908 0%,#efb72d 24%,#fff7bd 42%,#ef8dbd 52%,#b47aff 67%,#efb72d 86%,#a96908 100%)}
 @keyframes creatorRankTextFlow{0%,12%{background-position:100% 50%}55%{background-position:18% 50%}88%,100%{background-position:-90% 50%}}
+
+/* ==========================================================================
+   STAFF ROLE VISUAL EFFECTS (ONLY STAFF ROLES ACTIVATE USERNAME EFFECTS)
+   ========================================================================== */
+.staff-effect-admin .creatorNameText,
+.staff-effect-owner .creatorNameText,
+.staff-effect-head_moderator .creatorNameText,
+.staff-effect-moderator .creatorNameText,
+.staff-effect-trusted_contributor .creatorNameText {
+  position: relative;
+  display: inline-block;
+  font-weight: 750;
+  line-height: inherit;
+  transition: filter 0.2s ease, text-shadow 0.2s ease, color 0.2s ease;
+}
+
+/* Admin: Sleek purple glow / subtle shimmer */
+.staff-effect-admin .creatorNameText {
+  color: #c084fc;
+  text-shadow: 0 0 10px rgba(192, 132, 252, 0.5), 0 0 22px rgba(168, 85, 247, 0.25);
+  filter: drop-shadow(0 0 3px rgba(192, 132, 252, 0.35));
+}
+:root[data-theme=light] .staff-effect-admin .creatorNameText {
+  color: #7e22ce;
+  text-shadow: 0 0 8px rgba(126, 34, 206, 0.3);
+}
+
+/* Owner: Distinguished warm golden shimmer */
+.staff-effect-owner .creatorNameText {
+  color: #fbbf24;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.55), 0 0 24px rgba(245, 158, 11, 0.3);
+  filter: drop-shadow(0 0 3px rgba(251, 191, 36, 0.4));
+}
+:root[data-theme=light] .staff-effect-owner .creatorNameText {
+  color: #b45309;
+  text-shadow: 0 0 8px rgba(180, 83, 9, 0.35);
+}
+
+/* Head Moderator: Rich amber/bronze glow */
+.staff-effect-head_moderator .creatorNameText {
+  color: #f59e0b;
+  text-shadow: 0 0 9px rgba(245, 158, 11, 0.45);
+  filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.35));
+}
+:root[data-theme=light] .staff-effect-head_moderator .creatorNameText {
+  color: #92400e;
+  text-shadow: 0 0 7px rgba(146, 64, 14, 0.3);
+}
+
+/* Moderator: Crisp azure glow */
+.staff-effect-moderator .creatorNameText {
+  color: #38bdf8;
+  text-shadow: 0 0 9px rgba(56, 189, 248, 0.45);
+  filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.35));
+}
+:root[data-theme=light] .staff-effect-moderator .creatorNameText {
+  color: #0284c7;
+  text-shadow: 0 0 7px rgba(2, 132, 199, 0.3);
+}
+
+/* Trusted Contributor: Refined emerald glow */
+.staff-effect-trusted_contributor .creatorNameText {
+  color: #34d399;
+  text-shadow: 0 0 9px rgba(52, 211, 153, 0.45);
+  filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.35));
+}
+:root[data-theme=light] .staff-effect-trusted_contributor .creatorNameText {
+  color: #059669;
+  text-shadow: 0 0 7px rgba(5, 150, 105, 0.3);
+}
 
 .creatorRankBadge[class*="creator-rank-"]{position:relative;overflow:visible;color:var(--rank-solid);border-color:color-mix(in srgb,var(--rank-solid) 48%,transparent);background:color-mix(in srgb,var(--rank-solid) 12%,transparent);box-shadow:0 0 var(--badge-glow,0) var(--rank-glow);isolation:isolate}
 .creatorRankBadge[class*="creator-rank-"] .rankIconContainer{position:relative;z-index:1;display:grid;place-items:center;transform-origin:center}
@@ -4423,28 +4712,69 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .iconBadge-compact :is(.rankIconSvg,.roleBadgeIcon svg){width:11px;height:11px}
 .iconBadge-profile :is(.rankIconSvg,.roleBadgeIcon svg){width:12px;height:12px}
 .iconBadge-hero .rankIconSvg{width:30px;height:30px}
-.iconBadgeTooltip{
-  position:absolute;
-  z-index:80;
-  left:50%;
-  bottom:calc(100% + 7px);
-  width:max-content;
-  max-width:min(220px,calc(100vw - 24px));
-  padding:6px 8px;
-  border-radius:7px;
-  background:#1d1d1d;
-  box-shadow:0 5px 18px #0003;
-  color:#fff;
-  font:700 11px/1.25 Arial,sans-serif;
-  text-align:center;
-  white-space:nowrap;
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
-  translate:-50% 3px;
-  transition:opacity .16s ease,translate .16s ease,visibility .16s;
+.iconBadgeTooltip,
+.roleTooltipPopover {
+  position: absolute;
+  z-index: 120;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  min-width: 76px;
+  max-width: min(220px, calc(100vw - 24px));
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #181716;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  translate: -50% 4px;
+  transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), translate 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s;
+  isolation: isolate;
 }
-.iconBadge:hover .iconBadgeTooltip,.iconBadge:focus-visible .iconBadgeTooltip{opacity:1;visibility:visible;translate:-50% 0}
+.iconBadge:hover .iconBadgeTooltip,
+.iconBadge:focus-visible .iconBadgeTooltip,
+.iconBadge.tooltipOpen .iconBadgeTooltip,
+.roleTooltipHost:hover .roleTooltipPopover,
+.roleTooltipHost:focus-visible .roleTooltipPopover,
+.roleTooltipPopover.roleTooltipVisible {
+  opacity: 1;
+  visibility: visible;
+  translate: -50% 0;
+  pointer-events: auto;
+}
+.roleTooltipTitle {
+  display: block;
+  font-family: var(--font-sans, Arial, sans-serif);
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+}
+.roleTooltipSubtitle {
+  display: block;
+  font-family: var(--font-sans, Arial, sans-serif);
+  font-size: 9.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 1px;
+  line-height: 1.2;
+}
+.roleTooltipLevel {
+  display: block;
+  font-family: var(--font-sans, Arial, sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  color: #ff6688;
+  margin-top: 2px;
+  line-height: 1.2;
+}
 .roleBadge[data-tooltip]::after{content:none}
 .roleBadgeLabel{display:inline-flex;align-items:center;gap:6px;color:inherit;font:800 12px/1 'Plus Jakarta Sans',Arial,sans-serif}
 .roleBadgeLabel .roleBadge{margin:0}
@@ -4477,4 +4807,587 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 }
 @media(prefers-reduced-motion:reduce){.iconBadgeTooltip{transition:none}.iconBadge:hover{transform:none}}
 
+/* Profile Avatar & Banner Edit Affordances */
+.editorMediaShortcutCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft, rgba(0, 0, 0, 0.03));
+}
+.editorMediaShortcutPreview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.editorMediaShortcutAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-weight: 800;
+  font-size: 16px;
+  flex: none;
+}
+.editorMediaShortcutAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.editorMediaShortcutMeta strong {
+  display: block;
+  font-size: 14px;
+  color: var(--ink);
+}
+.editorMediaShortcutMeta span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+.editorMediaShortcutBtn {
+  flex: none;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.editorMediaShortcutBtn:hover {
+  background: var(--surface-soft);
+  transform: translateY(-1px);
+}
+.profileAvatar {
+  position: relative;
+}
+.profileAvatarEditBtn {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #181716;
+  color: #fff;
+  border: 2px solid var(--profile-card, #131b26);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  z-index: 4;
+}
+.profileAvatarEditBtn:hover {
+  transform: scale(1.1);
+  background: var(--red, #ff5039);
+  color: #fff;
+}
+.profileAvatarEditBtn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ==========================================================================
+   ABOUT TAB — MODERN, HIGH-END CREATOR SHOWCASE
+   ========================================================================== */
+.aboutTabSection {
+  padding-top: 14px;
+}
+
+.aboutModernContainer {
+  max-width: 900px;
+  display: grid;
+  gap: 22px;
+  padding: 4px 0 40px;
+}
+
+/* 1. Hero Bio Card */
+.aboutHeroCard {
+  position: relative;
+  background: var(--profile-card, #111822);
+  border: 1px solid var(--profile-line, rgba(255, 255, 255, 0.1));
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+:root[data-theme=light] .aboutHeroCard {
+  background: #ffffff;
+  border-color: #e4dfd6;
+  box-shadow: 0 8px 30px rgba(32, 28, 20, 0.05);
+}
+
+.aboutHeroTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.aboutHeroMeta {
+  display: grid;
+  gap: 6px;
+}
+
+.aboutBadgePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  background: rgba(255, 80, 57, 0.12);
+  color: var(--red, #ff5039);
+  border: 1px solid rgba(255, 80, 57, 0.24);
+}
+
+.aboutHeroTitle {
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: clamp(26px, 3.6vw, 36px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0;
+  color: var(--ink, #fff);
+  letter-spacing: -0.02em;
+}
+:root[data-theme=light] .aboutHeroTitle {
+  color: #16191f;
+}
+
+.aboutHeroHandle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted, #8b9bb0);
+}
+
+.aboutEditPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.06));
+  color: var(--ink, #fff);
+  border: 1.5px solid var(--line, rgba(255, 255, 255, 0.12));
+  transition: all 0.15s ease;
+}
+:root[data-theme=light] .aboutEditPill {
+  background: #f7f5f0;
+  border-color: #dcd6cb;
+  color: #20201d;
+}
+.aboutEditPill:hover {
+  background: var(--red, #ff5039);
+  border-color: var(--red, #ff5039);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.aboutBioWrap {
+  margin-top: 4px;
+}
+
+.aboutBioQuote {
+  position: relative;
+  margin: 0;
+  padding: 16px 20px 16px 26px;
+  border-left: 3px solid var(--red, #ff5039);
+  background: rgba(255, 80, 57, 0.035);
+  border-radius: 0 14px 14px 0;
+}
+
+.aboutQuoteMark {
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  font-family: Georgia, serif;
+  font-size: 36px;
+  line-height: 1;
+  color: var(--red, #ff5039);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.aboutBioText {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ink, #e4ecf6);
+  font-weight: 500;
+  word-break: break-word;
+}
+:root[data-theme=light] .aboutBioText {
+  color: #2d3139;
+}
+
+.aboutBioEmpty {
+  display: grid;
+  gap: 10px;
+  padding: 8px 0;
+  color: var(--muted, #8b9bb0);
+  font-size: 14px;
+}
+
+.aboutBioPromptBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: var(--red, #ff5039);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.aboutBioPromptBtn:hover {
+  transform: translateY(-1px);
+  opacity: 0.93;
+}
+
+/* 2. Details Grid (4 Tiles) */
+.aboutDetailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 600px) {
+  .aboutDetailsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.aboutDetailCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--profile-card, #111822);
+  border: 1px solid var(--profile-line, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+:root[data-theme=light] .aboutDetailCard {
+  background: #ffffff;
+  border-color: #e4dfd6;
+  box-shadow: 0 4px 16px rgba(32, 28, 20, 0.03);
+}
+.aboutDetailCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 80, 57, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.aboutDetailIconWrap {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex: none;
+  background: rgba(255, 80, 57, 0.08);
+  color: var(--red, #ff5039);
+  border: 1px solid rgba(255, 80, 57, 0.2);
+  font-size: 17px;
+}
+
+.aboutDateBadge, .aboutRepBadge {
+  font-weight: 800;
+  line-height: 1;
+}
+
+.aboutDetailContent {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.aboutDetailLabel {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--muted, #8b9bb0);
+  text-transform: uppercase;
+}
+
+.aboutDetailValue {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--ink, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:root[data-theme=light] .aboutDetailValue {
+  color: #16191f;
+}
+
+.aboutDetailMuted {
+  font-size: 13.5px;
+  color: var(--muted, #8b9bb0);
+  font-weight: 500;
+}
+
+.aboutActionLink {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red, #ff5039);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+.aboutActionLink:hover {
+  text-decoration: underline;
+}
+
+.aboutLinkAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14.5px;
+  font-weight: 750;
+  color: var(--red, #ff5039);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aboutLinkAction:hover {
+  text-decoration: underline;
+}
+
+.aboutReputationRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.aboutRankPill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.14);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* 3. Section Blocks */
+.aboutSectionBlock {
+  background: var(--profile-card, #111822);
+  border: 1px solid var(--profile-line, rgba(255, 255, 255, 0.1));
+  border-radius: 20px;
+  padding: 24px 28px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+}
+:root[data-theme=light] .aboutSectionBlock {
+  background: #ffffff;
+  border-color: #e4dfd6;
+  box-shadow: 0 6px 24px rgba(32, 28, 20, 0.03);
+}
+
+.aboutSectionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.aboutSectionHead h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink, #fff);
+  letter-spacing: -0.02em;
+}
+:root[data-theme=light] .aboutSectionHead h3 {
+  color: #16191f;
+}
+
+.aboutCountBadge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.08));
+  color: var(--muted, #8b9bb0);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+}
+
+.aboutSkillsWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aboutSkillChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.05));
+  color: var(--ink, #e4ecf6);
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+  transition: all 0.15s ease;
+}
+:root[data-theme=light] .aboutSkillChip {
+  background: #f5f2eb;
+  border-color: #ded8cf;
+  color: #27272a;
+}
+.aboutSkillChip:hover {
+  border-color: var(--red, #ff5039);
+  color: var(--red, #ff5039);
+  transform: translateY(-1px);
+}
+.aboutSkillHash {
+  color: var(--red, #ff5039);
+  font-weight: 800;
+}
+
+.aboutSocialRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.aboutSocialBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 750;
+  text-decoration: none;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.05));
+  color: var(--ink, #fff);
+  border: 1.5px solid var(--line, rgba(255, 255, 255, 0.1));
+  transition: all 0.18s ease;
+  text-transform: capitalize;
+}
+:root[data-theme=light] .aboutSocialBtn {
+  background: #f8f6f2;
+  border-color: #ded8cf;
+  color: #18181b;
+}
+.aboutSocialBtn:hover {
+  background: var(--red, #ff5039);
+  border-color: var(--red, #ff5039);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px var(--red-glow, rgba(255, 80, 57, 0.3));
+}
+
+/* 4. Achievements Grid in About */
+.aboutAchievementsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 640px) {
+  .aboutAchievementsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.aboutAchievementCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.035));
+  border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+  transition: all 0.15s ease;
+}
+:root[data-theme=light] .aboutAchievementCard {
+  background: #faf8f5;
+  border-color: #e5e0d7;
+}
+.aboutAchievementCard:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 80, 57, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.aboutAchievementIcon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex: none;
+  background: rgba(255, 80, 57, 0.08);
+  border: 1px solid rgba(255, 80, 57, 0.18);
+}
+
+.aboutAchievementInfo {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.aboutAchievementInfo h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--ink, #fff);
+}
+:root[data-theme=light] .aboutAchievementInfo h4 {
+  color: #18181b;
+}
+
+.aboutAchievementInfo p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted, #8b9bb0);
+}
+
+.aboutUnlockedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  flex: none;
+}
+:root[data-theme=dark] .aboutUnlockedBadge {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.3);
+}
 

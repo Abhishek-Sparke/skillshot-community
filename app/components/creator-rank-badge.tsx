@@ -67,14 +67,19 @@ export default function CreatorRankBadge({ rank, size = 'md', className = '', on
     }
   };
 
-  const accessibleLabel = `${info.label}${level ? `, Level ${level}` : ''} — Creator Rank`;
-  return <IconBadge
-    className={`creatorRankBadge ${info.badgeClass} size-${size} ${className}`}
-    size={size === 'sm' ? 'compact' : size === 'lg' ? 'hero' : 'profile'}
-    tooltip={accessibleLabel}
-    ariaLabel={onClick ? `Open ${accessibleLabel}` : accessibleLabel}
-    onClick={onClick}
-  >
-    <span className="rankIconContainer">{renderIcon()}</span>
-  </IconBadge>;
+  const accessibleLabel = `${info.label} Creator Rank${level ? `, Level ${level}` : ''}`;
+  return (
+    <IconBadge
+      className={`creatorRankBadge ${info.badgeClass} size-${size} ${className}`}
+      size={size === 'sm' ? 'compact' : size === 'lg' ? 'hero' : 'profile'}
+      tooltip={`${info.label} — Creator Rank`}
+      tooltipTitle={info.label}
+      tooltipSubtitle="Creator Rank"
+      level={level}
+      ariaLabel={onClick ? `Open ${accessibleLabel}` : accessibleLabel}
+      onClick={onClick}
+    >
+      <span className="rankIconContainer">{renderIcon()}</span>
+    </IconBadge>
+  );
 }

@@ -1,5 +1,6 @@
 import { getReadyDb } from '../../../lib/db';
 import { requirePrincipal } from '../../../lib/authz';
+import { syncCollectionPosts } from '../../../lib/collection-schema';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -17,7 +18,14 @@ export async function GET(request: Request) {
 
   const collections = await sql.query(`
     SELECT c.id, c.user_id, c.name, c.description, c.cover_url, c.is_private, c.is_featured, c.position, c.created_at,
-      (SELECT COUNT(*) FROM collection_posts cp JOIN posts p ON p.id = cp.post_id WHERE cp.collection_id = c.id AND p.status='VISIBLE') AS post_count
+      (SELECT COUNT(*) FROM collection_posts cp JOIN posts p ON p.id = cp.post_id WHERE cp.collection_id = c.id AND p.status='VISIBLE') AS post_count,
+      COALESCE(
+        c.cover_url,
+        (SELECT CASE WHEN lower(p.image_type) = 'image/gif' THEN '/api/images/' || p.id ELSE '/api/images/' || p.id || '?variant=thumbnail' END
+         FROM collection_posts cp JOIN posts p ON p.id = cp.post_id
+         WHERE cp.collection_id = c.id AND p.status = 'VISIBLE'
+         ORDER BY cp.position ASC, cp.created_at DESC LIMIT 1)
+      ) AS folder_cover
     FROM collections c
     WHERE c.user_id = $1 ${isOwner ? '' : 'AND c.is_private = false'}
     ORDER BY c.position ASC, c.created_at DESC
@@ -29,7 +37,7 @@ export async function GET(request: Request) {
       userId: String(col.user_id),
       name: String(col.name),
       description: String(col.description || ''),
-      coverUrl: col.cover_url ? String(col.cover_url) : null,
+      coverUrl: col.folder_cover ? String(col.folder_cover) : null,
       isPrivate: Boolean(col.is_private),
       isFeatured: Boolean(col.is_featured),
       position: Number(col.position),
@@ -64,6 +72,11 @@ export async function POST(request: Request) {
     `, [user.id, name, description, coverUrl, isPrivate, isFeatured, nextPos]);
 
     const row = inserted[0];
+    await syncCollectionPosts(sql, String(row.id), user.id, body.postIds);
+    const postCountRows = await sql.query(
+      `SELECT COUNT(*) AS post_count FROM collection_posts cp JOIN posts p ON p.id = cp.post_id WHERE cp.collection_id = $1 AND p.status='VISIBLE'`,
+      [row.id],
+    );
     return Response.json({
       collection: {
         id: String(row.id),
@@ -74,7 +87,7 @@ export async function POST(request: Request) {
         isPrivate: Boolean(row.is_private),
         isFeatured: Boolean(row.is_featured),
         position: Number(row.position),
-        postCount: 0,
+        postCount: Number(postCountRows[0]?.post_count || 0),
         createdAt: new Date(row.created_at as string).getTime(),
       },
     }, { status: 201 });

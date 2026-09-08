@@ -49,3 +49,21 @@ const ROLE_RANK: Record<UserRole, number> = { OWNER: 5, ADMIN: 4, HEAD_MODERATOR
 export function canModerateUser(actor: UserRole, target: UserRole) {
   return actor !== target && ROLE_RANK[actor] > ROLE_RANK[target];
 }
+
+export function getStaffEffectClass(role?: UserRole | string | null): string {
+  if (!role || role === 'USER') return '';
+  switch (role) {
+    case 'OWNER':
+      return 'staff-effect-owner';
+    case 'ADMIN':
+      return 'staff-effect-admin';
+    case 'HEAD_MODERATOR':
+      return 'staff-effect-head_moderator';
+    case 'MODERATOR':
+      return 'staff-effect-moderator';
+    case 'TRUSTED_CONTRIBUTOR':
+      return 'staff-effect-trusted_contributor';
+    default:
+      return '';
+  }
+}

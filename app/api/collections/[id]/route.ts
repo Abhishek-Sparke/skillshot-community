@@ -1,5 +1,6 @@
 import { getReadyDb } from '../../../../lib/db';
 import { requirePrincipal } from '../../../../lib/authz';
+import { syncCollectionPosts } from '../../../../lib/collection-schema';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -65,7 +66,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const user = auth.principal;
 
   const sql = await getReadyDb();
-  const existing = await sql.query(`SELECT user_id FROM collections WHERE id = $1 LIMIT 1`, [id]);
+  const existing = await sql.query(`SELECT * FROM collections WHERE id = $1 LIMIT 1`, [id]);
   if (!existing.length) return Response.json({ error: 'Collection not found' }, { status: 404 });
   if (existing[0].user_id !== user.id) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
@@ -102,17 +103,24 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       values.push(body.coverUrl ? String(body.coverUrl) : null);
     }
 
-    if (!updates.length) return Response.json({ error: 'No updates provided' }, { status: 400 });
+    const hasPostIds = Array.isArray(body.postIds);
+    if (!updates.length && !hasPostIds) return Response.json({ error: 'No updates provided' }, { status: 400 });
 
-    updates.push(`updated_at = now()`);
-    values.push(id);
+    let row = existing[0];
+    if (updates.length) {
+      updates.push(`updated_at = now()`);
+      values.push(id);
+      const updated = await sql.query(
+        `UPDATE collections SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
+        values
+      );
+      row = updated[0];
+    } else {
+      const latest = await sql.query(`SELECT * FROM collections WHERE id = $1 LIMIT 1`, [id]);
+      row = latest[0];
+    }
 
-    const updated = await sql.query(
-      `UPDATE collections SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
-      values
-    );
-
-    const row = updated[0];
+    if (hasPostIds) await syncCollectionPosts(sql, id, user.id, body.postIds);
     return Response.json({
       collection: {
         id: String(row.id),

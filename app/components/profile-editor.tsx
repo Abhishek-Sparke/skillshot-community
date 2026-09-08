@@ -25,8 +25,16 @@ const MAX_SOURCE_BANNER_SIZE = 5 * 1024 * 1024;
 const AVATAR_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 const BANNER_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
-export default function ProfileEditor({ profile, posts }: { profile: EditorProfile; posts: EditorPost[] }) {
-  const [activeTab, setActiveTab] = useState<'info' | 'appearance'>('info');
+export default function ProfileEditor({
+  profile,
+  posts,
+  initialTab = 'info',
+}: {
+  profile: EditorProfile;
+  posts: EditorPost[];
+  initialTab?: 'info' | 'appearance';
+}) {
+  const [activeTab, setActiveTab] = useState<'info' | 'appearance'>(initialTab);
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [avatarPreview, setAvatarPreview] = useState(profile.avatarUrl);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -325,6 +333,28 @@ export default function ProfileEditor({ profile, posts }: { profile: EditorProfi
         </div>
       ) : (
         <div className="infoSection">
+          <div className="editorMediaShortcutCard">
+            <div className="editorMediaShortcutPreview">
+              <div className="editorMediaShortcutAvatar">
+                {avatarPreview && !removeAvatar ? (
+                  <img src={avatarPreview} alt="Avatar" className="animatedPfp" />
+                ) : (
+                  <span>{initials(displayName)}</span>
+                )}
+              </div>
+              <div className="editorMediaShortcutMeta">
+                <strong>Profile Picture & Banner</strong>
+                <span>Personalize your avatar and banner (GIF or static image)</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="secondary editorMediaShortcutBtn"
+              onClick={() => setActiveTab('appearance')}
+            >
+              Edit PFP & Banner →
+            </button>
+          </div>
           <label>Display name<input required name="displayName" maxLength={80} value={displayName} onChange={event => setDisplayName(event.target.value)}/></label>
           <label>Username<span className="inputPrefix"><b>@</b><input required name="username" maxLength={30} pattern="[a-zA-Z0-9_-]+" title="Use letters, numbers, underscores, or hyphens." defaultValue={profile.username}/></span></label>
           <label>Professional bio<textarea name="bio" maxLength={500} defaultValue={profile.bio} placeholder="What do you create, and what are you great at?"/></label>
