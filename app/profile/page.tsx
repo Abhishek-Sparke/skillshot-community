@@ -11,5 +11,5 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
   if (!user) redirect(chatGPTSignInPath('/profile'));
   const profile = await ensureUser(user);
   const { saved, tab } = await searchParams;
-  return <><PublicNavbar returnTo="/profile"/><CreatorProfile username={String(profile.username)} saved={saved === '1'} initialTab={tab === 'saved' ? 'saved' : tab === 'liked' ? 'liked' : tab === 'about' ? 'about' : 'skillshots'} /></>;
+  return <><PublicNavbar returnTo="/profile"/><CreatorProfile username={String(profile.username)} saved={saved === '1'} initialTab={tab === 'saved' ? 'saved' : tab === 'liked' ? 'liked' : tab === 'about' ? 'about' : tab === 'skillshots' ? 'skillshots' : 'overview'} /></>;
 }
