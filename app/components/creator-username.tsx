@@ -108,11 +108,13 @@ export default function CreatorUsername({
     >
       {layout === 'profile' ? (
         <>
-          <span className="creatorProfileNameRow">{nameElement}</span>
-          <span className="creatorProfileMetaRow">
-            <span className="creatorProfileHandle">@{username}</span>
+          <span className="creatorProfileNameRow">
+            {nameElement}
             {rankBadge}
             {roleBadge}
+          </span>
+          <span className="creatorProfileMetaRow">
+            <span className="creatorProfileHandle">@{username}</span>
           </span>
         </>
       ) : (

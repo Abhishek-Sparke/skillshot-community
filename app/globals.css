@@ -342,10 +342,351 @@ footer a:hover { color:var(--red); }
 .profileDivider { border:0; border-top:1px solid var(--line); margin:10px 0 28px; }
 .profileEditor form { display:grid; gap:18px; }
 .formNotice { padding:12px 14px; border-radius:9px; background:#fff0ed; }
+.editorSubTabs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.editorSubTab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface, #fff);
+  color: var(--muted, #666);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  min-height: 38px;
+}
+.editorSubTab:hover {
+  color: var(--ink, #111);
+  border-color: var(--ink, #111);
+  background: var(--surface-soft, #f7f5f0);
+}
+.editorSubTab.active {
+  background: var(--ink, #111) !important;
+  color: #fff !important;
+  border-color: var(--ink, #111) !important;
+}
+:root[data-theme=dark] .editorSubTab {
+  background: var(--surface);
+  color: var(--muted);
+  border-color: var(--line);
+}
+:root[data-theme=dark] .editorSubTab:hover {
+  background: var(--surface-soft);
+  color: var(--ink);
+  border-color: var(--line);
+}
+:root[data-theme=dark] .editorSubTab.active {
+  background: var(--solid) !important;
+  color: var(--on-solid) !important;
+  border-color: var(--solid) !important;
+}
+.appearanceSection {
+  display: grid;
+  gap: 18px;
+}
+.appearanceLivePreview {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 4px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-soft, #f7f5f0);
+  overflow: hidden;
+}
+.appearanceLivePreview h4 {
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.previewCoverWrap {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  border-radius: 12px;
+  overflow: visible;
+  background: linear-gradient(125deg, #20201d 0%, #34322d 52%, #ff5b42 145%);
+}
+.previewBannerImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+.previewBannerFallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  font: 800 11px/1 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: 0.2em;
+}
+.previewBannerOverlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+}
+.previewAvatarWrap {
+  position: absolute;
+  left: 16px;
+  bottom: -26px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid var(--surface, #fff);
+  background: #eee2d5;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  z-index: 2;
+}
+.previewAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.previewAvatarFallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.previewIdentityRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 32px 12px 2px;
+  min-width: 0;
+}
+.previewIdentityRow strong {
+  font-size: 15px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.previewIdentityRow span {
+  font-size: 12.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.appearanceFieldset {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px 20px;
+  background: var(--surface, #fff);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+.appearanceFieldset legend {
+  padding: 0 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.appearanceHint {
+  margin: 4px 0 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.appearanceToolsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.uploadToolBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  box-sizing: border-box;
+  white-space: nowrap;
+  background: var(--ink, #111);
+  color: #fff;
+  border: 0;
+}
+.uploadToolBtn:hover {
+  opacity: 0.92;
+}
+.uploadToolBtn input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  font-size: 0;
+}
+.appearanceToolsRow .quietButton {
+  border: 0;
+  background: transparent;
+  color: #b33;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+.appearanceToolsRow .quietButton:hover {
+  text-decoration: underline;
+}
+.editorMediaShortcutCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft, #f7f5f0);
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.editorMediaShortcutPreview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.editorMediaShortcutAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  background: #eee2d5;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.editorMediaShortcutAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.editorMediaShortcutAvatar span {
+  font-size: 14px;
+  font-weight: 800;
+}
+.editorMediaShortcutMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.editorMediaShortcutMeta strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+.editorMediaShortcutMeta span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.editorMediaShortcutBtn {
+  min-height: 38px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+:root[data-theme=dark] .appearanceLivePreview,
+:root[data-theme=dark] .editorMediaShortcutCard {
+  background: var(--surface-soft);
+  border-color: var(--line);
+}
+:root[data-theme=dark] .previewAvatarWrap {
+  border-color: var(--surface);
+  background: var(--surface-soft);
+}
+:root[data-theme=dark] .previewAvatarFallback,
+:root[data-theme=dark] .editorMediaShortcutAvatar span {
+  color: var(--ink);
+}
+:root[data-theme=dark] .previewIdentityRow strong,
+:root[data-theme=dark] .editorMediaShortcutMeta strong {
+  color: var(--ink);
+}
+:root[data-theme=dark] .previewIdentityRow span,
+:root[data-theme=dark] .editorMediaShortcutMeta span {
+  color: var(--muted);
+}
+:root[data-theme=dark] .appearanceFieldset {
+  background: var(--surface);
+  border-color: var(--line);
+}
+:root[data-theme=dark] .appearanceFieldset legend {
+  color: var(--ink);
+}
+:root[data-theme=dark] .appearanceHint {
+  color: var(--muted);
+}
+:root[data-theme=dark] .uploadToolBtn {
+  background: var(--solid) !important;
+  color: var(--on-solid) !important;
+}
 .inputPrefix { display:flex; align-items:center; overflow:hidden; border:1px solid var(--line); border-radius:9px; background:#faf9f6; }
 .inputPrefix b { padding-left:14px; color:#888; }
 .inputPrefix input { flex:1; min-width:0; border:0!important; }
-.editorActions { display:flex; align-items:center; gap:16px; margin-top:4px; }
+.editorActions { display:flex; align-items:center; gap:16px; margin-top:8px; }
+.editorActions .primary {
+  min-height: 42px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.editorActions .quietButton {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .quietButton { color:#69655e; font-weight:800; text-decoration:none; }
 .avatarEditor,.socialEditor,.featuredEditor { margin:0; border:1px solid var(--line); border-radius:13px; padding:18px; }
 .avatarEditor legend,.socialEditor legend,.featuredEditor legend { padding:0 7px; font-size:13px; font-weight:900; }
@@ -559,15 +900,39 @@ footer a:hover { color:var(--red); }
   .avatarPreview { width:68px; height:68px; }
   .removeAvatarButton { grid-column:1/-1; width:max-content; padding:0; }
   .featuredChoices { grid-template-columns:1fr; }
-  .detailNav { gap:15px; }
+  .detailNav { gap:15px; flex-wrap:wrap; }
   .downloadButton { width:100%; text-align:center; }
-  .editorActions { align-items:stretch; flex-direction:column; }
-  .editorActions .primary,.quietButton { width:100%; text-align:center; }
+  .editorActions { align-items:stretch; flex-direction:column; gap:10px; width:100%; }
+  .editorActions .primary,.editorActions .quietButton { width:100%; text-align:center; justify-content:center; }
   .imageLightbox { padding:10px; }
   .imageLightboxPanel { width:100%; max-height:96vh; border-radius:13px; }
   .imageLightboxPanel>img { max-height:calc(96vh - 56px); }
   .imageLightboxTop { min-height:56px; padding-left:14px; }
 }
+
+@media(max-width:480px) {
+  .formPage { padding:16px 12px; }
+  .formCard,.detail { padding:20px 14px; border-radius:16px; }
+  .editorSubTabs { gap:8px; }
+  .editorSubTab { flex:1 1 auto; text-align:center; justify-content:center; padding:8px 14px; font-size:13px; }
+  .appearanceLivePreview { padding:12px; border-radius:14px; }
+  .previewCoverWrap { height:110px; }
+  .previewIdentityRow { flex-direction:column; align-items:flex-start; gap:8px; }
+  .appearanceToolsRow { flex-direction:column; align-items:stretch; gap:10px; width:100%; }
+  .uploadToolBtn { width:100%; justify-content:center; text-align:center; }
+  .appearanceToolsRow .quietButton { width:100%; text-align:center; justify-content:center; }
+}
+
+@media(max-width:380px) {
+  .formPage { padding:12px 8px; }
+  .formCard,.detail { padding:16px 12px; border-radius:12px; }
+  .formCard h1,.detail h1 { font-size:26px; }
+  .detailNav { gap:10px; }
+  .editorSubTab { width:100%; flex:1 1 100%; }
+  .previewCoverWrap { height:95px; }
+  .profileLinks { flex-direction:column; align-items:flex-start; gap:12px; }
+}
+
 
 .roleBadge { display:inline-flex; align-items:center; justify-content:center; flex:none; border-radius:999px; font:800 12px/1 'Plus Jakarta Sans',Arial,sans-serif; vertical-align:middle; position:relative; outline-offset:3px; }
 .roleBadge.compact { width:22px; height:22px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.06); }
@@ -4132,7 +4497,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .profilePage .profileAvatar{align-self:start;width:190px;height:190px;margin-top:-98px;border:6px solid #0d141e;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#292f3b,#111722);box-shadow:0 0 0 3px #ff6688,0 0 35px #ff315c66;color:#fff;font-size:44px;z-index:3}
 .profilePage .profileAvatar img{width:100%;height:100%;object-fit:cover;display:block}
 .profilePage .profileMainInfo{min-width:0;display:grid;gap:9px}
-.profilePage .profileNameLine{min-width:0}.profilePage .creatorProfileIdentity{display:grid;justify-items:start;gap:10px}.profilePage .creatorProfileNameRow{display:flex;align-items:center;min-width:0;font-size:clamp(29px,3vw,42px);font-weight:800;letter-spacing:-.04em;line-height:1.05}.profilePage .creatorProfileMetaRow{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}.profilePage .creatorProfileHandle{color:var(--profile-muted);font-size:15px;font-weight:600}.profilePage .creatorProfileMetaRow .creatorRankBadge{width:auto;height:30px;padding:0 11px;gap:6px;border-radius:999px;background:#201638;border:1px solid #6940a6;color:#bc75ff}.profilePage .creatorProfileMetaRow .rankLabelText{display:inline;font-size:12px;font-weight:800}.profilePage .creatorProfileMetaRow .roleBadge.profile{height:30px;padding:0 12px;border-radius:999px;font-size:12px}.profilePage .profileNameLine .creatorUsernameLink{font-size:inherit}
+.profilePage .profileNameLine{min-width:0}.profilePage .creatorProfileIdentity{display:grid;justify-items:start;gap:10px}.profilePage .creatorProfileNameRow{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;font-size:clamp(29px,3vw,42px);font-weight:800;letter-spacing:-.04em;line-height:1.05}.profilePage .creatorProfileNameRow .creatorRankBadge,.profilePage .creatorProfileNameRow .roleBadge{flex-shrink:0;vertical-align:middle}.profilePage .creatorProfileMetaRow{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}.profilePage .creatorProfileHandle{color:var(--profile-muted);font-size:15px;font-weight:600}.profilePage .creatorProfileMetaRow .creatorRankBadge{width:auto;height:30px;padding:0 11px;gap:6px;border-radius:999px;background:#201638;border:1px solid #6940a6;color:#bc75ff}.profilePage .creatorProfileMetaRow .rankLabelText{display:inline;font-size:12px;font-weight:800}.profilePage .creatorProfileMetaRow .roleBadge.profile{height:30px;padding:0 12px;border-radius:999px;font-size:12px}.profilePage .profileNameLine .creatorUsernameLink{font-size:inherit}
 .profilePage .profileUsername,.profilePage .profileBio{margin:0;color:var(--profile-muted)}
 .profilePage .profileBio{font-size:15px;line-height:1.55;max-width:650px;color:#d6dde8}
 .profilePage .profileDetails{display:flex;gap:20px;flex-wrap:wrap;margin-top:2px;color:var(--profile-muted);font-size:13px}.profilePage .profileDetails a{color:#6fe5ff}
@@ -4445,8 +4810,8 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 :root[data-theme=light] .profilePage .profileStats{background:#faf8f4}
 
 /* Username effects are resolved once in getUsernameEffect: rank for users, staff for staff. */
-.creatorUsernameLink{position:relative;overflow:visible;isolation:isolate;opacity:1}
-.creatorUsernameLink .creatorNameText{position:relative;display:inline-block;overflow:visible;color:inherit;font-weight:750;line-height:inherit}
+.creatorUsernameLink{position:relative;overflow:visible;isolation:isolate;opacity:1;transform:none!important;translate:none!important}
+.creatorUsernameLink .creatorNameText{position:relative;display:inline-block;overflow:visible;color:inherit;font-weight:750;line-height:inherit;transform:none!important;translate:none!important;margin:0!important;flex-shrink:0}
 
 /* Creator Rank effects also provide the matching badge color tokens. */
 .creator-rank-newcomer{--rank-solid:#8b66c9;--rank-glow:#8b66c933}
@@ -4460,18 +4825,20 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .creatorUsernameLink:is(.creator-rank-creator,.creator-rank-rising,.creator-rank-skilled,.creator-rank-elite,.creator-rank-master,.creator-rank-legend) .creatorNameText{
   color:var(--rank-solid);
   background-image:var(--rank-text-gradient);
-  background-position:100% 50%;
-  background-size:260% 100%;
-  background-repeat:no-repeat;
+  background-position:0% 50%;
+  background-size:200% 100%;
+  background-repeat:repeat;
   background-clip:text;
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   filter:drop-shadow(0 0 var(--rank-glow-size,4px) var(--rank-glow));
-  animation:creatorRankTextFlow var(--rank-text-speed,4.8s) ease-in-out infinite;
+  animation:creatorRankTextFlow var(--rank-text-speed,4.8s) linear infinite;
   will-change:background-position;
+  transform:none!important;
+  translate:none!important;
 }
 :root[data-theme=light] .creatorUsernameLink.creator-rank-newcomer .creatorNameText{color:#fff;text-shadow:0 1px 2px #000,0 0 5px #000}
-@keyframes creatorRankTextFlow{0%,12%{background-position:100% 50%}55%{background-position:18% 50%}88%,100%{background-position:-90% 50%}}
+@keyframes creatorRankTextFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
 
 /* ==========================================================================
    STAFF ROLE VISUAL EFFECTS (ONLY STAFF ROLES ACTIVATE USERNAME EFFECTS)
@@ -4483,15 +4850,17 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   line-height: inherit;
   color:var(--staff-solid);
   background-image:var(--staff-gradient);
-  background-position:100% 50%;
-  background-size:240% 100%;
-  background-repeat:no-repeat;
+  background-position:0% 50%;
+  background-size:200% 100%;
+  background-repeat:repeat;
   background-clip:text;
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
   filter:drop-shadow(0 0 3px var(--staff-glow));
-  animation:staffUsernameFlow var(--staff-speed,4.4s) ease-in-out infinite;
+  animation:staffUsernameFlow var(--staff-speed,4.4s) linear infinite;
   will-change:background-position;
+  transform:none!important;
+  translate:none!important;
 }
 
 .staff-effect-owner{--staff-solid:#ff765f;--staff-glow:#ff5d4680;--staff-speed:3.8s;--staff-gradient:linear-gradient(105deg,#b82f26 0%,#ff5d46 30%,#ffd3c9 47%,#ff725c 58%,#b82f26 100%)}
@@ -4499,7 +4868,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .staff-effect-head_moderator{--staff-solid:#5caeff;--staff-glow:#328cff80;--staff-speed:3.7s;--staff-gradient:linear-gradient(105deg,#075ba8 0%,#3694ed 29%,#d9f3ff 47%,#62bdff 58%,#075ba8 100%)}
 .staff-effect-moderator{--staff-solid:#2bc9e8;--staff-glow:#21c8e866;--staff-speed:4.8s;--staff-gradient:linear-gradient(105deg,#087d9b 0%,#20b9d8 32%,#d9fbff 48%,#54d9ed 58%,#087d9b 100%)}
 .staff-effect-trusted_contributor{--staff-solid:#34d399;--staff-glow:#24b98266;--staff-speed:5.2s;--staff-gradient:linear-gradient(105deg,#087d58 0%,#25b982 32%,#dffff3 48%,#57dca9 58%,#087d58 100%)}
-@keyframes staffUsernameFlow{0%,15%{background-position:100% 50%}55%{background-position:12% 50%}90%,100%{background-position:-90% 50%}}
+@keyframes staffUsernameFlow{0%{background-position:0% 50%}100%{background-position:200% 50%}}
 
 .creatorRankBadge[class*="creator-rank-"]{position:relative;overflow:visible;color:var(--rank-solid);border-color:color-mix(in srgb,var(--rank-solid) 48%,transparent);background:color-mix(in srgb,var(--rank-solid) 12%,transparent);box-shadow:0 0 var(--badge-glow,0) var(--rank-glow);isolation:isolate}
 .creatorRankBadge[class*="creator-rank-"] .rankIconContainer{position:relative;z-index:1;display:grid;place-items:center;transform-origin:center}

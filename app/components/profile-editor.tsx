@@ -189,6 +189,14 @@ export default function ProfileEditor({
       const error = destination.searchParams.get('error');
       if (error) {
         const messages: Record<string, string> = {
+          username: 'Please choose a valid username.',
+          'username-taken': 'That username is already taken.',
+          website: 'Website must begin with http:// or https://.',
+          social: 'Enter valid GitHub, Instagram, or LinkedIn profile URLs.',
+          'social-github': 'Enter a valid GitHub profile URL.',
+          'social-instagram': 'Enter a valid Instagram profile URL.',
+          'social-linkedin': 'Enter a valid LinkedIn profile URL.',
+          avatar: 'Choose a PNG, JPG, or WebP image. Your saved avatar has a 2 MB maximum and is optimized automatically.',
           'avatar-size': 'Avatar is too large. Please choose an image of 2 MB or less.',
           'avatar-type': 'Please upload a PNG, JPG, WebP, or GIF image.',
           'avatar-rate': 'You have changed your profile picture several times today. Please try again later.',
@@ -200,7 +208,17 @@ export default function ProfileEditor({
           'banner-invalid': "That banner couldn't be read. Please choose another image or GIF.",
           'banner-upload': "Couldn't upload your banner. Please try again.",
           'banner-moderation': 'This banner could not be approved. Try another image or contact the team.',
+          save: 'Your profile could not be saved. Please try again.',
         };
+        if (error === 'username' || error === 'username-taken' || error === 'website' || error.startsWith('social')) {
+          setActiveTab('info');
+          if (error.startsWith('social-')) {
+            const platformKey = error.replace('social-', '') as SocialPlatformKey;
+            setSocialErrors(prev => ({ ...prev, [platformKey]: messages[error] }));
+          }
+        } else if (error.startsWith('avatar') || error.startsWith('banner')) {
+          setActiveTab('appearance');
+        }
         setFeedback(messages[error] || 'Your profile could not be saved. Please check the fields and try again.');
         setBusy(false);
         return;
@@ -233,10 +251,9 @@ export default function ProfileEditor({
         </button>
       </div>
 
-      {activeTab === 'appearance' ? (
-        <div className="appearanceSection">
-          {/* Live Preview Card */}
-          <div className="appearanceLivePreview">
+      <div className="appearanceSection" style={{ display: activeTab === 'appearance' ? 'block' : 'none' }}>
+        {/* Live Preview Card */}
+        <div className="appearanceLivePreview">
             <h4>Live Appearance Preview</h4>
             <div className="previewCoverWrap">
               {bannerPreview && !removeBanner ? (
@@ -331,8 +348,8 @@ export default function ProfileEditor({
             <input type="hidden" name="removeAvatar" value={removeAvatar ? '1' : '0'} />
           </fieldset>
         </div>
-      ) : (
-        <div className="infoSection">
+
+        <div className="infoSection" style={{ display: activeTab === 'info' ? 'block' : 'none' }}>
           <div className="editorMediaShortcutCard">
             <div className="editorMediaShortcutPreview">
               <div className="editorMediaShortcutAvatar">
@@ -379,7 +396,6 @@ export default function ProfileEditor({
             {posts.length ? <div className="featuredChoices">{posts.map(post => <label key={post.id} className={selectedFeatured.includes(post.id) ? 'selected' : ''}><input type="checkbox" name="featuredPost" value={post.id} checked={selectedFeatured.includes(post.id)} onChange={() => toggleFeatured(post.id)}/><span>✓</span><b>{post.title}</b></label>)}</div> : <p>Publish your first Skillshot, then return here to feature your best work.</p>}
           </fieldset>
         </div>
-      )}
 
       <p className="editorFeedback" role="status" aria-live="polite">{feedback}</p>
       {busy && (avatarFile || bannerFile) && (
