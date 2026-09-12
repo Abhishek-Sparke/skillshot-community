@@ -56,7 +56,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     const sql = await getReadyDb();
-    const disc = await sql.query(`SELECT id, is_locked, status FROM discussions WHERE id = $1 LIMIT 1`, [id]);
+    const disc = await sql.query(`SELECT id, user_id, title, is_locked, status FROM discussions WHERE id = $1 LIMIT 1`, [id]);
     if (!disc.length || disc[0].status !== 'VISIBLE') {
       return Response.json({ error: 'Discussion not found' }, { status: 404 });
     }
@@ -80,6 +80,51 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       WHERE id = $1
     `, [id]);
     if(isMeaningfulComment(replyBody))await awardXp({userId:user.id,amount:XP_REWARDS.DISCUSSION_REPLY,eventType:'DISCUSSION_REPLY',reason:'Meaningful discussion reply',actionId:`discussion-reply:${replyId}`,relatedType:'DISCUSSION',relatedId:id});
+
+    const actorName = String(user.profile.display_name || user.profile.username || 'Someone');
+    const discAuthorId = String(disc[0].user_id);
+
+    // 1. Notify discussion author if not replying to own discussion
+    if (discAuthorId !== user.id) {
+      await sql.query(
+        `INSERT INTO notifications (id, user_id, actor_id, category, type, title, body, event_key, target_url, target_id)
+         VALUES ($1, $2, $3, 'discussion', 'DISCUSSION_REPLY', $4, $5, $6, $7, $8)
+         ON CONFLICT (event_key) WHERE event_key IS NOT NULL DO NOTHING`,
+        [
+          crypto.randomUUID(),
+          discAuthorId,
+          user.id,
+          `${actorName} replied to your discussion`,
+          replyBody.slice(0, 160),
+          `disc-reply:${replyId}:${discAuthorId}`,
+          `/discussion/${id}#reply-${replyId}`,
+          id,
+        ]
+      ).catch(() => undefined);
+    }
+
+    // 2. Notify users mentioned in reply (@username)
+    const mentions = Array.from(replyBody.matchAll(/(?:^|\s)@([a-z0-9][a-z0-9_-]{1,29})\b/gi), m => m[1].toLowerCase());
+    const uniqueMentions = [...new Set(mentions)].slice(0, 10);
+    if (uniqueMentions.length > 0) {
+      await sql.query(
+        `INSERT INTO notifications (id, user_id, actor_id, category, type, title, body, event_key, target_url, target_id)
+         SELECT gen_random_uuid()::text, u.id, $1, 'discussion', 'DISCUSSION_MENTION', $2, $3, 'disc-mention:' || $4 || ':' || u.id, $5, $6
+         FROM users u
+         WHERE lower(u.username) = ANY($7::text[]) AND u.status = 'ACTIVE' AND u.id <> $1 AND u.id <> $8
+         ON CONFLICT (event_key) WHERE event_key IS NOT NULL DO NOTHING`,
+        [
+          user.id,
+          `${actorName} mentioned you in a discussion`,
+          replyBody.slice(0, 160),
+          replyId,
+          `/discussion/${id}#reply-${replyId}`,
+          id,
+          uniqueMentions,
+          discAuthorId,
+        ]
+      ).catch(() => undefined);
+    }
 
     return Response.json({
       reply: {

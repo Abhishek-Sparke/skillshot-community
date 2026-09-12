@@ -81,4 +81,84 @@
   .publicNavMobileActions .navMobileUpload,
   .publicNavbar[data-compact=true] .publicNavToggle{width:36px;height:36px}
 }
-@media(prefers-reduced-motion:reduce){.publicNavbar .publicNavLinks,.publicNavToggle span,.navBellLink.hasUnread .navBellIcon,.navBellBadge{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){.publicNavbar .publicNavLinks,.publicNavToggle span,.navBellLink.hasUnread .navBellIcon,.navBellBadge,.notifDropdownPanel,.notifCommentPopover{animation:none!important;transition:none!important}}
+
+/* Notification Dropdown Panel */
+.notifDropdownPanel{position:absolute;top:calc(100% + 10px);right:0;width:380px;max-width:calc(100vw - 24px);background:var(--surface,#fff);border:1px solid var(--line,#e2ded6);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,0.18),0 4px 12px rgba(0,0,0,0.08);z-index:120;display:flex;flex-direction:column;overflow:hidden;color:var(--ink,#171715);animation:notifDropIn .16s cubic-bezier(0.16,1,0.3,1);text-align:left}
+:root[data-theme=dark] .notifDropdownPanel{background:var(--surface,#181716);border-color:var(--line,#2d2a27);box-shadow:0 16px 40px rgba(0,0,0,0.36),0 4px 12px rgba(0,0,0,0.15);color:var(--ink,#edebe8)}
+@keyframes notifDropIn{from{opacity:0;transform:translateY(-6px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* Tabs Header (Discussion | Post | Support) */
+.notifTabsHeader{display:flex;background:var(--surface-soft,rgba(0,0,0,0.03));border-bottom:1px solid var(--line,#e2ded6);position:relative}
+:root[data-theme=dark] .notifTabsHeader{background:var(--surface-secondary,rgba(0,0,0,0.2));border-bottom-color:var(--line,#2d2a27)}
+.notifTabBtn{flex:1;padding:12px 6px;background:transparent;border:0;border-bottom:3px solid transparent;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--muted,#8c8880);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s ease}
+.notifTabBtn:hover{color:var(--ink,#171715);background:rgba(0,0,0,0.02)}
+:root[data-theme=dark] .notifTabBtn:hover{color:var(--ink,#edebe8);background:rgba(255,255,255,0.03)}
+.notifTabBtn.active{color:var(--red,#ff5039);font-weight:700;border-bottom:3px solid var(--red,#ff5039);background:rgba(255,80,57,0.06)}
+.notifTabCountBadge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--red,#ff5039);color:#fff;font-size:10.5px;font-weight:700;line-height:1}
+
+/* Sub-bar: MARK ALL AS READ */
+.notifSubBar{display:flex;justify-content:flex-end;align-items:center;padding:7px 14px;background:var(--surface,#fff);border-bottom:1px solid var(--line,#e2ded6)}
+:root[data-theme=dark] .notifSubBar{background:var(--surface,#181716);border-bottom-color:var(--line,#2d2a27)}
+.notifMarkAllBtn{background:transparent;border:0;color:var(--muted,#8c8880);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;padding:3px 6px;border-radius:4px;transition:color .15s ease}
+.notifMarkAllBtn:hover:not(:disabled){color:var(--ink,#edebe8)}
+.notifMarkAllBtn:disabled{opacity:0.35;cursor:not-allowed}
+
+/* List Container */
+.notifListContainer{max-height:380px;overflow-y:auto;overscroll-behavior:contain}
+.notifLoadingState{padding:30px 20px;text-align:center;font-size:13px;color:var(--muted,#8c8880)}
+.notifEmptyState{padding:40px 20px;text-align:center;color:var(--muted,#8c8880)}
+.notifEmptyIcon{font-size:30px;margin-bottom:10px}
+.notifEmptyTitle{font-size:14px;font-weight:700;color:var(--ink,#edebe8);margin:0 0 4px}
+.notifEmptySubtitle{font-size:12px;line-height:1.45;margin:0}
+
+/* List Items */
+.notifItemsList{display:flex;flex-direction:column}
+.notifItem{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line,rgba(255,255,255,0.06));cursor:pointer;transition:background .15s ease;text-decoration:none;color:inherit;position:relative;outline:none}
+.notifItem:last-child{border-bottom:0}
+.notifItem:hover,.notifItem:focus-visible{background:var(--surface-soft,rgba(255,255,255,0.04))}
+.notifItem.unread{background:rgba(255,80,57,0.04)}
+.notifItem.unread:hover{background:rgba(255,80,57,0.08)}
+
+/* Left Avatar & Icons */
+.notifActorAvatarWrap{flex:0 0 38px;width:38px;height:38px;position:relative}
+.notifActorAvatarImg{width:38px;height:38px;border-radius:50%;object-fit:cover;display:block}
+.notifActorAvatarFallback{width:38px;height:38px;border-radius:50%;background:var(--surface-soft,#2c2925);color:var(--ink,#edebe8);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.notifSupportIconBadge{width:38px;height:38px;border-radius:50%;background:rgba(99,102,241,0.15);color:#818cf8;display:flex;align-items:center;justify-content:center}
+
+/* Item Body */
+.notifItemBody{flex:1 1 auto;min-width:0;font-size:13px;line-height:1.45}
+.notifActorName{font-weight:700;color:var(--ink,#edebe8);margin-right:3px}
+.notifActionText{color:var(--text-secondary,#b3ada6);word-break:break-word}
+.notifRankBadgeInline{display:inline-flex;vertical-align:middle;margin-left:4px}
+.notifItemMeta{font-size:11.5px;color:var(--muted,#8c8880);margin-top:4px}
+
+/* Support Staff Comment & Popover */
+.notifStaffCommentNotice{margin-top:6px;position:relative}
+.notifStaffCommentPreview{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.25);font-size:12px}
+.notifModBadge{font-weight:600;color:#818cf8;white-space:nowrap}
+.notifCommentExcerpt{color:var(--ink,#edebe8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+.notifTooltipTrigger{background:transparent;border:0;cursor:pointer;padding:0 2px;font-size:12px;line-height:1;flex-shrink:0}
+.notifCommentPopover{position:absolute;bottom:calc(100% + 6px);left:0;width:280px;padding:12px;background:var(--surface,#181716);border:1px solid rgba(99,102,241,0.45);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:150;font-size:12px;animation:notifTooltipIn .15s ease-out}
+@keyframes notifTooltipIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.notifCommentPopoverHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-weight:700;color:#818cf8}
+.notifReadOnlyTag{font-size:10px;padding:1px 5px;background:rgba(255,255,255,0.08);border-radius:3px;color:var(--muted,#8c8880)}
+.notifCommentPopoverText{color:var(--ink,#edebe8);margin:0 0 6px;line-height:1.45;white-space:pre-wrap}
+.notifCommentPopoverFooter{font-size:10px;color:var(--muted,#8c8880);border-top:1px solid var(--line,#2d2a27);padding-top:5px}
+
+/* Right side thumbnail & unread dot */
+.notifItemRight{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:6px;margin-left:auto}
+.notifThumbnailWrap{width:40px;height:40px;border-radius:6px;overflow:hidden;background:#000;border:1px solid var(--line,#2d2a27)}
+.notifThumbnailImg{width:100%;height:100%;object-fit:cover;display:block}
+.notifUnreadDot{width:8px;height:8px;border-radius:50%;background:var(--red,#ff5039);box-shadow:0 0 6px var(--red,#ff5039)}
+
+/* Footer */
+.notifDropdownFooter{padding:10px 14px;background:var(--surface-secondary,rgba(0,0,0,0.15));border-top:1px solid var(--line,#2d2a27);text-align:center}
+.notifViewAllLink{font-size:12.5px;font-weight:600;color:var(--muted,#8c8880);text-decoration:none;transition:color .15s ease;display:inline-flex;align-items:center;gap:4px}
+.notifViewAllLink:hover{color:var(--red,#ff5039)}
+
+/* Mobile Responsive Dropdown */
+@media(max-width:480px){
+  .notifDropdownPanel{position:fixed;top:68px;left:10px;right:10px;width:auto;max-width:none;max-height:calc(100dvh - 80px)}
+}
+

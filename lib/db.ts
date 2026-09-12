@@ -95,6 +95,15 @@ export async function getReadyDb() {
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_reports_status_created ON reports(status, created_at)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_moderation_status_created ON moderation_queue(status, created_at)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC)`);
+    await sql.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS category text NOT NULL DEFAULT 'post'`);
+    await sql.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS actor_id text REFERENCES users(id) ON DELETE SET NULL`);
+    await sql.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS target_id text`);
+    await sql.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS thumbnail_url text`);
+    await sql.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS staff_comment text`);
+    await sql.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS comment_visibility text NOT NULL DEFAULT 'INTERNAL'`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_category ON notifications(user_id, category, created_at DESC)`);
+    await sql.query(`UPDATE notifications SET category = 'discussion' WHERE (type LIKE 'DISCUSSION%' OR target_url LIKE '/discussion/%' OR target_url LIKE '/announcements/%') AND category <> 'discussion'`);
+    await sql.query(`UPDATE notifications SET category = 'support' WHERE (type IN ('NEW_REPORT','NEW_APPEAL','SUPPORT','CASE_ASSIGNED','SUPPORT_ACCEPTED','SUPPORT_DISMISSED','SUPPORT_STAFF_COMMENT') OR target_url LIKE '/support/%' OR target_url LIKE '/admin/reports%') AND category <> 'support'`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_appeals_user_created ON appeals(user_id, created_at DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_upload_events_created ON upload_events(created_at DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_cleanup_due ON storage_cleanup_queue(cleanup_after) WHERE deleted_at IS NULL`);

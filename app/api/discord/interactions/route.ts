@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getReadyDb } from '../../../../lib/db';
 import { calculateLevelProgress, calculateRankProgress, rankFromXp } from '../../../../lib/creator-rank';
-import { syncMemberCreatorRank } from '../../../../lib/discord-service';
+import { syncMemberCreatorRank, createDiscordVerificationSession, callDiscordApi } from '../../../../lib/discord-service';
+import { DISCORD_CLIENT_ID } from '../../../../lib/discord-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -204,28 +205,103 @@ export async function POST(request: Request) {
   // 3. Interaction Type 3: MESSAGE_COMPONENT (Buttons, etc.)
   if (interaction.type === 3) {
     const customId = String(interaction.data?.custom_id || '');
+    const callerId = String(interaction.member?.user?.id || interaction.user?.id || '');
+
     if (customId === 'skillshot_rank_verify') {
+      if (!callerId) {
+        return NextResponse.json({
+          type: 4,
+          data: { content: '❌ Unable to identify your Discord user ID. Please try again.', flags: 64 },
+        });
+      }
+
+      const sql = await getReadyDb();
+      const existing = await sql.query(
+        `SELECT u.username, u.display_name, u.creator_xp, u.creator_rank
+         FROM discord_connections dc
+         JOIN users u ON u.id = dc.skillshot_user_id
+         WHERE dc.discord_user_id = $1
+         LIMIT 1`,
+        [callerId]
+      );
+
+      // Existing verified user
+      if (existing.length) {
+        const user = existing[0];
+        const xp = Number(user.creator_xp || 0);
+        const rank = rankFromXp(xp);
+        await syncMemberCreatorRank(callerId, rank.id);
+
+        if (interaction.token) {
+          setTimeout(() => {
+            callDiscordApi(`/webhooks/${DISCORD_CLIENT_ID}/${interaction.token}/messages/@original`, { method: 'DELETE' }).catch(() => {});
+          }, 10000);
+        }
+
+        return NextResponse.json({
+          type: 4,
+          data: {
+            content:
+              '✅ **Discord Verified**\n\n' +
+              'Your Skillshot account has been successfully verified.\n\n' +
+              `**Creator Rank:**\n${rank.label}\n\n` +
+              `**Discord Role:**\n${rank.label}\n\n` +
+              'Your role has been assigned successfully.\n' +
+              'Your Discord role will automatically update when your Skillshot rank changes.',
+            flags: 64, // Ephemeral: visible ONLY to the user who clicked the button
+          },
+        });
+      }
+
+      // New / Unconnected user: preserve original Discord user ID in server-side verification session
+      const vt = await createDiscordVerificationSession(callerId, interaction.token);
+      const verifyUrl = `https://skillshot-community.vercel.app/api/discord/authorize?vt=${encodeURIComponent(vt)}`;
+
       return NextResponse.json({
         type: 4,
         data: {
           content:
             '🏆 **Skillshot Rank Verification**\n\n' +
-            'Click below to securely connect your Skillshot account. Your Discord role will be assigned automatically based on your actual Creator Rank:\n\n' +
-            '🔗 https://skillshot-community.vercel.app/api/discord/authorize',
-          flags: 64, // Ephemeral so only the clicking user sees it
+            'Connect your Skillshot account to Discord to verify your Creator Rank and automatically receive your matching Discord role.\n\n' +
+            '1. Click **"Verify Skillshot"** below\n' +
+            '2. Sign in or sign up on Skillshot\n' +
+            '3. Confirm your Discord account\n' +
+            '4. Your Creator Rank will be verified and role assigned instantly!',
+          flags: 64, // Ephemeral
           components: [
             {
               type: 1,
               components: [
                 {
                   type: 2,
-                  style: 5,
+                  style: 5, // Link button
                   label: '🔗 Verify Skillshot',
-                  url: 'https://skillshot-community.vercel.app/api/discord/authorize',
+                  url: verifyUrl,
                 },
               ],
             },
           ],
+        },
+      });
+    }
+
+    if (customId === 'skillshot_how_it_works') {
+      return NextResponse.json({
+        type: 4,
+        data: {
+          content:
+            'ℹ️ **How Skillshot Creator Ranks Work**\n\n' +
+            'Skillshot has 7 Creator Ranks based entirely on XP earned on the platform:\n' +
+            '• **Newcomer** (0 - 499 XP)\n' +
+            '• **Creator** (500 - 1,499 XP)\n' +
+            '• **Rising Creator** (1,500 - 3,499 XP)\n' +
+            '• **Skilled Creator** (3,500 - 6,999 XP)\n' +
+            '• **Elite Creator** (7,000 - 11,999 XP)\n' +
+            '• **Master Creator** (12,000 - 19,999 XP)\n' +
+            '• **Legend** (20,000+ XP)\n\n' +
+            'Earn XP by sharing Skillshots, getting likes, meaningful comments, and completing achievements.\n' +
+            'Your Discord role syncs automatically whenever you rank up!',
+          flags: 64, // Ephemeral
         },
       });
     }

@@ -40,5 +40,14 @@ export const DISCORD_MIGRATION = [
     status text NOT NULL DEFAULT 'ACTIVE',
     last_error text
   )`,
-  `CREATE INDEX IF NOT EXISTS idx_discord_verif_channel ON discord_verification_messages(channel_id)`
+  `CREATE INDEX IF NOT EXISTS idx_discord_verif_channel ON discord_verification_messages(channel_id)`,
+
+  `CREATE TABLE IF NOT EXISTS discord_verification_sessions (
+    token text PRIMARY KEY,
+    discord_user_id text NOT NULL,
+    interaction_token text,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    expires_at timestamptz NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_discord_verif_sess_exp ON discord_verification_sessions(expires_at)`
 ];

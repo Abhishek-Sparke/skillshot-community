@@ -8,7 +8,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   const user = auth.principal;
 
   const sql = await getReadyDb();
-  const disc = await sql.query(`SELECT id FROM discussions WHERE id = $1 AND status = 'VISIBLE' LIMIT 1`, [id]);
+  const disc = await sql.query(`SELECT id, user_id, title FROM discussions WHERE id = $1 AND status = 'VISIBLE' LIMIT 1`, [id]);
   if (!disc.length) {
     return Response.json({ error: 'Discussion not found' }, { status: 404 });
   }
@@ -31,6 +31,25 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
     `, [id, user.id]);
     await sql.query(`UPDATE discussions SET reaction_count = reaction_count + 1 WHERE id = $1`, [id]);
     reacted = true;
+
+    if (disc[0].user_id !== user.id) {
+      const actorName = String(user.profile?.display_name || user.profile?.username || 'Someone');
+      await sql.query(
+        `INSERT INTO notifications (id, user_id, actor_id, category, type, title, body, event_key, target_url, target_id)
+         VALUES ($1, $2, $3, 'discussion', 'DISCUSSION_LIKE', $4, $5, $6, $7, $8)
+         ON CONFLICT (event_key) WHERE event_key IS NOT NULL DO NOTHING`,
+        [
+          crypto.randomUUID(),
+          disc[0].user_id,
+          user.id,
+          `${actorName} liked your discussion`,
+          disc[0].title ? String(disc[0].title).slice(0, 120) : 'Your discussion received a like.',
+          `disc-like:${id}:${user.id}`,
+          `/discussion/${id}`,
+          id,
+        ]
+      ).catch(() => undefined);
+    }
   }
 
   const countRow = await sql.query(`SELECT reaction_count FROM discussions WHERE id = $1`, [id]);

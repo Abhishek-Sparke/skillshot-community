@@ -93,6 +93,18 @@ export async function GET(request: Request) {
   const discordUserId = String(discordUser.id);
   const discordUsername = String(discordUser.global_name || discordUser.username);
 
+  // 4b. Enforce Discord User ID match if initiated via Discord button
+  const boundDiscordUserId = cookieStore.get('discord_bound_user_id')?.value;
+  cookieStore.delete('discord_bound_user_id');
+
+  if (boundDiscordUserId && boundDiscordUserId !== discordUserId) {
+    return redirectSettings(
+      `error=${encodeURIComponent(
+        'The Discord account signed into your browser does not match the Discord user who clicked Verify in Discord.'
+      )}`
+    );
+  }
+
   // 5. Enforce unique mapping:
   // - Prevent one Discord account from being linked to multiple Skillshot accounts
   // - Prevent one Skillshot account from being linked to multiple Discord accounts

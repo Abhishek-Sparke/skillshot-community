@@ -2,17 +2,20 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { requirePrincipal } from '../../../../lib/authz';
 import { DISCORD_CLIENT_ID } from '../../../../lib/discord-config';
+import { getDiscordVerificationSession } from '../../../../lib/discord-service';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const vt = url.searchParams.get('vt')?.trim();
+
   const auth = await requirePrincipal();
   if ('error' in auth) {
-    const url = new URL(request.url);
-    return NextResponse.redirect(new URL(`/signin?callbackUrl=${encodeURIComponent('/settings/connections')}`, url.origin));
+    const callbackPath = vt ? `/api/discord/authorize?vt=${encodeURIComponent(vt)}` : '/settings/connections';
+    return NextResponse.redirect(new URL(`/signin?callbackUrl=${encodeURIComponent(callbackPath)}`, url.origin));
   }
 
-  const url = new URL(request.url);
   // Default to the official registered redirect URI; fallback to request origin in local dev
   const isLocal = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
   const redirectUri = process.env.DISCORD_REDIRECT_URI || (isLocal
@@ -28,6 +31,19 @@ export async function GET(request: Request) {
     maxAge: 600, // 10 minutes
     path: '/',
   });
+
+  if (vt) {
+    const session = await getDiscordVerificationSession(vt);
+    if (session) {
+      cookieStore.set('discord_bound_user_id', session.discordUserId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 600,
+        path: '/',
+      });
+    }
+  }
 
   const discordAuthUrl = new URL('https://discord.com/api/oauth2/authorize');
   discordAuthUrl.searchParams.set('client_id', DISCORD_CLIENT_ID);

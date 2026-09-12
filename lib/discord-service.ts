@@ -479,20 +479,93 @@ export async function reconcileAllDiscordRoles(limit = 100): Promise<{
 }
 
 /**
- * Post or update the Skillshot Rank Verification embed in Discord #rank.
- * Uses Discord primary button with custom_id 'skillshot_rank_verify' and link to website.
+ * Retrieve text channels from Guild 1548208097112236124.
+ */
+export async function getGuildChannels(): Promise<Array<{ id: string; name: string; type: number }>> {
+  const res = await callDiscordApi(`/guilds/${DISCORD_GUILD_ID}/channels`);
+  if (!res.ok || !Array.isArray(res.data)) return [];
+  return res.data
+    .filter((c: any) => c.type === 0 || c.type === 5)
+    .map((c: any) => ({ id: String(c.id), name: String(c.name), type: Number(c.type) }));
+}
+
+/**
+ * Automatically locate the #👑ranks / #ranks channel in the guild.
+ */
+export async function findRankChannel(): Promise<{ id: string; name: string } | null> {
+  if (DISCORD_RANK_CHANNEL_ID) {
+    return { id: DISCORD_RANK_CHANNEL_ID, name: 'ranks' };
+  }
+  const channels = await getGuildChannels();
+  const exact = channels.find(c => {
+    const clean = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return clean === 'ranks' || clean === 'rank';
+  });
+  if (exact) return exact;
+  const contains = channels.find(c => c.name.toLowerCase().includes('rank'));
+  if (contains) return contains;
+  return null;
+}
+
+/**
+ * Create a secure server-side verification session bound to the clicking Discord user ID.
+ */
+export async function createDiscordVerificationSession(discordUserId: string, interactionToken?: string): Promise<string> {
+  const sql = await getReadyDb();
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+  await sql.query(
+    `INSERT INTO discord_verification_sessions (token, discord_user_id, interaction_token, created_at, expires_at)
+     VALUES ($1, $2, $3, now(), $4)`,
+    [token, discordUserId, interactionToken || null, expiresAt]
+  );
+  return token;
+}
+
+/**
+ * Validate and retrieve a Discord verification session by token.
+ */
+export async function getDiscordVerificationSession(token: string): Promise<{ discordUserId: string; interactionToken?: string } | null> {
+  if (!token) return null;
+  const sql = await getReadyDb();
+  const rows = await sql.query(
+    `SELECT discord_user_id, interaction_token FROM discord_verification_sessions
+     WHERE token = $1 AND expires_at > now() LIMIT 1`,
+    [token]
+  );
+  if (!rows.length) return null;
+  return {
+    discordUserId: String(rows[0].discord_user_id),
+    interactionToken: rows[0].interaction_token ? String(rows[0].interaction_token) : undefined,
+  };
+}
+
+/**
+ * Post or update the official Skillshot Rank Verification embed in Discord #👑ranks.
+ * Uses Discord primary button with custom_id 'skillshot_rank_verify'.
  */
 export async function postOrUpdateRankVerificationMessage(channelIdInput?: string): Promise<{
   success: boolean;
   message: string;
   messageId?: string;
   channelId?: string;
+  channelName?: string;
 }> {
-  const channelId = channelIdInput?.trim() || DISCORD_RANK_CHANNEL_ID;
+  let channelId = channelIdInput?.trim();
+  let channelName = '';
+
+  if (!channelId) {
+    const found = await findRankChannel();
+    if (found) {
+      channelId = found.id;
+      channelName = found.name;
+    }
+  }
+
   if (!channelId) {
     return {
       success: false,
-      message: 'No Discord rank channel configured. Provide a channel ID or set DISCORD_RANK_CHANNEL_ID.',
+      message: 'No Discord rank channel found or configured. Please select or provide the channel ID for #👑ranks.',
     };
   }
 
@@ -506,13 +579,30 @@ export async function postOrUpdateRankVerificationMessage(channelIdInput?: strin
   const payload = {
     embeds: [
       {
+        author: {
+          name: '🏆 Skillshot • Official Rank Bot',
+          icon_url: 'https://skillshot-community.vercel.app/icon.png',
+        },
         title: '🏆 Skillshot Rank Verification',
         description:
-          'Connect your Skillshot account to Discord to verify your Creator Rank and receive your matching Discord role.\n\n' +
-          'Your Discord role is determined automatically from your Skillshot rank.',
+          'Connect your Skillshot account to Discord to verify your Creator Rank and automatically receive your matching Discord role.\n\n' +
+          '**Complete these steps:**\n\n' +
+          '**1.** Click **"Verify Skillshot"** below\n' +
+          '**2.** Sign in or create your Skillshot account\n' +
+          '**3.** Verify your Discord account\n' +
+          '**4.** Your Creator Rank is detected automatically\n' +
+          '**5.** Your matching Discord role is assigned\n\n' +
+          '✦ *Your rank always comes from your Skillshot account.*\n' +
+          '✦ *Users cannot manually select a rank.*',
         color: DISCORD_EMBED_COLOR,
+        image: {
+          url: 'https://skillshot-community.vercel.app/icon.png',
+        },
+        thumbnail: {
+          url: 'https://skillshot-community.vercel.app/icon.png',
+        },
         footer: {
-          text: 'Skillshot Community • Automatic Rank Synchronization',
+          text: 'Skillshot Community • Single Source of Truth for Creator Rank',
         },
       },
     ],
@@ -528,9 +618,9 @@ export async function postOrUpdateRankVerificationMessage(channelIdInput?: strin
           },
           {
             type: 2, // Button
-            style: 5, // Link
-            label: 'Open Skillshot',
-            url: 'https://skillshot-community.vercel.app/settings/connections',
+            style: 2, // Secondary
+            label: 'ℹ️ How It Works',
+            custom_id: 'skillshot_how_it_works',
           },
         ],
       },

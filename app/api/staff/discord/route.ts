@@ -9,6 +9,8 @@ import {
   postOrUpdateRankVerificationMessage,
   getDiscordBotPermissions,
   getRankChannelStatus,
+  getGuildChannels,
+  findRankChannel,
 } from '../../../../lib/discord-service';
 import { DISCORD_CLIENT_ID, DISCORD_GUILD_ID } from '../../../../lib/discord-config';
 
@@ -22,7 +24,7 @@ export async function GET() {
 
   const sql = await getReadyDb();
 
-  const [countRows, lastSyncRows, userRows, rankChannel, botPermissions] = await Promise.all([
+  const [countRows, lastSyncRows, userRows, rankChannel, botPermissions, guildChannels, defaultRankChannel] = await Promise.all([
     sql.query(`
       SELECT
         count(*)::int AS total,
@@ -66,6 +68,8 @@ export async function GET() {
       allSatisfied: false,
       error: err?.message || 'Error checking bot permissions',
     })),
+    getGuildChannels().catch(() => []),
+    findRankChannel().catch(() => null),
   ]);
 
   const counts = countRows[0] || {};
@@ -92,7 +96,7 @@ export async function GET() {
     lastError: row.last_error ? String(row.last_error) : null,
   }));
 
-  return NextResponse.json({ stats, connections, rankChannel, botPermissions });
+  return NextResponse.json({ stats, connections, rankChannel, botPermissions, guildChannels, defaultRankChannel });
 }
 
 export async function POST(request: Request) {

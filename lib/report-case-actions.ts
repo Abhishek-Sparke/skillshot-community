@@ -76,5 +76,36 @@ export async function mutateCase(actor:Principal,id:string,body:Record<string,un
     }
   }
   if(result.length&&action==='KEEP'&&item.target_type==='SKILLSHOT'&&content?.post?.user_id)await awardXp({userId:String(content.post.user_id),amount:XP_REWARDS.SKILLSHOT_PUBLISHED,eventType:'SKILLSHOT_PUBLISHED',reason:'Published an approved Skillshot',actionId:`skillshot-published:${item.target_id}`,relatedType:'SKILLSHOT',relatedId:item.target_id});
+  if (result.length) {
+    const isPublicComment = body.visibility === 'PUBLIC_TO_REPORTER' || body.publicToReporter === true;
+    if (action === 'NOTE' && isPublicComment && reason) {
+      await sql.query(
+        `INSERT INTO notifications (id, user_id, actor_id, category, type, title, body, staff_comment, comment_visibility, event_key, target_url, target_id)
+         SELECT gen_random_uuid()::text, r.reporter_id, $1, 'support', 'SUPPORT_STAFF_COMMENT',
+           'Moderator added a comment to your report.', $2, $2, 'PUBLIC_TO_REPORTER',
+           'report-comment:' || r.id || ':' || clock_timestamp()::text, '/support/reports/' || r.id, r.id
+         FROM reports r
+         WHERE r.case_id = $3
+         ON CONFLICT (event_key) WHERE event_key IS NOT NULL DO NOTHING`,
+        [actor.id, reason, item.id]
+      ).catch(() => undefined);
+    } else if (terminal.has(action)) {
+      const isAccepted = ['KEEP', 'HIDE', 'DELETE', 'RESOLVE'].includes(action);
+      const notifType = isAccepted ? 'SUPPORT_ACCEPTED' : 'SUPPORT_DISMISSED';
+      const notifTitle = isAccepted ? 'Your report was accepted.' : 'Your report was dismissed.';
+      const notifBody = isAccepted
+        ? 'We reviewed the reported content and have taken appropriate action.'
+        : 'We reviewed the reported content and determined it does not violate guidelines.';
+      await sql.query(
+        `INSERT INTO notifications (id, user_id, actor_id, category, type, title, body, event_key, target_url, target_id)
+         SELECT gen_random_uuid()::text, r.reporter_id, $1, 'support', $2, $3, $4,
+           'report-decision:' || r.id || ':' || $2, '/support/reports/' || r.id, r.id
+         FROM reports r
+         WHERE r.case_id = $5
+         ON CONFLICT (event_key) WHERE event_key IS NOT NULL DO NOTHING`,
+        [actor.id, notifType, notifTitle, notifBody, item.id]
+      ).catch(() => undefined);
+    }
+  }
   return result.length?Response.json({ok:true,case:result[0]}):Response.json({error:'The case or content changed. Reload before trying again.'},{status:409});
 }

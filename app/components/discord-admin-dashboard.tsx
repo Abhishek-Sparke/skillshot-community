@@ -48,17 +48,24 @@ export default function DiscordAdminDashboard({
   initialConnections,
   initialRankChannel,
   initialBotPermissions,
+  initialGuildChannels = [],
+  initialDefaultRankChannel,
 }: {
   initialStats: DiscordAdminStats;
   initialConnections: DiscordAdminConnection[];
   initialRankChannel?: DiscordRankChannelStatus;
   initialBotPermissions?: DiscordBotPermissions;
+  initialGuildChannels?: Array<{ id: string; name: string }>;
+  initialDefaultRankChannel?: { id: string; name: string } | null;
 }) {
   const [stats, setStats] = useState<DiscordAdminStats>(initialStats);
   const [connections, setConnections] = useState<DiscordAdminConnection[]>(initialConnections);
   const [rankChannel, setRankChannel] = useState<DiscordRankChannelStatus | undefined>(initialRankChannel);
   const [botPermissions, setBotPermissions] = useState<DiscordBotPermissions | undefined>(initialBotPermissions);
-  const [channelInput, setChannelInput] = useState(initialRankChannel?.configuredChannelId || '');
+  const [guildChannels, setGuildChannels] = useState<Array<{ id: string; name: string }>>(initialGuildChannels);
+  const [channelInput, setChannelInput] = useState(
+    initialRankChannel?.configuredChannelId || initialDefaultRankChannel?.id || ''
+  );
   const [busyUser, setBusyUser] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [registerBusy, setRegisterBusy] = useState(false);
@@ -120,6 +127,7 @@ export default function DiscordAdminDashboard({
         setConnections(data.connections);
         if (data.rankChannel) setRankChannel(data.rankChannel);
         if (data.botPermissions) setBotPermissions(data.botPermissions);
+        if (data.guildChannels) setGuildChannels(data.guildChannels);
       }
     } catch {
       // Graceful fallback
@@ -314,15 +322,31 @@ export default function DiscordAdminDashboard({
           }}
         >
           <div>
-            <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase' }}>Rank Channel ID</span>
-            <input
-              type="text"
-              value={channelInput}
-              onChange={e => setChannelInput(e.target.value)}
-              placeholder="e.g. 1548208097112236124"
-              className="input"
-              style={{ width: '100%', marginTop: 4, fontSize: 13 }}
-            />
+            <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase' }}>Target Channel (#👑ranks)</span>
+            {guildChannels.length > 0 ? (
+              <select
+                value={channelInput}
+                onChange={e => setChannelInput(e.target.value)}
+                className="input"
+                style={{ width: '100%', marginTop: 4, fontSize: 13, background: 'var(--card-bg, #161822)', color: 'inherit' }}
+              >
+                <option value="">Auto-detect (#👑ranks)</option>
+                {guildChannels.map(c => (
+                  <option key={c.id} value={c.id}>
+                    #{c.name} ({c.id})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={channelInput}
+                onChange={e => setChannelInput(e.target.value)}
+                placeholder="Leave blank for auto-detect or enter channel ID"
+                className="input"
+                style={{ width: '100%', marginTop: 4, fontSize: 13 }}
+              />
+            )}
           </div>
 
           <div>
@@ -354,15 +378,27 @@ export default function DiscordAdminDashboard({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             type="button"
             className="button primary"
             onClick={handlePostVerificationMessage}
             disabled={postBusy || bulkBusy}
+            style={{
+              padding: '10px 18px',
+              fontSize: 14,
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #ff5039, #ff7a59)',
+              boxShadow: '0 4px 14px rgba(255, 80, 57, 0.35)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
           >
-            {postBusy ? 'Posting to Discord…' : rankChannel?.messageId ? 'Update Verification Message in #rank' : 'Post Verification Message in #rank'}
+            {postBusy ? 'Posting to Discord…' : rankChannel?.messageId ? '🚀 Update Verification Message in #👑ranks' : '🚀 Post Verification Message in #👑ranks'}
           </button>
+          <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+            Posts exactly one permanent embed message with the &quot;🔗 Verify Skillshot&quot; button. If one exists, it updates it.
+          </span>
         </div>
       </section>
 
