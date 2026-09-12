@@ -9,6 +9,7 @@ const groups = [
       ['Appearance', 'Light, dark, or system theme.', '/settings/appearance'],
       ['Privacy', 'Control what information is public.', '/settings/privacy'],
       ['Security', 'Manage account security.', '/settings/security'],
+      ['Connections', 'Manage connected accounts and Discord rank sync.', '/settings/connections'],
       ['Trusted Contributor', 'Application and status.', '/settings/trusted-contributor'],
     ],
   },

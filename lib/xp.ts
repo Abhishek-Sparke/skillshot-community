@@ -1,5 +1,6 @@
 import { getReadyDb } from './db';
 import { CREATOR_RANKS, creatorRankId, rankFromXp } from './creator-rank';
+import { enqueueDiscordRankSync } from './discord-service';
 export { XP_REWARDS, isMeaningfulComment, normalizeCommentForXp } from './xp-policy';
 import { XP_REWARDS, isMeaningfulComment, normalizeCommentForXp } from './xp-policy';
 
@@ -42,6 +43,7 @@ export async function awardXp(event: Award) {
         crypto.randomUUID(), event.userId, `You reached ${rank.label}`, `Your Creator Rank is now ${rank.label}.`, `rank-up:${event.userId}:${rank.id}`,
       ]);
     }
+    enqueueDiscordRankSync(event.userId, rank.id).catch(() => {});
   }
   return { awarded: true, xp, rank: rank.id };
 }

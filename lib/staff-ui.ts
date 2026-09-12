@@ -20,6 +20,7 @@ export function staffLinks(user: StaffIdentity): StaffLink[] {
     add('team.view', 'Team & Roles', '/admin/team', 'Management');
     add('users.view', 'Users', '/admin/users', 'Management');
     add('trusted_contributor.review', 'Trusted Contributors', '/admin/trusted-contributors', 'Management', 'applications');
+    add('settings.manage', 'Discord Integration', '/admin/discord', 'Management');
     add('analytics.view', 'Analytics', '/admin/analytics', 'Insights');
     add('storage.view', 'Storage', '/admin/storage', 'Insights');
     add('audit.view', 'Audit Log', '/admin/audit', 'Insights');

@@ -9,6 +9,7 @@ import { CHAT_MIGRATION } from './chat-schema';
 import { COMMUNITY_MIGRATION } from './community-schema';
 import { COLLECTION_MIGRATION } from './collection-schema';
 import { XP_MIGRATION } from './xp-schema';
+import { DISCORD_MIGRATION } from './discord-schema';
 
 let client: NeonQueryFunction<false, false> | null = null;
 let initialization: Promise<unknown> | null = null;
@@ -107,6 +108,7 @@ export async function getReadyDb() {
     await sql.transaction(COMMUNITY_MIGRATION.map(statement=>sql.query(statement)));
     await sql.transaction(COLLECTION_MIGRATION.map(statement=>sql.query(statement)));
     await sql.transaction(XP_MIGRATION.map(statement=>sql.query(statement)));
+    await sql.transaction(DISCORD_MIGRATION.map(statement=>sql.query(statement)));
   })();
   await initialization;
   return sql;

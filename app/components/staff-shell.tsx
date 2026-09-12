@@ -15,6 +15,7 @@ const descriptions: Record<string, string> = {
   Users: 'Find and manage community accounts.', 'Trusted Contributors': 'Recognize people making a positive contribution.',
   Analytics: 'Understand community activity at a glance.', Storage: 'Monitor image storage and review retained files safely.',
   'Audit Log': 'A record of sensitive staff actions.', 'Moderation History': 'Review moderation activity within your access.',
+  'Discord Integration': 'Manage connected Discord accounts, automated rank synchronization, and reconciliation.',
   Settings: 'Server-enforced safety and publishing policies.',
 };
 export default function StaffShell({ user, children }: { user: StaffIdentity; children: React.ReactNode }) {
