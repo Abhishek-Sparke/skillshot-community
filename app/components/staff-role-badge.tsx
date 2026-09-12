@@ -18,6 +18,14 @@ export function RoleIcon({ role }: { role: UserRole }) {
       </svg>
     );
   }
+  if (role === 'ADMIN') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m12 3 7 4v5c0 4.4-2.7 7.3-7 9.7C7.7 19.3 5 16.4 5 12V7Z" />
+        <path d="m12 7.5 1 2.2 2.4.3-1.8 1.6.5 2.4-2.1-1.2-2.1 1.2.5-2.4-1.8-1.6 2.4-.3Z" />
+      </svg>
+    );
+  }
   if (role === 'TRUSTED_CONTRIBUTOR') {
     return (
       <svg viewBox="0 0 24 24" aria-hidden="true">

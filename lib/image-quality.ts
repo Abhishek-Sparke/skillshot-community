@@ -40,7 +40,8 @@ export async function inspectSelectedImage(file: File): Promise<ImageDimensions>
   const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
   const text = (start: number, end: number) => String.fromCharCode(...header.slice(start, end));
   const actual = header[0] === 0x89 && text(1, 4) === 'PNG' ? 'image/png' : header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff ? 'image/jpeg' : text(0, 4) === 'RIFF' && text(8, 12) === 'WEBP' ? 'image/webp' : '';
-  if (actual !== file.type) throw new Error('This file is not a valid PNG, JPG, or WebP image.');
+  const normalizedFileType = file.type === 'image/jpg' ? 'image/jpeg' : file.type;
+  if (!actual || (actual !== normalizedFileType && !(actual === 'image/jpeg' && file.type === 'image/jpg'))) throw new Error('This file is not a valid PNG, JPG, or WebP image.');
   const url = URL.createObjectURL(file);
   try {
     const dimensions = await new Promise<ImageDimensions>((resolve, reject) => {

@@ -99,7 +99,9 @@ export default function Upload() {
     const form = event.currentTarget;
     const inputImage = prepared?.file;
     if (preparing || !prepared) { setStatus('Please choose a valid image and wait for the image check to finish.'); return; }
-    if (!(inputImage instanceof File) || !IMAGE_TYPES.has(inputImage.type) || inputImage.size > MAX_IMAGE_SIZE) {
+    const rawType = (inputImage?.type || '').toLowerCase();
+    const normalizedType = rawType === 'image/jpg' ? 'image/jpeg' : rawType;
+    if (!(inputImage instanceof File) || !IMAGE_TYPES.has(normalizedType) || inputImage.size > MAX_IMAGE_SIZE) {
       setStatus(inputImage instanceof File && inputImage.size > MAX_IMAGE_SIZE ? 'Image is too large. Please choose an image smaller than 10 MB.' : 'Please upload a PNG, JPG, WebP, or GIF image.');
       return;
     }
@@ -112,21 +114,62 @@ export default function Upload() {
     try {
       const image = inputImage;
       if (image.size > MAX_IMAGE_SIZE) { setStatus('The edited image is too large. Try the original crop or a smaller image.'); return; }
-      const extension = image.type==='image/gif'?'gif':image.type === 'image/png' ? 'png' : image.type === 'image/jpeg' ? 'jpg' : 'webp';
-      const staged = await upload(`staging/${crypto.randomUUID()}.${extension}`, image, {
-        access: 'private', handleUploadUrl: '/api/uploads', contentType: image.type,
-        abortSignal: controller.signal,
-        onUploadProgress: event => { setProgress(Math.round(event.percentage)); },
-      });
-      setStatus('Checking and optimizing image…');
+      const extension = normalizedType === 'image/gif' ? 'gif' : normalizedType === 'image/png' ? 'png' : normalizedType === 'image/jpeg' ? 'jpg' : 'webp';
       const values = new FormData(form);
-      const response = await fetch('/api/posts', {
-        method: 'POST', headers: { 'content-type': 'application/json' }, signal: controller.signal,
-        body: JSON.stringify({ pathname: staged.pathname, title: values.get('title'), description: values.get('description'), skills: values.get('skills'), tags: values.get('tags'), category: values.get('category') }),
-      });
+      const postTitle = (title || (values.get('title') as string) || '').trim();
+      const postDescription = (description || (values.get('description') as string) || '').trim();
+      const postSkills = (skills || (values.get('skills') as string) || '').trim();
+      const postTags = (tags || (values.get('tags') as string) || '').trim();
+      const postCategory = (category || (values.get('category') as string) || 'Other');
+
+      if (!postTitle) {
+        setStatus('Please add a title.');
+        setBusy(false);
+        return;
+      }
+
+      let response: Response | null = null;
+      let stagedPath: string | null = null;
+
+      try {
+        const staged = await upload(`staging/${crypto.randomUUID()}.${extension}`, image, {
+          access: 'private', handleUploadUrl: '/api/uploads', contentType: normalizedType,
+          abortSignal: controller.signal,
+          onUploadProgress: event => { setProgress(Math.round(event.percentage * 0.7)); },
+        });
+        if (staged?.pathname) stagedPath = staged.pathname;
+      } catch (stagingErr) {
+        // Direct staging may fail if blob client token generation or client CDN direct put fails.
+        // Fall back gracefully to direct multipart upload to /api/posts below.
+        console.warn('Direct blob staging failed, falling back to direct server upload:', stagingErr);
+      }
+
+      setStatus('Checking and optimizing image…');
+
+      if (stagedPath) {
+        response = await fetch('/api/posts', {
+          method: 'POST', headers: { 'content-type': 'application/json' }, signal: controller.signal,
+          body: JSON.stringify({ pathname: stagedPath, title: postTitle, description: postDescription, skills: postSkills, tags: postTags, category: postCategory }),
+        });
+      } else {
+        const directData = new FormData();
+        directData.set('image', image);
+        directData.set('title', postTitle);
+        directData.set('description', postDescription);
+        directData.set('skills', postSkills);
+        directData.set('tags', postTags);
+        directData.set('category', postCategory);
+
+        response = await fetch('/api/posts', {
+          method: 'POST',
+          signal: controller.signal,
+          body: directData,
+        });
+      }
+
       if (response.status === 401) { requireClientAuth(false, '/upload', 'Sign in to publish your Skillshot'); return; }
-      const result = await response.json();
-      if (!response.ok || !result.id) { setStatus(result.error || 'Upload failed. Please try again.'); return; }
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.id) { setStatus(result?.error || 'Upload failed. Please try again.'); return; }
       setProgress(100);
       setStatus(result.status === 'VISIBLE' ? '✓ Upload complete' : '✓ Uploaded and awaiting a safety review');
       if (result.status === 'VISIBLE') window.setTimeout(() => window.location.assign(`/shots/${result.id}`), 500);
@@ -136,8 +179,16 @@ export default function Upload() {
         setSelectedFile(null); setSourceInfo(null); setPrepared(null); setPreview('');
         if (imageInput.current) imageInput.current.value = '';
       }
-    } catch {
-      setStatus(controller.signal.aborted ? 'The upload timed out. Check your connection and try again.' : !navigator.onLine ? 'Network error. Check your connection and try again.' : 'Upload failed. Check your sign-in and connection, then try again.');
+    } catch (error) {
+      if (controller.signal.aborted) {
+        setStatus('The upload timed out. Check your connection and try again.');
+      } else if (!navigator.onLine) {
+        setStatus('Network error. Check your connection and try again.');
+      } else if (error instanceof Error && error.message) {
+        setStatus(error.message.includes('Failed to fetch') ? 'Network connection error. Please check your internet and try again.' : error.message);
+      } else {
+        setStatus('Upload failed. Check your sign-in and connection, then try again.');
+      }
     } finally { window.clearTimeout(timeout); setBusy(false); }
   }
 
@@ -161,7 +212,7 @@ export default function Upload() {
         <label>Skills<input name="skills" maxLength={300} placeholder="Add skills..." value={skills} onChange={event => setSkills(event.target.value)}/><small>Separate skills with commas.</small></label>
         <label>Tags<input name="tags" maxLength={300} placeholder="Add tags..." value={tags} onChange={event=>setTags(event.target.value)}/></label>
         <label>Category <small>(optional)</small><select name="category" value={category} onChange={event => setCategory(event.target.value)}><option value="">Choose a category</option>{CATEGORIES.map(value => <option key={value}>{value}</option>)}</select></label>
-        <button className="primary" type="submit" disabled={busy || preparing || !prepared}>{busy ? 'Publishing…' : preparing ? 'Checking image…' : 'Publish Skillshot'}</button>
+        <button className="primary" type="submit" disabled={busy || preparing || !prepared}>{busy ? 'Publishing…' : preparing ? 'Checking image…' : !prepared ? 'Select an image to publish' : 'Publish Skillshot'}</button>
         {busy && <div className="uploadProgress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={`Upload ${progress}%`}><span style={{ width: `${progress}%` }}/></div>}
         <p role="status" aria-live="polite">{status}{busy && status === 'Uploading…' ? ` ${progress}%` : ''}</p>
       </form><aside className="livePreview">

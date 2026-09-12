@@ -1,7 +1,7 @@
 export const SKILLSHOT_MAX_BYTES = 10 * 1024 * 1024;
 export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 export const BANNER_MAX_BYTES = 5 * 1024 * 1024;
-export const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+export const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/jpg']);
 export const AVATAR_TYPES = new Set([...IMAGE_TYPES, 'image/gif']);
 export const BANNER_TYPES = new Set([...IMAGE_TYPES, 'image/gif']);
 export const SKILLSHOT_TYPES = new Set([...IMAGE_TYPES, 'image/gif']);
