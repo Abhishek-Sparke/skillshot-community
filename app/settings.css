@@ -119,17 +119,18 @@ body{transition:background-color .15s,color .15s}
 :root[data-theme=dark] .staffTopbar{background:var(--surface);border-bottom-color:var(--line)}
 :root[data-theme=dark] .staffNavGroup a{color:var(--ink)}
 :root[data-theme=dark] .staffNavCount{background:var(--surface-soft);color:var(--muted)}
+:root[data-theme=dark] .staffDataTable tbody tr:hover{background:rgba(255,255,255,0.045)}
 :root[data-theme=dark] .caseFlag{background:#2b2214;border-color:#5c4724;color:#ffca7a}
 :root[data-theme=dark] .caseConversation>div{border-left-color:var(--line);color:var(--ink)}
 :root[data-theme=dark] .caseConversation .caseReported{background:#2d1614;border-color:var(--red);color:var(--ink)}
 :root[data-theme=dark] .caseTimeline li{border-left-color:var(--line);color:var(--ink)}
 
 /* Role Badges (Dark Mode Vibrancy) */
-:root[data-theme=dark] .roleOWNER{background:rgba(217,76,67,0.18);color:#ff857c;border:1px solid rgba(217,76,67,0.38)}
-:root[data-theme=dark] .roleADMIN{background:rgba(147,91,235,0.18);color:#be9bff;border:1px solid rgba(147,91,235,0.38)}
-:root[data-theme=dark] .roleHEAD_MODERATOR{background:rgba(217,137,39,0.18);color:#ffc06b;border:1px solid rgba(217,137,39,0.38)}
-:root[data-theme=dark] .roleMODERATOR{background:rgba(56,143,237,0.18);color:#7eb9ff;border:1px solid rgba(56,143,237,0.38)}
-:root[data-theme=dark] .roleTRUSTED_CONTRIBUTOR{background:rgba(43,168,98,0.18);color:#6ee2a2;border:1px solid rgba(43,168,98,0.38)}
+:root[data-theme=dark] .roleOWNER{background:rgba(217,76,67,0.22);color:#ffa199;border:1px solid rgba(217,76,67,0.48);box-shadow:0 0 10px rgba(217,76,67,0.2)}
+:root[data-theme=dark] .roleADMIN{background:rgba(147,91,235,0.22);color:#c9abff;border:1px solid rgba(147,91,235,0.48);box-shadow:0 0 10px rgba(147,91,235,0.2)}
+:root[data-theme=dark] .roleHEAD_MODERATOR{background:rgba(217,137,39,0.22);color:#ffd08a;border:1px solid rgba(217,137,39,0.48);box-shadow:0 0 10px rgba(217,137,39,0.2)}
+:root[data-theme=dark] .roleMODERATOR{background:rgba(56,143,237,0.22);color:#93c5fd;border:1px solid rgba(56,143,237,0.48);box-shadow:0 0 10px rgba(56,143,237,0.2)}
+:root[data-theme=dark] .roleTRUSTED_CONTRIBUTOR{background:rgba(43,168,98,0.22);color:#86efac;border:1px solid rgba(43,168,98,0.48);box-shadow:0 0 10px rgba(43,168,98,0.2)}
 :root[data-theme=dark] .adminBadge::after{background:#282622;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,0.5)}
 :root[data-theme=dark] .adminBadge::before{border-top-color:#282622}
 

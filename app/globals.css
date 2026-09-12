@@ -4493,11 +4493,11 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .profilePage .profileCover>span{position:absolute;left:28px;bottom:22px;z-index:2;color:#fff9;font:800 10px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:.22em}
 .profileCoverEdit{position:absolute;right:18px;top:18px;z-index:3;display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border:1px solid #ffffff2b;border-radius:12px;background:#0b1018d9;color:#fff;text-decoration:none;font-size:13px;font-weight:800;backdrop-filter:blur(14px)}
 .profileCoverEdit:hover{border-color:#ff7192;background:#151b25}
-.profilePage .profileSummary{position:relative;display:grid;grid-template-columns:220px minmax(0,1fr) auto;gap:28px;align-items:end;min-height:170px;padding:24px 28px 22px;background:linear-gradient(110deg,#0c121b,#101721);border-bottom:1px solid var(--profile-line)}
-.profilePage .profileAvatar{align-self:start;width:190px;height:190px;margin-top:-98px;border:6px solid #0d141e;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#292f3b,#111722);box-shadow:0 0 0 3px #ff6688,0 0 35px #ff315c66;color:#fff;font-size:44px;z-index:3}
-.profilePage .profileAvatar img{width:100%;height:100%;object-fit:cover;display:block}
-.profilePage .profileMainInfo{min-width:0;display:grid;gap:9px}
-.profilePage .profileNameLine{min-width:0}.profilePage .creatorProfileIdentity{display:grid;justify-items:start;gap:10px}.profilePage .creatorProfileNameRow{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;font-size:clamp(29px,3vw,42px);font-weight:800;letter-spacing:-.04em;line-height:1.05}.profilePage .creatorProfileNameRow .creatorRankBadge,.profilePage .creatorProfileNameRow .roleBadge{flex-shrink:0;vertical-align:middle}.profilePage .creatorProfileMetaRow{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}.profilePage .creatorProfileHandle{color:var(--profile-muted);font-size:15px;font-weight:600}.profilePage .creatorProfileMetaRow .creatorRankBadge{width:auto;height:30px;padding:0 11px;gap:6px;border-radius:999px;background:#201638;border:1px solid #6940a6;color:#bc75ff}.profilePage .creatorProfileMetaRow .rankLabelText{display:inline;font-size:12px;font-weight:800}.profilePage .creatorProfileMetaRow .roleBadge.profile{height:30px;padding:0 12px;border-radius:999px;font-size:12px}.profilePage .profileNameLine .creatorUsernameLink{font-size:inherit}
+.profilePage .profileSummary{position:relative;z-index:5;display:grid;grid-template-columns:220px minmax(0,1fr) auto;gap:28px;align-items:end;min-height:170px;padding:24px 28px 22px;background:linear-gradient(110deg,#0c121b,#101721);border-bottom:1px solid var(--profile-line)}
+.profilePage .profileAvatar{align-self:start;width:190px;height:190px;margin-top:-98px;border:6px solid #0d141e;border-radius:50%;overflow:visible;background:linear-gradient(135deg,#292f3b,#111722);box-shadow:0 0 0 3px #ff6688,0 0 35px #ff315c66;color:#fff;font-size:44px;z-index:4}
+.profilePage .profileAvatar img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+.profilePage .profileMainInfo{min-width:0;display:grid;gap:9px;position:relative;z-index:6}
+.profilePage .profileNameLine{min-width:0;position:relative;z-index:7}.profilePage .creatorProfileIdentity{display:grid;justify-items:start;gap:10px}.profilePage .creatorProfileNameRow{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;font-size:clamp(29px,3vw,42px);font-weight:800;letter-spacing:-.04em;line-height:1.05}.profilePage .creatorProfileNameRow .creatorRankBadge,.profilePage .creatorProfileNameRow .roleBadge{flex-shrink:0;vertical-align:middle}.profilePage .creatorProfileNameRow :is(.creatorRankBadge,.roleBadge,.roleBadge.profile){width:20px;height:20px;min-width:20px;min-height:20px;padding:0;border-radius:50%;flex-shrink:0;vertical-align:middle}.profilePage .creatorProfileMetaRow{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}.profilePage .creatorProfileHandle{color:var(--profile-muted);font-size:15px;font-weight:600}.profilePage .creatorProfileMetaRow .creatorRankBadge{width:auto;height:30px;padding:0 11px;gap:6px;border-radius:999px;background:#201638;border:1px solid #6940a6;color:#bc75ff}.profilePage .creatorProfileMetaRow .rankLabelText{display:inline;font-size:12px;font-weight:800}.profilePage .creatorProfileMetaRow .roleBadge.profile{height:30px;padding:0 12px;border-radius:999px;font-size:12px}.profilePage .profileNameLine .creatorUsernameLink{font-size:inherit}
 .profilePage .profileUsername,.profilePage .profileBio{margin:0;color:var(--profile-muted)}
 .profilePage .profileBio{font-size:15px;line-height:1.55;max-width:650px;color:#d6dde8}
 .profilePage .profileDetails{display:flex;gap:20px;flex-wrap:wrap;margin-top:2px;color:var(--profile-muted);font-size:13px}.profilePage .profileDetails a{color:#6fe5ff}
@@ -5079,6 +5079,16 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), translate 0.16s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.16s;
   isolation: isolate;
 }
+.iconBadge:hover,
+.iconBadge:focus-visible,
+.iconBadge.tooltipOpen {
+  z-index: 200;
+}
+.creatorUsernameWrapper:hover,
+.creatorUsernameWrapper:focus-within,
+.creatorUsernameWrapper:has(.tooltipOpen) {
+  z-index: 200;
+}
 .iconBadge:hover .iconBadgeTooltip,
 .iconBadge:focus-visible .iconBadgeTooltip,
 .iconBadge.tooltipOpen .iconBadgeTooltip,
@@ -5089,6 +5099,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   visibility: visible;
   translate: -50% 0;
   pointer-events: auto;
+  z-index: 999;
 }
 .roleTooltipTitle {
   display: block;
@@ -5130,6 +5141,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .creatorUsernameWrapper .iconBadge:focus-visible .iconBadgeTooltip,
 .creatorUsernameWrapper .iconBadge.tooltipOpen .iconBadgeTooltip{
   translate:0 0;
+  z-index: 999;
 }
 .roleBadge[data-tooltip]::after{content:none}
 .roleBadgeLabel{display:inline-flex;align-items:center;gap:6px;color:inherit;font:800 12px/1 'Plus Jakarta Sans',Arial,sans-serif}
@@ -5228,20 +5240,20 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 }
 .profileAvatarEditBtn {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
+  bottom: 4px;
+  right: 4px;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: #181716;
   color: #fff;
   border: 2px solid var(--profile-card, #131b26);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
   text-decoration: none;
   transition: transform 0.15s ease, background-color 0.15s ease;
-  z-index: 4;
+  z-index: 10;
 }
 .profileAvatarEditBtn:hover {
   transform: scale(1.1);
