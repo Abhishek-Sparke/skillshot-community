@@ -54,6 +54,11 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     timestamp: new Date().toISOString(),
+    env: {
+      hasBotToken: !!process.env.DISCORD_BOT_TOKEN,
+      hasClientSecret: !!process.env.DISCORD_CLIENT_SECRET,
+      hasPublicKey: !!process.env.DISCORD_PUBLIC_KEY,
+    },
     bot: bot || { error: botRes.data?.message || 'Failed to authenticate with Discord API' },
     guildId: DISCORD_GUILD_ID,
     clientId: DISCORD_CLIENT_ID,
