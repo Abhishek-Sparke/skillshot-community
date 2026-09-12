@@ -612,20 +612,21 @@ export async function postOrUpdateRankVerificationMessage(channelIdInput?: strin
         components: [
           {
             type: 2, // Button
-            style: 1, // Primary (blurple)
+            style: 5, // Link button (instant, client-side, zero timeouts)
             label: '🔗 Verify Skillshot',
-            custom_id: VERIFY_BUTTON_CUSTOM_ID,
+            url: 'https://skillshot-community.vercel.app/api/discord/authorize',
           },
           {
             type: 2, // Button
-            style: 2, // Secondary
+            style: 5, // Link button
             label: 'ℹ️ How It Works',
-            custom_id: 'skillshot_how_it_works',
+            url: 'https://skillshot-community.vercel.app/guidelines',
           },
         ],
       },
     ],
   };
+  // Reference custom IDs: VERIFY_BUTTON_CUSTOM_ID, 'skillshot_how_it_works'
 
   let messageId: string | null = null;
   let updatedExisting = false;
