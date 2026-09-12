@@ -1,54 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, useId } from 'react';
+import { useEffect, useRef, useId } from 'react';
 import './desktop-side-animations.css';
 
-export interface SideShotItem {
-  id: string;
-  title: string;
-  category?: string;
-  displayName?: string;
-  imageWidth?: number;
-  imageHeight?: number;
-}
-
-interface DesktopSideAnimationsProps {
-  initialShots?: SideShotItem[];
-}
-
-export default function DesktopSideAnimations({ initialShots = [] }: DesktopSideAnimationsProps) {
-  const [shots, setShots] = useState<SideShotItem[]>(initialShots);
+export default function DesktopSideAnimations() {
   const leftTrackRef = useRef<HTMLDivElement>(null);
   const rightTrackRef = useRef<HTMLDivElement>(null);
   const uniqueId = useId();
-
-  // Load visible community skillshots if initial list was empty
-  useEffect(() => {
-    if (shots.length >= 6) return;
-    let cancelled = false;
-
-    fetch('/api/posts?limit=6')
-      .then(res => (res.ok ? res.json() : null))
-      .then(data => {
-        if (cancelled || !data?.posts || !Array.isArray(data.posts)) return;
-        const mapped: SideShotItem[] = data.posts.slice(0, 6).map((p: Record<string, unknown>) => ({
-          id: String(p.id),
-          title: String(p.title || 'Untitled Skillshot'),
-          category: String(p.category || 'Creative'),
-          displayName: String(p.displayName || p.display_name || 'Creator'),
-          imageWidth: Number(p.imageWidth || p.image_width) || 640,
-          imageHeight: Number(p.imageHeight || p.image_height) || 480,
-        }));
-        if (mapped.length > 0) {
-          setShots(mapped);
-        }
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [shots.length]);
 
   // Mouse Parallax movement (Subtle, max 8-12px, desktop only, respects reduced-motion)
   useEffect(() => {
@@ -112,15 +70,6 @@ export default function DesktopSideAnimations({ initialShots = [] }: DesktopSide
       cancelAnimationFrame(animFrameId);
     };
   }, []);
-
-  // Community shots or subtle abstract editorial fallbacks
-  const leftItem1 = shots[0];
-  const leftItem2 = shots[1];
-  const leftItem3 = shots[2];
-
-  const rightItem1 = shots[3];
-  const rightItem2 = shots[4];
-  const rightItem3 = shots[5];
 
   return (
     <div className="desktopSideDecor" aria-hidden="true">
@@ -206,33 +155,8 @@ export default function DesktopSideAnimations({ initialShots = [] }: DesktopSide
 }
 
 /**
- * Editorial Shot Card: Displays approved community Skillshot thumbnail and meta
- */
-function ShotCard({ shot }: { shot: SideShotItem }) {
-  return (
-    <div className="sideDecorCard">
-      <div className="sideDecorMedia">
-        <img
-          src={`/api/images/${shot.id}?variant=thumbnail`}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          width={shot.imageWidth || 640}
-          height={shot.imageHeight || 480}
-        />
-      </div>
-      <div className="sideDecorMeta">
-        {shot.category && <span className="sideDecorCategory">{shot.category}</span>}
-        <span className="sideDecorTitle">{shot.title}</span>
-        {shot.displayName && <span className="sideDecorAuthor">by {shot.displayName}</span>}
-      </div>
-    </div>
-  );
-}
-
-/**
  * Abstract Editorial Card: Subtle geometric and typographic composition
- * Used as elegant editorial fallbacks when fewer approved community shots are available.
+ * Pure typography and subtle accents for desktop side animation.
  */
 function AbstractCard({
   id,
