@@ -7,10 +7,10 @@
   display: none !important;
 }
 
-/* 2. Desktop Only: min-width 1200px */
+/* 2. Desktop Only: min-width 1200px (Hidden to eliminate scattered boxes) */
 @media (min-width: 1200px) {
   .desktopSideDecor {
-    display: flex !important;
+    display: none !important;
     position: absolute;
     top: 70px;
     left: 0;

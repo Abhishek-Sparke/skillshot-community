@@ -72,7 +72,7 @@ export default function DesktopSideAnimations() {
   }, []);
 
   return (
-    <div className="desktopSideDecor" aria-hidden="true">
+    <div className="desktopSideDecor" aria-hidden="true" style={{ display: 'none' }}>
       {/* Left side composition (organic staggered zigzag) */}
       <div className="sideDecorTrack sideDecorLeft" ref={leftTrackRef}>
         <div className="sideDecorItem">
