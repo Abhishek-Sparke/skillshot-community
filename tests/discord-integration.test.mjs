@@ -135,3 +135,50 @@ test('10. Automatic rank change hook in awardXp triggers enqueueDiscordRankSync'
   assert.match(xpCode, /import\s*\{[^}]*enqueueDiscordRankSync[^}]*\}\s*from\s*['"]\.\/discord-service['"]/);
   assert.match(xpCode, /enqueueDiscordRankSync\(event\.userId,\s*rank\.id\)/);
 });
+
+test('11. Discord interaction endpoint enforces Ed25519 signature verification', async () => {
+  const routeCode = await read('app/api/discord/interactions/route.ts');
+  assert.match(routeCode, /X-Signature-Ed25519/);
+  assert.match(routeCode, /X-Signature-Timestamp/);
+  assert.match(routeCode, /DISCORD_PUBLIC_KEY/);
+  assert.match(routeCode, /crypto\.subtle\.verify\('Ed25519'/);
+  assert.match(routeCode, /Invalid interaction signature/);
+});
+
+test('12. Slash commands /rank, /link, /sync handle requests server-side without trusting client rank/xp', async () => {
+  const routeCode = await read('app/api/discord/interactions/route.ts');
+  // Must lookup caller from DB
+  assert.match(routeCode, /SELECT u\.username, u\.display_name, u\.creator_xp, u\.creator_rank/);
+  assert.match(routeCode, /WHERE dc\.discord_user_id = \$1/);
+  // Never accepts rank or role in payload
+  assert.doesNotMatch(routeCode, /interaction\.data\.options/);
+  assert.match(routeCode, /commandName === 'rank'/);
+  assert.match(routeCode, /commandName === 'link'/);
+  assert.match(routeCode, /commandName === 'sync'/);
+});
+
+test('13. Disconnect preserves Skillshot XP, Creator Rank, and user achievements', async () => {
+  const serviceCode = await read('lib/discord-service.ts');
+  // Deletes connection and queue records only
+  assert.match(serviceCode, /DELETE FROM discord_connections WHERE skillshot_user_id = \$1/);
+  assert.match(serviceCode, /DELETE FROM discord_sync_queue WHERE skillshot_user_id = \$1/);
+  // Never touches users table creator_xp or creator_rank
+  assert.doesNotMatch(serviceCode, /UPDATE users SET creator_xp/);
+  assert.doesNotMatch(serviceCode, /DELETE FROM users/);
+});
+
+test('14. Sync queue prevents duplicate pending jobs for the same user', async () => {
+  const serviceCode = await read('lib/discord-service.ts');
+  assert.match(serviceCode, /SELECT id FROM discord_sync_queue WHERE skillshot_user_id = \$1 AND status = 'PENDING'/);
+  assert.match(serviceCode, /UPDATE discord_sync_queue\s+SET target_rank = \$1/);
+});
+
+test('15. Staff Discord admin API supports REGISTER_COMMANDS for Guild 1548208097112236124', async () => {
+  const staffRoute = await read('app/api/staff/discord/route.ts');
+  assert.match(staffRoute, /action === 'REGISTER_COMMANDS'/);
+  assert.match(staffRoute, /\/applications\/\$\{DISCORD_CLIENT_ID\}\/guilds\/\$\{DISCORD_GUILD_ID\}\/commands/);
+  assert.match(staffRoute, /name:\s*'rank'/);
+  assert.match(staffRoute, /name:\s*'link'/);
+  assert.match(staffRoute, /name:\s*'sync'/);
+});
+

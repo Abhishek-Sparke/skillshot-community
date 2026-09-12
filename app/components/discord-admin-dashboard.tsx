@@ -37,7 +37,29 @@ export default function DiscordAdminDashboard({
   const [connections, setConnections] = useState<DiscordAdminConnection[]>(initialConnections);
   const [busyUser, setBusyUser] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [registerBusy, setRegisterBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const handleRegisterCommands = async () => {
+    setRegisterBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/staff/discord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'REGISTER_COMMANDS' }),
+      });
+      const data = await res.json();
+      setMessage({
+        text: data.message || (data.success ? 'Slash commands registered.' : data.error || 'Failed to register commands.'),
+        type: data.success ? 'success' : 'error',
+      });
+    } catch {
+      setMessage({ text: 'Network error registering Discord commands.', type: 'error' });
+    } finally {
+      setRegisterBusy(false);
+    }
+  };
 
   const refreshData = async () => {
     try {
@@ -164,8 +186,17 @@ export default function DiscordAdminDashboard({
         <button
           type="button"
           className="button"
+          onClick={handleRegisterCommands}
+          disabled={bulkBusy || registerBusy}
+        >
+          {registerBusy ? 'Registering…' : 'Register Slash Commands'}
+        </button>
+
+        <button
+          type="button"
+          className="button"
           onClick={refreshData}
-          disabled={bulkBusy}
+          disabled={bulkBusy || registerBusy}
         >
           Refresh Status
         </button>

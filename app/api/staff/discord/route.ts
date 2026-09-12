@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { requirePrincipal } from '../../../../lib/authz';
 import { getReadyDb } from '../../../../lib/db';
 import { rankFromXp } from '../../../../lib/creator-rank';
-import { syncMemberCreatorRank, reconcileAllDiscordRoles } from '../../../../lib/discord-service';
+import { syncMemberCreatorRank, reconcileAllDiscordRoles, callDiscordApi } from '../../../../lib/discord-service';
+import { DISCORD_CLIENT_ID, DISCORD_GUILD_ID } from '../../../../lib/discord-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -151,6 +152,48 @@ export async function POST(request: Request) {
       success: true,
       message: `Reconciled ${result.total} connection(s): ${result.synced} in sync, ${result.notInGuild} not in server, ${result.failed} failed.`,
       ...result,
+    });
+  }
+
+  if (action === 'REGISTER_COMMANDS') {
+    const commands = [
+      {
+        name: 'rank',
+        description: 'Display your current Skillshot Creator Rank, level, and XP progress',
+        type: 1,
+      },
+      {
+        name: 'link',
+        description: 'Get the official link to connect your Discord account to Skillshot',
+        type: 1,
+      },
+      {
+        name: 'sync',
+        description: 'Synchronize your Discord Creator Rank role with your Skillshot account',
+        type: 1,
+      },
+    ];
+
+    const endpoint = `/applications/${DISCORD_CLIENT_ID}/guilds/${DISCORD_GUILD_ID}/commands`;
+    const res = await callDiscordApi(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(commands),
+    });
+
+    if (!res.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Failed to register Discord commands (${res.status}): ${res.data?.message || 'Check bot permissions'}`,
+        },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully registered ${res.data?.length || 3} slash commands (/rank, /link, /sync) in Guild ${DISCORD_GUILD_ID}!`,
+      commands: res.data,
     });
   }
 

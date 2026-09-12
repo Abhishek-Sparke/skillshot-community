@@ -320,14 +320,49 @@ export async function enqueueDiscordRankSync(skillshotUserId: string, targetRank
   const discordUserId = String(connRows[0].discord_user_id);
   const targetRoleId = DISCORD_CREATOR_RANK_ROLES[targetRank];
 
-  await sql.query(
-    `INSERT INTO discord_sync_queue(id, skillshot_user_id, discord_user_id, target_rank, target_role_id, status)
-     VALUES($1, $2, $3, $4, $5, 'PENDING')`,
-    [crypto.randomUUID(), skillshotUserId, discordUserId, targetRank, targetRoleId]
+  // Check if a PENDING job already exists for this user to prevent duplicate jobs
+  const pendingJobs = await sql.query(
+    `SELECT id FROM discord_sync_queue WHERE skillshot_user_id = $1 AND status = 'PENDING' LIMIT 1`,
+    [skillshotUserId]
   );
 
-  // Trigger non-blocking async execution
-  syncMemberCreatorRank(discordUserId, targetRank).catch(() => {});
+  let queueId: string;
+  if (pendingJobs.length) {
+    queueId = String(pendingJobs[0].id);
+    await sql.query(
+      `UPDATE discord_sync_queue
+       SET target_rank = $1, target_role_id = $2, updated_at = now()
+       WHERE id = $3`,
+      [targetRank, targetRoleId, queueId]
+    );
+  } else {
+    queueId = crypto.randomUUID();
+    await sql.query(
+      `INSERT INTO discord_sync_queue(id, skillshot_user_id, discord_user_id, target_rank, target_role_id, status)
+       VALUES($1, $2, $3, $4, $5, 'PENDING')`,
+      [queueId, skillshotUserId, discordUserId, targetRank, targetRoleId]
+    );
+  }
+
+  // Trigger non-blocking async execution and update queue status on completion
+  syncMemberCreatorRank(discordUserId, targetRank)
+    .then(async (res) => {
+      await sql.query(
+        `UPDATE discord_sync_queue
+         SET status = $1, attempts = attempts + 1, last_attempt_at = now(), error_message = $2, updated_at = now()
+         WHERE id = $3`,
+        [res.success ? 'COMPLETED' : 'FAILED', res.error || null, queueId]
+      );
+    })
+    .catch(async (err) => {
+      await sql.query(
+        `UPDATE discord_sync_queue
+         SET status = 'FAILED', attempts = attempts + 1, last_attempt_at = now(), error_message = $1, updated_at = now()
+         WHERE id = $2`,
+        [err?.message || 'Sync error', queueId]
+      );
+    });
+
   return true;
 }
 

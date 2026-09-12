@@ -11,11 +11,9 @@ async function verifyDiscordSignature(
   timestamp: string | null,
   publicKeyHex: string | null
 ): Promise<boolean> {
-  if (!publicKeyHex) {
-    // If public key is not yet set in environment, allow through with warning in non-production
-    return process.env.NODE_ENV !== 'production';
+  if (!publicKeyHex || !signature || !timestamp) {
+    return false;
   }
-  if (!signature || !timestamp) return false;
 
   try {
     const pubKeyBytes = new Uint8Array(
