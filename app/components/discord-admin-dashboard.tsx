@@ -26,19 +26,69 @@ export interface DiscordAdminStats {
   lastSync: string | null;
 }
 
+export interface DiscordRankChannelStatus {
+  configuredChannelId: string;
+  messageId: string | null;
+  lastPostedAt: string | null;
+  status: string;
+  lastError: string | null;
+}
+
+export interface DiscordBotPermissions {
+  viewChannel: boolean;
+  sendMessages: boolean;
+  embedLinks: boolean;
+  manageRoles: boolean;
+  allSatisfied: boolean;
+  error?: string;
+}
+
 export default function DiscordAdminDashboard({
   initialStats,
   initialConnections,
+  initialRankChannel,
+  initialBotPermissions,
 }: {
   initialStats: DiscordAdminStats;
   initialConnections: DiscordAdminConnection[];
+  initialRankChannel?: DiscordRankChannelStatus;
+  initialBotPermissions?: DiscordBotPermissions;
 }) {
   const [stats, setStats] = useState<DiscordAdminStats>(initialStats);
   const [connections, setConnections] = useState<DiscordAdminConnection[]>(initialConnections);
+  const [rankChannel, setRankChannel] = useState<DiscordRankChannelStatus | undefined>(initialRankChannel);
+  const [botPermissions, setBotPermissions] = useState<DiscordBotPermissions | undefined>(initialBotPermissions);
+  const [channelInput, setChannelInput] = useState(initialRankChannel?.configuredChannelId || '');
   const [busyUser, setBusyUser] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [registerBusy, setRegisterBusy] = useState(false);
+  const [postBusy, setPostBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const handlePostVerificationMessage = async () => {
+    setPostBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/staff/discord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'POST_VERIFICATION_MESSAGE',
+          channelId: channelInput.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      setMessage({
+        text: data.message || (data.success ? 'Verification message posted to Discord!' : data.error || 'Failed to post message.'),
+        type: data.success ? 'success' : 'error',
+      });
+      await refreshData();
+    } catch {
+      setMessage({ text: 'Network error posting verification message.', type: 'error' });
+    } finally {
+      setPostBusy(false);
+    }
+  };
 
   const handleRegisterCommands = async () => {
     setRegisterBusy(true);
@@ -68,6 +118,8 @@ export default function DiscordAdminDashboard({
         const data = await res.json();
         setStats(data.stats);
         setConnections(data.connections);
+        if (data.rankChannel) setRankChannel(data.rankChannel);
+        if (data.botPermissions) setBotPermissions(data.botPermissions);
       }
     } catch {
       // Graceful fallback
@@ -217,6 +269,102 @@ export default function DiscordAdminDashboard({
           {message.text}
         </div>
       )}
+
+      {/* RANK CHANNEL & VERIFICATION MESSAGE */}
+      <section
+        className="staffSection"
+        style={{
+          background: 'rgba(255, 80, 57, 0.03)',
+          border: '1px solid rgba(255, 80, 57, 0.2)',
+          borderRadius: 12,
+          padding: 16,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 20 }}>🏆</span>
+            <h2 style={{ fontSize: 16, margin: 0 }}>Discord #rank Verification Message</h2>
+          </div>
+          <span
+            style={{
+              fontSize: 12,
+              padding: '3px 8px',
+              borderRadius: 6,
+              background: rankChannel?.status === 'ACTIVE' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+              color: rankChannel?.status === 'ACTIVE' ? 'var(--success, #22c55e)' : 'var(--muted)',
+            }}
+          >
+            {rankChannel?.status === 'ACTIVE' ? `Message Active (${rankChannel.messageId})` : 'Not Posted Yet'}
+          </span>
+        </div>
+
+        <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>
+          Post the official Skillshot verification embed in your server&apos;s rank channel. Members click &quot;Verify Skillshot&quot; to authenticate, verify their Creator Rank, and automatically receive their Discord role.
+        </p>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 12,
+            marginBottom: 16,
+            background: 'rgba(0, 0, 0, 0.2)',
+            padding: 12,
+            borderRadius: 8,
+          }}
+        >
+          <div>
+            <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase' }}>Rank Channel ID</span>
+            <input
+              type="text"
+              value={channelInput}
+              onChange={e => setChannelInput(e.target.value)}
+              placeholder="e.g. 1548208097112236124"
+              className="input"
+              style={{ width: '100%', marginTop: 4, fontSize: 13 }}
+            />
+          </div>
+
+          <div>
+            <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase' }}>Last Posted / Updated</span>
+            <strong style={{ fontSize: 13, display: 'block', marginTop: 8 }}>
+              {rankChannel?.lastPostedAt ? new Date(rankChannel.lastPostedAt).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : 'Never'}
+            </strong>
+          </div>
+
+          <div>
+            <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase' }}>Bot Permissions</span>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6, fontSize: 12 }}>
+              <span style={{ color: botPermissions?.viewChannel ? 'var(--success, #22c55e)' : 'var(--danger, #ef4444)' }}>
+                View {botPermissions?.viewChannel ? '✓' : '✕'}
+              </span>
+              <span>•</span>
+              <span style={{ color: botPermissions?.sendMessages ? 'var(--success, #22c55e)' : 'var(--danger, #ef4444)' }}>
+                Send {botPermissions?.sendMessages ? '✓' : '✕'}
+              </span>
+              <span>•</span>
+              <span style={{ color: botPermissions?.embedLinks ? 'var(--success, #22c55e)' : 'var(--danger, #ef4444)' }}>
+                Embed {botPermissions?.embedLinks ? '✓' : '✕'}
+              </span>
+              <span>•</span>
+              <span style={{ color: botPermissions?.manageRoles ? 'var(--success, #22c55e)' : 'var(--danger, #ef4444)' }}>
+                Roles {botPermissions?.manageRoles ? '✓' : '✕'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button
+            type="button"
+            className="button primary"
+            onClick={handlePostVerificationMessage}
+            disabled={postBusy || bulkBusy}
+          >
+            {postBusy ? 'Posting to Discord…' : rankChannel?.messageId ? 'Update Verification Message in #rank' : 'Post Verification Message in #rank'}
+          </button>
+        </div>
+      </section>
 
       {/* CONNECTIONS TABLE */}
       <section className="staffSection">

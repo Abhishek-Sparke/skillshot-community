@@ -17,6 +17,11 @@ const COMMANDS = [
     type: 1,
   },
   {
+    name: 'verify',
+    description: 'Verify your Skillshot account and receive your Creator Rank role',
+    type: 1,
+  },
+  {
     name: 'link',
     description: 'Get the official link to connect your Discord account to Skillshot',
     type: 1,

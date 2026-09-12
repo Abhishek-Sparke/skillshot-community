@@ -1,5 +1,6 @@
 import { requirePanel } from '../../../lib/authz';
 import { getReadyDb } from '../../../lib/db';
+import { getRankChannelStatus, getDiscordBotPermissions } from '../../../lib/discord-service';
 import DiscordAdminDashboard from '../../components/discord-admin-dashboard';
 
 export default async function DiscordAdminPage() {
@@ -10,7 +11,7 @@ export default async function DiscordAdminPage() {
 
   const sql = await getReadyDb();
 
-  const [countRows, lastSyncRows, userRows] = await Promise.all([
+  const [countRows, lastSyncRows, userRows, rankChannel, botPermissions] = await Promise.all([
     sql.query(`
       SELECT
         count(*)::int AS total,
@@ -39,6 +40,21 @@ export default async function DiscordAdminPage() {
       ORDER BY dc.updated_at DESC
       LIMIT 100
     `),
+    getRankChannelStatus().catch(() => ({
+      configuredChannelId: '',
+      messageId: null,
+      lastPostedAt: null,
+      status: 'NOT_POSTED',
+      lastError: null,
+    })),
+    getDiscordBotPermissions().catch(err => ({
+      viewChannel: false,
+      sendMessages: false,
+      embedLinks: false,
+      manageRoles: false,
+      allSatisfied: false,
+      error: err?.message || 'Permission check failed',
+    })),
   ]);
 
   const counts = countRows[0] || {};
@@ -69,6 +85,8 @@ export default async function DiscordAdminPage() {
     <DiscordAdminDashboard
       initialStats={initialStats}
       initialConnections={initialConnections}
+      initialRankChannel={rankChannel}
+      initialBotPermissions={botPermissions}
     />
   );
 }

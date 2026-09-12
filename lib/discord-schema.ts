@@ -30,5 +30,15 @@ export const DISCORD_MIGRATION = [
     updated_at timestamptz NOT NULL DEFAULT now()
   )`,
   `CREATE INDEX IF NOT EXISTS idx_discord_sync_queue_status ON discord_sync_queue(status, created_at)`,
-  `CREATE INDEX IF NOT EXISTS idx_discord_sync_queue_user ON discord_sync_queue(skillshot_user_id)`
+  `CREATE INDEX IF NOT EXISTS idx_discord_sync_queue_user ON discord_sync_queue(skillshot_user_id)`,
+
+  `CREATE TABLE IF NOT EXISTS discord_verification_messages (
+    id text PRIMARY KEY,
+    channel_id text NOT NULL UNIQUE,
+    message_id text,
+    last_posted_at timestamptz,
+    status text NOT NULL DEFAULT 'ACTIVE',
+    last_error text
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_discord_verif_channel ON discord_verification_messages(channel_id)`
 ];

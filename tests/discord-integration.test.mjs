@@ -181,7 +181,75 @@ test('15. Staff Discord admin API supports REGISTER_COMMANDS for Guild 154820809
   assert.match(staffRoute, /action === 'REGISTER_COMMANDS'/);
   assert.match(staffRoute, /\/applications\/\$\{DISCORD_CLIENT_ID\}\/guilds\/\$\{DISCORD_GUILD_ID\}\/commands/);
   assert.match(staffRoute, /name:\s*'rank'/);
+  assert.match(staffRoute, /name:\s*'verify'/);
   assert.match(staffRoute, /name:\s*'link'/);
   assert.match(staffRoute, /name:\s*'sync'/);
 });
+
+test('16. OAuth state and CSRF protection is strictly enforced during verification', async () => {
+  const authRoute = await read('app/api/discord/authorize/route.ts');
+  const callbackRoute = await read('app/api/discord/callback/route.ts');
+
+  // Authorize sets HttpOnly cookie with cryptorandom state
+  assert.match(authRoute, /cookieStore\.set\('discord_oauth_state',\s*state/);
+  assert.match(authRoute, /httpOnly:\s*true/);
+
+  // Callback validates state and consumes cookie
+  assert.match(callbackRoute, /cookieStore\.get\('discord_oauth_state'\)/);
+  assert.match(callbackRoute, /cookieStore\.delete\('discord_oauth_state'\)/);
+  assert.match(callbackRoute, /state !== savedState/);
+});
+
+test('17. Discord <-> Skillshot account mapping enforces bidirectional uniqueness', async () => {
+  const callbackRoute = await read('app/api/discord/callback/route.ts');
+  // Prevents one Discord account from linking to multiple Skillshot accounts
+  assert.match(callbackRoute, /existingDiscord\[0\]\.skillshot_user_id !== principal\.id/);
+  // Prevents one Skillshot account from linking to multiple Discord accounts
+  assert.match(callbackRoute, /existingSkillshot\[0\]\.discord_user_id !== discordUserId/);
+});
+
+test('18. Verification triggers immediate role sync and gives Newcomer role to users with 0 XP', async () => {
+  const callbackRoute = await read('app/api/discord/callback/route.ts');
+  assert.match(callbackRoute, /const currentRank = rankFromXp\(xp\)/);
+  assert.match(callbackRoute, /await syncMemberCreatorRank\(discordUserId,\s*currentRank\.id,\s*principal\.id\)/);
+
+  // Verify 0 XP gives Newcomer
+  const newcomer = rankFromXp(0);
+  assert.equal(newcomer.id, 'NEWCOMER');
+  assert.equal(roleIdForRank(newcomer.id), '1548217177348374548');
+});
+
+test('19. Rank verification message definition uses skillshot_rank_verify custom_id and coral branding', async () => {
+  const serviceCode = await read('lib/discord-service.ts');
+  assert.match(serviceCode, /🏆 Skillshot Rank Verification/);
+  assert.match(serviceCode, /VERIFY_BUTTON_CUSTOM_ID/);
+  assert.match(serviceCode, /DISCORD_EMBED_COLOR/);
+  assert.match(serviceCode, /postOrUpdateRankVerificationMessage/);
+});
+
+test('20. Interaction endpoint handles component button skillshot_rank_verify ephemerally', async () => {
+  const routeCode = await read('app/api/discord/interactions/route.ts');
+  assert.match(routeCode, /interaction\.type === 3/);
+  assert.match(routeCode, /customId === 'skillshot_rank_verify'/);
+  assert.match(routeCode, /flags:\s*64/); // Ephemeral
+  assert.match(routeCode, /\/api\/discord\/authorize/);
+});
+
+test('21. Staff Discord admin API protects rank channel posting with settings.manage RBAC', async () => {
+  const staffRoute = await read('app/api/staff/discord/route.ts');
+  assert.match(staffRoute, /requirePrincipal\('settings\.manage'\)/);
+  assert.match(staffRoute, /action === 'POST_VERIFICATION_MESSAGE'/);
+  assert.match(staffRoute, /postOrUpdateRankVerificationMessage/);
+});
+
+test('22. Bot permission inspector checks View Channel, Send Messages, Embed Links, Manage Roles', async () => {
+  const serviceCode = await read('lib/discord-service.ts');
+  assert.match(serviceCode, /export async function getDiscordBotPermissions/);
+  assert.match(serviceCode, /viewChannel/);
+  assert.match(serviceCode, /sendMessages/);
+  assert.match(serviceCode, /embedLinks/);
+  assert.match(serviceCode, /manageRoles/);
+  assert.match(serviceCode, /allSatisfied/);
+});
+
 

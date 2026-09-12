@@ -2,7 +2,14 @@ import { NextResponse } from 'next/server';
 import { requirePrincipal } from '../../../../lib/authz';
 import { getReadyDb } from '../../../../lib/db';
 import { rankFromXp } from '../../../../lib/creator-rank';
-import { syncMemberCreatorRank, reconcileAllDiscordRoles, callDiscordApi } from '../../../../lib/discord-service';
+import {
+  syncMemberCreatorRank,
+  reconcileAllDiscordRoles,
+  callDiscordApi,
+  postOrUpdateRankVerificationMessage,
+  getDiscordBotPermissions,
+  getRankChannelStatus,
+} from '../../../../lib/discord-service';
 import { DISCORD_CLIENT_ID, DISCORD_GUILD_ID } from '../../../../lib/discord-config';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +22,7 @@ export async function GET() {
 
   const sql = await getReadyDb();
 
-  const [countRows, lastSyncRows, userRows] = await Promise.all([
+  const [countRows, lastSyncRows, userRows, rankChannel, botPermissions] = await Promise.all([
     sql.query(`
       SELECT
         count(*)::int AS total,
@@ -44,6 +51,21 @@ export async function GET() {
       ORDER BY dc.updated_at DESC
       LIMIT 100
     `),
+    getRankChannelStatus().catch(() => ({
+      configuredChannelId: '',
+      messageId: null,
+      lastPostedAt: null,
+      status: 'ERROR',
+      lastError: 'Failed to read rank channel status',
+    })),
+    getDiscordBotPermissions().catch(err => ({
+      viewChannel: false,
+      sendMessages: false,
+      embedLinks: false,
+      manageRoles: false,
+      allSatisfied: false,
+      error: err?.message || 'Error checking bot permissions',
+    })),
   ]);
 
   const counts = countRows[0] || {};
@@ -70,7 +92,7 @@ export async function GET() {
     lastError: row.last_error ? String(row.last_error) : null,
   }));
 
-  return NextResponse.json({ stats, connections });
+  return NextResponse.json({ stats, connections, rankChannel, botPermissions });
 }
 
 export async function POST(request: Request) {
@@ -163,6 +185,11 @@ export async function POST(request: Request) {
         type: 1,
       },
       {
+        name: 'verify',
+        description: 'Verify your Skillshot account and receive your Creator Rank role',
+        type: 1,
+      },
+      {
         name: 'link',
         description: 'Get the official link to connect your Discord account to Skillshot',
         type: 1,
@@ -192,9 +219,15 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Successfully registered ${res.data?.length || 3} slash commands (/rank, /link, /sync) in Guild ${DISCORD_GUILD_ID}!`,
+      message: `Successfully registered ${res.data?.length || 4} slash commands (/rank, /verify, /link, /sync) in Guild ${DISCORD_GUILD_ID}!`,
       commands: res.data,
     });
+  }
+
+  if (action === 'POST_VERIFICATION_MESSAGE') {
+    const channelId = body.channelId ? String(body.channelId) : undefined;
+    const result = await postOrUpdateRankVerificationMessage(channelId);
+    return NextResponse.json(result, { status: result.success ? 200 : 400 });
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

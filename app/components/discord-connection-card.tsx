@@ -186,7 +186,7 @@ export default function DiscordConnectionCard() {
       {!isConnected ? (
         <>
           <p className="settingsHint" style={{ marginBottom: 16 }}>
-            Connect your Discord account to sync your Skillshot Creator Rank.
+            Connect your Discord account to verify your Creator Rank and receive your matching Discord role.
           </p>
           <div className="settingsActions">
             <a
@@ -194,18 +194,40 @@ export default function DiscordConnectionCard() {
               className="button primary"
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
             >
-              <span>Connect Discord</span>
+              <span>🔗 Verify Skillshot with Discord</span>
             </a>
           </div>
         </>
       ) : (
         <>
+          {/* VERIFICATION STATUS HEADER */}
+          <div
+            style={{
+              padding: '12px 16px',
+              borderRadius: 10,
+              marginBottom: 16,
+              background: 'rgba(34, 197, 94, 0.08)',
+              border: '1px solid rgba(34, 197, 94, 0.25)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 18 }} aria-hidden="true">✅</span>
+              <strong style={{ fontSize: 15, color: 'var(--success, #22c55e)' }}>Discord Verified</strong>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--foreground)' }}>
+              {searchParams.get('already_linked') === '1'
+                ? 'Your Discord account is already connected to Skillshot.'
+                : 'Your Skillshot account is successfully connected.'}
+            </p>
+          </div>
+
+          {/* ROLE & RANK DETAILS GRID */}
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
               gap: 12,
-              padding: '12px 14px',
+              padding: '14px 16px',
               borderRadius: 10,
               background: 'rgba(255, 255, 255, 0.03)',
               border: '1px solid var(--line)',
@@ -232,7 +254,7 @@ export default function DiscordConnectionCard() {
               <small style={{ display: 'block', color: 'var(--muted)', fontSize: 11, textTransform: 'uppercase' }}>
                 Discord Role
               </small>
-              <strong style={{ fontSize: 14 }}>
+              <strong style={{ fontSize: 14, color: data?.syncStatus === 'SYNCED' ? 'var(--success, #22c55e)' : undefined }}>
                 {data?.syncStatus === 'SYNCED'
                   ? `${data.creatorRank.label} ✓`
                   : data?.syncStatus === 'NOT_IN_GUILD'
@@ -241,6 +263,10 @@ export default function DiscordConnectionCard() {
               </strong>
             </div>
           </div>
+
+          <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>
+            Your role will automatically update whenever your Skillshot rank changes.
+          </p>
 
           <div className="settingsActions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button
@@ -251,6 +277,14 @@ export default function DiscordConnectionCard() {
             >
               {syncing ? 'Syncing Rank…' : 'Sync Rank'}
             </button>
+
+            <a
+              href="/api/discord/authorize"
+              className="button"
+              style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+            >
+              Reconnect
+            </a>
 
             <button
               type="button"

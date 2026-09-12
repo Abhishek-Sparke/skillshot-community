@@ -2,6 +2,9 @@ import { getReadyDb } from './db';
 import {
   DISCORD_API_BASE,
   DISCORD_GUILD_ID,
+  DISCORD_RANK_CHANNEL_ID,
+  DISCORD_EMBED_COLOR,
+  VERIFY_BUTTON_CUSTOM_ID,
   DISCORD_CREATOR_RANK_ROLES,
   MANAGED_DISCORD_ROLE_IDS,
   type isManagedCreatorRankRole,
@@ -474,3 +477,256 @@ export async function reconcileAllDiscordRoles(limit = 100): Promise<{
     failed,
   };
 }
+
+/**
+ * Post or update the Skillshot Rank Verification embed in Discord #rank.
+ * Uses Discord primary button with custom_id 'skillshot_rank_verify' and link to website.
+ */
+export async function postOrUpdateRankVerificationMessage(channelIdInput?: string): Promise<{
+  success: boolean;
+  message: string;
+  messageId?: string;
+  channelId?: string;
+}> {
+  const channelId = channelIdInput?.trim() || DISCORD_RANK_CHANNEL_ID;
+  if (!channelId) {
+    return {
+      success: false,
+      message: 'No Discord rank channel configured. Provide a channel ID or set DISCORD_RANK_CHANNEL_ID.',
+    };
+  }
+
+  const sql = await getReadyDb();
+  const existingRows = await sql.query(
+    `SELECT message_id FROM discord_verification_messages WHERE channel_id = $1 LIMIT 1`,
+    [channelId]
+  );
+  const existingMessageId = existingRows[0]?.message_id ? String(existingRows[0].message_id) : null;
+
+  const payload = {
+    embeds: [
+      {
+        title: '🏆 Skillshot Rank Verification',
+        description:
+          'Connect your Skillshot account to Discord to verify your Creator Rank and receive your matching Discord role.\n\n' +
+          'Your Discord role is determined automatically from your Skillshot rank.',
+        color: DISCORD_EMBED_COLOR,
+        footer: {
+          text: 'Skillshot Community • Automatic Rank Synchronization',
+        },
+      },
+    ],
+    components: [
+      {
+        type: 1, // Action Row
+        components: [
+          {
+            type: 2, // Button
+            style: 1, // Primary (blurple)
+            label: '🔗 Verify Skillshot',
+            custom_id: VERIFY_BUTTON_CUSTOM_ID,
+          },
+          {
+            type: 2, // Button
+            style: 5, // Link
+            label: 'Open Skillshot',
+            url: 'https://skillshot-community.vercel.app/settings/connections',
+          },
+        ],
+      },
+    ],
+  };
+
+  let messageId: string | null = null;
+  let updatedExisting = false;
+
+  if (existingMessageId) {
+    const patchRes = await callDiscordApi(`/channels/${channelId}/messages/${existingMessageId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+
+    if (patchRes.ok && patchRes.data?.id) {
+      messageId = String(patchRes.data.id);
+      updatedExisting = true;
+    }
+  }
+
+  if (!messageId) {
+    const postRes = await callDiscordApi(`/channels/${channelId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (!postRes.ok) {
+      const errMsg = postRes.data?.message || `Failed to post message (Discord HTTP ${postRes.status})`;
+      await sql.query(
+        `INSERT INTO discord_verification_messages (id, channel_id, message_id, last_posted_at, status, last_error)
+         VALUES ($1, $2, null, now(), 'FAILED', $3)
+         ON CONFLICT (channel_id) DO UPDATE
+         SET status = 'FAILED', last_error = $3, last_posted_at = now()`,
+        [crypto.randomUUID(), channelId, errMsg]
+      );
+      return {
+        success: false,
+        message: `Failed to post verification message to Discord channel ${channelId}: ${errMsg}`,
+        channelId,
+      };
+    }
+
+    messageId = String(postRes.data?.id);
+  }
+
+  await sql.query(
+    `INSERT INTO discord_verification_messages (id, channel_id, message_id, last_posted_at, status, last_error)
+     VALUES ($1, $2, $3, now(), 'ACTIVE', null)
+     ON CONFLICT (channel_id) DO UPDATE
+     SET message_id = $3, last_posted_at = now(), status = 'ACTIVE', last_error = null`,
+    [crypto.randomUUID(), channelId, messageId]
+  );
+
+  return {
+    success: true,
+    message: updatedExisting
+      ? `Updated existing rank verification message in #${channelId}.`
+      : `Posted new rank verification message to #${channelId}!`,
+    messageId,
+    channelId,
+  };
+}
+
+export type BotPermissionCheck = {
+  viewChannel: boolean;
+  sendMessages: boolean;
+  embedLinks: boolean;
+  manageRoles: boolean;
+  allSatisfied: boolean;
+  rawPermissions?: string;
+  error?: string;
+};
+
+/**
+ * Inspect bot permissions in the guild / rank channel.
+ * Checks for View Channel, Send Messages, Embed Links, and Manage Roles.
+ * Does NOT require Administrator permission.
+ */
+export async function getDiscordBotPermissions(): Promise<BotPermissionCheck> {
+  // 1. Fetch bot's user info
+  const userRes = await callDiscordApi('/users/@me');
+  if (!userRes.ok) {
+    return {
+      viewChannel: false,
+      sendMessages: false,
+      embedLinks: false,
+      manageRoles: false,
+      allSatisfied: false,
+      error: userRes.data?.message || 'Failed to authenticate bot token',
+    };
+  }
+
+  const botUserId = userRes.data.id;
+
+  // 2. Fetch bot's guild member details
+  const memberRes = await callDiscordApi(`/guilds/${DISCORD_GUILD_ID}/members/${botUserId}`);
+  if (!memberRes.ok) {
+    return {
+      viewChannel: false,
+      sendMessages: false,
+      embedLinks: false,
+      manageRoles: false,
+      allSatisfied: false,
+      error: memberRes.data?.message || 'Bot is not a member of the configured guild',
+    };
+  }
+
+  const memberRoles: string[] = memberRes.data.roles || [];
+
+  // 3. Fetch guild roles to resolve bitfields
+  const rolesRes = await callDiscordApi(`/guilds/${DISCORD_GUILD_ID}/roles`);
+  if (!rolesRes.ok) {
+    return {
+      viewChannel: false,
+      sendMessages: false,
+      embedLinks: false,
+      manageRoles: false,
+      allSatisfied: false,
+      error: rolesRes.data?.message || 'Failed to fetch guild roles',
+    };
+  }
+
+  const guildRoles: Array<{ id: string; permissions: string }> = rolesRes.data || [];
+  let cumulative = BigInt(0);
+
+  // Include @everyone role (role ID === DISCORD_GUILD_ID)
+  const everyoneRole = guildRoles.find(r => r.id === DISCORD_GUILD_ID);
+  if (everyoneRole) {
+    cumulative |= BigInt(everyoneRole.permissions || '0');
+  }
+
+  for (const roleId of memberRoles) {
+    const role = guildRoles.find(r => r.id === roleId);
+    if (role) {
+      cumulative |= BigInt(role.permissions || '0');
+    }
+  }
+
+  // Administrator bit: 8 (0x8)
+  const isAdministrator = (cumulative & BigInt(8)) !== BigInt(0);
+
+  // Specific bits:
+  // VIEW_CHANNEL: 1024 (0x400)
+  // SEND_MESSAGES: 2048 (0x800)
+  // EMBED_LINKS: 16384 (0x4000)
+  // MANAGE_ROLES: 268435456 (0x10000000)
+  const viewChannel = isAdministrator || (cumulative & BigInt(1024)) !== BigInt(0);
+  const sendMessages = isAdministrator || (cumulative & BigInt(2048)) !== BigInt(0);
+  const embedLinks = isAdministrator || (cumulative & BigInt(16384)) !== BigInt(0);
+  const manageRoles = isAdministrator || (cumulative & BigInt(268435456)) !== BigInt(0);
+
+  return {
+    viewChannel,
+    sendMessages,
+    embedLinks,
+    manageRoles,
+    allSatisfied: viewChannel && sendMessages && embedLinks && manageRoles,
+    rawPermissions: cumulative.toString(),
+  };
+}
+
+/**
+ * Retrieve current rank channel message status from the database.
+ */
+export async function getRankChannelStatus(): Promise<{
+  configuredChannelId: string;
+  messageId: string | null;
+  lastPostedAt: string | null;
+  status: string;
+  lastError: string | null;
+}> {
+  const sql = await getReadyDb();
+  const rows = await sql.query(
+    `SELECT channel_id, message_id, last_posted_at, status, last_error
+     FROM discord_verification_messages
+     ORDER BY last_posted_at DESC NULLS LAST
+     LIMIT 1`
+  );
+
+  if (rows.length) {
+    return {
+      configuredChannelId: DISCORD_RANK_CHANNEL_ID || rows[0].channel_id,
+      messageId: rows[0].message_id,
+      lastPostedAt: rows[0].last_posted_at,
+      status: rows[0].status,
+      lastError: rows[0].last_error,
+    };
+  }
+
+  return {
+    configuredChannelId: DISCORD_RANK_CHANNEL_ID,
+    messageId: null,
+    lastPostedAt: null,
+    status: 'NOT_POSTED',
+    lastError: null,
+  };
+}
+

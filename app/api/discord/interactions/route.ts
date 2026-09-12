@@ -122,16 +122,29 @@ export async function POST(request: Request) {
       });
     }
 
-    // /link command: Provide link to connect Discord account
-    if (commandName === 'link') {
+    // /verify and /link command: Provide link to connect and verify Skillshot account
+    if (commandName === 'verify' || commandName === 'link') {
       return NextResponse.json({
         type: 4,
         data: {
           content:
-            '🔗 **Connect your Discord account to Skillshot:**\n' +
-            'https://skillshot-community.vercel.app/settings/connections\n\n' +
-            'Connecting your account automatically assigns your Skillshot Creator Rank role in this server.',
-          flags: 64,
+            '🏆 **Skillshot Rank Verification**\n\n' +
+            'Connect your Skillshot account to Discord to verify your Creator Rank and receive your matching Discord role.\n\n' +
+            '🔗 https://skillshot-community.vercel.app/api/discord/authorize',
+          flags: 64, // Ephemeral
+          components: [
+            {
+              type: 1,
+              components: [
+                {
+                  type: 2,
+                  style: 5,
+                  label: '🔗 Verify Skillshot',
+                  url: 'https://skillshot-community.vercel.app/api/discord/authorize',
+                },
+              ],
+            },
+          ],
         },
       });
     }
@@ -160,8 +173,8 @@ export async function POST(request: Request) {
           type: 4,
           data: {
             content:
-              'Your Discord account is not connected to Skillshot. Connect here:\n' +
-              'https://skillshot-community.vercel.app/settings/connections',
+              'Your Discord account is not connected to Skillshot. Connect and verify here:\n' +
+              'https://skillshot-community.vercel.app/api/discord/authorize',
             flags: 64,
           },
         });
@@ -185,6 +198,41 @@ export async function POST(request: Request) {
     return NextResponse.json({
       type: 4,
       data: { content: 'Unknown command.', flags: 64 },
+    });
+  }
+
+  // 3. Interaction Type 3: MESSAGE_COMPONENT (Buttons, etc.)
+  if (interaction.type === 3) {
+    const customId = String(interaction.data?.custom_id || '');
+    if (customId === 'skillshot_rank_verify') {
+      return NextResponse.json({
+        type: 4,
+        data: {
+          content:
+            '🏆 **Skillshot Rank Verification**\n\n' +
+            'Click below to securely connect your Skillshot account. Your Discord role will be assigned automatically based on your actual Creator Rank:\n\n' +
+            '🔗 https://skillshot-community.vercel.app/api/discord/authorize',
+          flags: 64, // Ephemeral so only the clicking user sees it
+          components: [
+            {
+              type: 1,
+              components: [
+                {
+                  type: 2,
+                  style: 5,
+                  label: '🔗 Verify Skillshot',
+                  url: 'https://skillshot-community.vercel.app/api/discord/authorize',
+                },
+              ],
+            },
+          ],
+        },
+      });
+    }
+
+    return NextResponse.json({
+      type: 4,
+      data: { content: 'Unknown component action.', flags: 64 },
     });
   }
 

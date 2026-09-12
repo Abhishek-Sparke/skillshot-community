@@ -93,16 +93,24 @@ export async function GET(request: Request) {
   const discordUserId = String(discordUser.id);
   const discordUsername = String(discordUser.global_name || discordUser.username);
 
-  // 5. Enforce unique mapping: check if Discord account is linked to another Skillshot user
+  // 5. Enforce unique mapping:
+  // - Prevent one Discord account from being linked to multiple Skillshot accounts
+  // - Prevent one Skillshot account from being linked to multiple Discord accounts
   const sql = await getReadyDb();
-  const existingMapping = await sql.query(
-    `SELECT skillshot_user_id FROM discord_connections WHERE discord_user_id = $1 LIMIT 1`,
-    [discordUserId]
-  );
+  const [existingDiscord, existingSkillshot] = await Promise.all([
+    sql.query(`SELECT skillshot_user_id FROM discord_connections WHERE discord_user_id = $1 LIMIT 1`, [discordUserId]),
+    sql.query(`SELECT discord_user_id FROM discord_connections WHERE skillshot_user_id = $1 LIMIT 1`, [principal.id]),
+  ]);
 
-  if (existingMapping.length && existingMapping[0].skillshot_user_id !== principal.id) {
+  if (existingDiscord.length && existingDiscord[0].skillshot_user_id !== principal.id) {
     return redirectSettings('error=This+Discord+account+is+already+connected+to+another+Skillshot+account.');
   }
+
+  if (existingSkillshot.length && existingSkillshot[0].discord_user_id !== discordUserId) {
+    return redirectSettings('error=Your+Skillshot+account+is+already+connected+to+a+different+Discord+account.+Please+disconnect+it+first+to+switch.');
+  }
+
+  const wasAlreadyLinked = existingDiscord.length > 0 && existingSkillshot.length > 0;
 
   // 6. Persist connection
   await sql.query(
@@ -131,6 +139,7 @@ export async function GET(request: Request) {
       JSON.stringify({
         discordUserId,
         discordUsername,
+        reconnection: wasAlreadyLinked,
       }),
     ]
   );
@@ -141,8 +150,8 @@ export async function GET(request: Request) {
   const syncResult = await syncMemberCreatorRank(discordUserId, currentRank.id, principal.id);
 
   if (!syncResult.inGuild) {
-    return redirectSettings('connected=1&warning=not_in_guild');
+    return redirectSettings(`verified=1&connected=1&warning=not_in_guild${wasAlreadyLinked ? '&already_linked=1' : ''}`);
   }
 
-  return redirectSettings('connected=1');
+  return redirectSettings(`verified=1&connected=1${wasAlreadyLinked ? '&already_linked=1' : ''}`);
 }
