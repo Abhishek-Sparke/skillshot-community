@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import CreatorUsername from './creator-username';
 import UiIcon from './ui-icon';
 import type { CreatorRankId } from '../../lib/creator-rank';
@@ -129,13 +130,17 @@ function DiscussionCard({ discussion: disc, currentUser, formatDate, onOpen, onR
       </div>
       {disc.isPinned && <span className="discussionPinnedIcon" title="Pinned discussion"><UiIcon name="pin" size={15} /></span>}
     </div>
-    <h3 className="discussionTitle">{disc.title}</h3>
+    <h3 className="discussionTitle">
+      <Link href={`/discussion/${encodeURIComponent(disc.id)}`} onClick={event => event.stopPropagation()}>
+        {disc.title}
+      </Link>
+    </h3>
     <p className="discussionPreview">{disc.summary || disc.content.slice(0, 160) + (disc.content.length > 160 ? '…' : '')}</p>
     {disc.imageUrl && <div className="discussionImagePreview"><img src={disc.imageUrl} alt={disc.title} loading="lazy" />{disc.isGif && <span className="gifBadge">GIF</span>}</div>}
     <div className="discussionCardBottom">
       <div className="discussionInteractions">
         <button type="button" className={`reactionBtn ${disc.viewerReacted ? 'reacted' : ''}`} onClick={event => onReact(disc.id, event)} aria-label={`${disc.viewerReacted ? 'Remove reaction from' : 'React to'} ${disc.title}`}><UiIcon name="heart" size={16} /><span>{disc.reactionCount}</span></button>
-        <button type="button" className="replyCountBtn" onClick={event => { event.stopPropagation(); onOpen(disc); }} aria-label={`${disc.replyCount} replies`}><UiIcon name="comment" size={16} /><span>{disc.replyCount} {disc.replyCount === 1 ? 'reply' : 'replies'}</span></button>
+        <Link href={`/discussion/${encodeURIComponent(disc.id)}#replies`} className="replyCountBtn" onClick={event => event.stopPropagation()} aria-label={`${disc.replyCount} replies`}><UiIcon name="comment" size={16} /><span>{disc.replyCount} {disc.replyCount === 1 ? 'reply' : 'replies'}</span></Link>
         <span className={`discussionSaveState ${disc.viewerSaved ? 'saved' : ''}`} title={disc.viewerSaved ? 'Saved' : 'Save available from discussion'}><UiIcon name="bookmark" size={15} /></span>
       </div>
       {currentUser?.isStaff && <div className="staffQuickControls" onClick={event => event.stopPropagation()}>

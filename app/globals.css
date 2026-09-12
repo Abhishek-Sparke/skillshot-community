@@ -3745,6 +3745,744 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   border-color: #ef4444;
 }
 
+/* Staff Modal & Dedicated Page Toolbars */
+.staffModalToolbar,
+.staffDiscussionToolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.staffModalToolbar .staffActionBtn,
+.staffDiscussionToolbar .staffActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.staffModalToolbar .staffActionBtn:hover,
+.staffDiscussionToolbar .staffActionBtn:hover {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 6%, var(--surface));
+}
+
+.staffModalToolbar .staffActionBtn.active,
+.staffDiscussionToolbar .staffActionBtn.active {
+  background: var(--red);
+  color: #ffffff;
+  border-color: var(--red);
+}
+
+.staffModalToolbar .staffActionBtn.delete,
+.staffDiscussionToolbar .staffActionBtn.delete {
+  color: #ef4444;
+  border-color: color-mix(in srgb, #ef4444 32%, var(--line));
+}
+
+.staffModalToolbar .staffActionBtn.delete:hover,
+.staffDiscussionToolbar .staffActionBtn.delete:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.modalAuthorActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.modalHeaderRightControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modalOpenFullBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secondary-text);
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  transition: all 0.15s ease;
+}
+
+.modalOpenFullBtn:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 4%, var(--surface));
+}
+
+/* ==========================================================================
+   DEDICATED SEPARATE DISCUSSION PAGE (/discussion/[id])
+   ========================================================================== */
+.discussionPageWrapper {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 28px 20px 80px;
+  width: 100%;
+}
+
+.discussionBreadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+  font-size: 13px;
+  color: var(--secondary-text);
+  flex-wrap: wrap;
+}
+
+.discussionBackLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--secondary-text);
+  text-decoration: none;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  transition: all 0.18s ease;
+}
+
+.discussionBackLink:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+  transform: translateX(-3px);
+  background: color-mix(in srgb, var(--ink) 4%, var(--surface));
+}
+
+.discussionBackLink .backArrow {
+  font-size: 14px;
+  transition: transform 0.18s ease;
+}
+
+.discussionBackLink:hover .backArrow {
+  transform: translateX(-2px);
+}
+
+.breadcrumbSep {
+  color: color-mix(in srgb, var(--secondary-text) 50%, transparent);
+}
+
+.breadcrumbCategory {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.breadcrumbTitle {
+  color: var(--secondary-text);
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.discussionMainCard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: clamp(22px, 4vw, 38px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  margin-bottom: 28px;
+}
+
+.discussionHeaderBadges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.discussionCategoryBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: color-mix(in srgb, var(--red) 11%, var(--surface));
+  color: var(--red);
+  border: 1px solid color-mix(in srgb, var(--red) 24%, transparent);
+}
+
+.discussionDetailTitle {
+  font-size: clamp(24px, 3.8vw, 36px);
+  font-weight: 800;
+  line-height: 1.22;
+  color: var(--ink);
+  margin: 0 0 22px;
+  word-break: break-word;
+  letter-spacing: -0.02em;
+}
+
+.discussionAuthorBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+}
+
+.discussionAuthorLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.discussionAuthorAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
+.discussionAuthorAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.discussionAuthorMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.discussionPostMeta {
+  font-size: 12.5px;
+  color: var(--secondary-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.discussionEditedTag {
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.discussionToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.discussionActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--secondary-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.discussionActionBtn:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 4%, var(--surface));
+}
+
+.discussionActionBtn.reactionBtn.reacted {
+  background: color-mix(in srgb, var(--red) 12%, var(--surface));
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.discussionActionBtn.bookmarkBtn.saved {
+  background: color-mix(in srgb, var(--ink) 10%, var(--surface));
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.discussionSummaryQuote {
+  position: relative;
+  background: color-mix(in srgb, var(--ink) 2.5%, var(--surface));
+  border-left: 4px solid var(--red);
+  border-radius: 0 12px 12px 0;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+
+.summaryQuoteIcon {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--red);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.summaryQuoteText {
+  margin: 0;
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.discussionBody {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink);
+  margin-bottom: 24px;
+  word-break: break-word;
+}
+
+.discussionParagraph {
+  margin: 0 0 16px;
+}
+
+.discussionParagraph:last-child {
+  margin-bottom: 0;
+}
+
+.discussionLink {
+  color: var(--red);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 500;
+}
+
+.discussionAttachedMedia {
+  position: relative;
+  margin: 24px 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #000000;
+  cursor: zoom-in;
+  max-height: 520px;
+}
+
+.discussionAttachedMedia img {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  display: block;
+}
+
+.mediaZoomHint {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.discussionAttachedMedia:hover .mediaZoomHint {
+  opacity: 1;
+}
+
+.discussionStatsFooter {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--secondary-text);
+  flex-wrap: wrap;
+}
+
+.statsItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statsItem.date {
+  margin-left: auto;
+  font-size: 12.5px;
+}
+
+.discussionLightboxOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+
+.discussionLightboxContent {
+  position: relative;
+  max-width: 95vw;
+  max-height: 90vh;
+}
+
+.discussionLightboxContent img {
+  max-width: 95vw;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.discussionLightboxClose {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.discussionLightboxClose:hover {
+  background: #ffffff;
+  color: #000000;
+}
+
+/* Discussion Replies Card */
+.discussionRepliesCard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: clamp(22px, 4vw, 36px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+.discussionRepliesHeader {
+  margin-bottom: 22px;
+}
+
+.discussionRepliesHeader h2 {
+  font-size: 20px;
+  font-weight: 750;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+}
+
+.replyCountBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--ink) 8%, var(--surface));
+  color: var(--secondary-text);
+}
+
+.discussionLockedNoticeBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #f59e0b 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, transparent);
+  color: #b45309;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+:root[data-theme=dark] .discussionLockedNoticeBanner {
+  color: #fbbf24;
+}
+
+.discussionReplyComposer {
+  background: color-mix(in srgb, var(--ink) 2%, var(--surface));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 28px;
+  transition: border-color 0.2s ease;
+}
+
+.discussionReplyComposer:focus-within {
+  border-color: var(--ink);
+}
+
+.replyFormHeader {
+  margin-bottom: 12px;
+}
+
+.replyUserMini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--secondary-text);
+}
+
+.replyUserMini img,
+.replyUserMini .avatarFallback {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  font-size: 11px;
+}
+
+.discussionReplyTextarea {
+  width: 100%;
+  min-height: 85px;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14.5px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  padding: 0;
+}
+
+.discussionReplyTextarea::placeholder {
+  color: var(--secondary-text);
+  opacity: 0.7;
+}
+
+.replyComposerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.replyCharCount {
+  font-size: 12px;
+  color: var(--secondary-text);
+}
+
+.replyComposerButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.discussionSignInPrompt {
+  text-align: center;
+  padding: 16px;
+}
+
+.discussionSignInPrompt p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--secondary-text);
+}
+
+.discussionRepliesList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.discussionRepliesEmpty {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.emptyRepliesIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 6%, var(--surface));
+  color: var(--secondary-text);
+}
+
+.discussionRepliesEmpty h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.discussionRepliesEmpty p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--secondary-text);
+}
+
+.discussionReplyCard {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 1.5%, var(--surface));
+  border: 1px solid var(--line);
+  transition: border-color 0.15s ease;
+}
+
+.discussionReplyCard:hover {
+  border-color: color-mix(in srgb, var(--ink) 25%, var(--line));
+}
+
+.replyCardAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
+.replyCardAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.replyCardContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.replyCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.replyAuthorDetails {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.replyCardTime {
+  font-size: 11.5px;
+  color: var(--secondary-text);
+}
+
+.replyDeleteAction {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 6px;
+  color: var(--secondary-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.replyDeleteAction:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.replyCardBody {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.replyCardBody p {
+  margin: 0 0 8px;
+}
+
+.replyCardBody p:last-child {
+  margin-bottom: 0;
+}
+
+.discussionToastNotification {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  z-index: 10000;
+  animation: toastNotificationIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toastNotificationIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+
 /* Discussion Detail Modal */
 .discussionModalOverlay {
   position: fixed;
@@ -4969,8 +5707,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .reactionBtn.reacted{border:0;background:color-mix(in srgb,var(--red) 9%,transparent)}
 .discussionSaveState{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;color:var(--secondary-text)}
 .discussionSaveState.saved{background:color-mix(in srgb,var(--red) 9%,transparent);color:var(--red)}
-.staffQuickControls{margin-left:auto}
-.staffActionBtn{display:grid;place-items:center;width:29px;height:29px;padding:0;color:var(--secondary-text)}
+.staffQuickControls .staffActionBtn{display:grid;place-items:center;width:29px;height:29px;padding:0;color:var(--secondary-text)}
 .discTag{display:inline-flex;align-items:center;gap:4px}
 .communityLoadingState,.communityEmptyState{min-height:0;margin:0;border:1px dashed var(--line);border-radius:16px;background:color-mix(in srgb,var(--surface) 74%,transparent);padding:clamp(28px,5vw,48px);text-align:center}
 .communityEmptyState{display:grid;justify-items:center;gap:7px}

@@ -1,6 +1,6 @@
 import { getReadyDb } from '../../../../../lib/db';
 import { requirePrincipal } from '../../../../../lib/authz';
-import { normalizeRole } from '../../../../../lib/roles';
+import { normalizeRole, isStaffRole } from '../../../../../lib/roles';
 import { moderateText } from '../../../../../lib/moderation';
 import { awardXp, XP_REWARDS, isMeaningfulComment } from '../../../../../lib/xp';
 
@@ -101,3 +101,39 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return Response.json({ error: msg }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const auth = await requirePrincipal();
+  if ('error' in auth) return auth.error;
+  const user = auth.principal;
+
+  try {
+    const url = new URL(request.url);
+    const replyId = url.searchParams.get('replyId');
+    if (!replyId) {
+      return Response.json({ error: 'Missing replyId' }, { status: 400 });
+    }
+
+    const sql = await getReadyDb();
+    const existing = await sql.query(`SELECT id, user_id FROM discussion_replies WHERE id = $1 AND discussion_id = $2 LIMIT 1`, [replyId, id]);
+    if (!existing.length) {
+      return Response.json({ error: 'Reply not found' }, { status: 404 });
+    }
+
+    const isOwner = existing[0].user_id === user.id;
+    const isStaff = isStaffRole(user.role);
+    if (!isOwner && !isStaff) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    await sql.query(`DELETE FROM discussion_replies WHERE id = $1 AND discussion_id = $2`, [replyId, id]);
+    await sql.query(`UPDATE discussions SET reply_count = GREATEST(0, reply_count - 1), updated_at = now() WHERE id = $1`, [id]);
+
+    return Response.json({ success: true });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to delete reply';
+    return Response.json({ error: msg }, { status: 500 });
+  }
+}
+

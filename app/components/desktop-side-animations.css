@@ -18,17 +18,17 @@
     height: 960px;
     justify-content: center;
     pointer-events: none;
-    overflow: clip;
+    overflow: visible;
     z-index: 2;
     user-select: none;
     -webkit-user-select: none;
   }
 
-  /* Center spacer matching the 1220px .shell to guarantee ZERO overlap with hero */
+  /* Center spacer matching the editorial hero to guarantee ZERO overlap */
   .sideDecorSpacer {
-    flex: 0 0 1220px;
-    max-width: 1220px;
-    width: 1220px;
+    flex: 0 0 min(960px, 62vw);
+    max-width: min(960px, 62vw);
+    width: min(960px, 62vw);
     pointer-events: none;
   }
 
@@ -302,6 +302,12 @@
    3. RESPONSIVE SCALE: 1440px+ (Slightly increased visual presence)
    ========================================================================== */
 @media (min-width: 1440px) {
+  .sideDecorSpacer {
+    flex: 0 0 min(1080px, 66vw);
+    max-width: min(1080px, 66vw);
+    width: min(1080px, 66vw);
+  }
+
   .sideDecorTrack {
     opacity: 0.92;
   }
@@ -341,6 +347,12 @@
    4. RESPONSIVE SCALE: 1920px+ (Generous breathing room between elements)
    ========================================================================== */
 @media (min-width: 1920px) {
+  .sideDecorSpacer {
+    flex: 0 0 min(1200px, 64vw);
+    max-width: min(1200px, 64vw);
+    width: min(1200px, 64vw);
+  }
+
   .desktopSideDecor {
     height: 1080px;
   }

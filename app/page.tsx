@@ -3,6 +3,7 @@ import Link from 'next/link';
 import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
 import PublicNavbar from './components/public-navbar';
 import CreatorUsername from './components/creator-username';
+import DesktopSideAnimations from './components/desktop-side-animations';
 import { getChatGPTUser } from './chatgpt-auth';
 import { signInPath } from '../lib/auth-path';
 import { getReadyDb } from '../lib/db';
@@ -165,6 +166,7 @@ export default async function Home() {
   return (
     <main style={{ position: 'relative', overflowX: 'clip' }}>
       <PublicNavbar returnTo="/" />
+      <DesktopSideAnimations />
       {/* 1. HERO (Tighter vertical spacing) */}
       <section className="hero shell">
         <div className="heroEditorial">
