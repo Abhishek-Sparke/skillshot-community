@@ -160,6 +160,9 @@ body{transition:background-color .15s,color .15s}
 :root[data-theme=dark] .viewReplies:hover{background:#33312c}
 :root[data-theme=dark] .featuredChoices label.selected{border-color:var(--red);background:rgba(255,96,74,0.15)}
 :root[data-theme=dark] .miniCanvas{color:#20201d}
+:root[data-theme=dark] .loadMore button{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important;box-shadow:0 4px 16px rgba(0,0,0,0.45)}
+:root[data-theme=dark] .loadMore button:hover:not(:disabled){background:var(--surface-soft)!important;border-color:rgba(255,255,255,0.22)!important;color:#fff!important;box-shadow:0 6px 22px rgba(0,0,0,0.6)}
+:root[data-theme=dark] .loadMore button:disabled{background:var(--surface-soft)!important;color:var(--muted)!important;border-color:var(--line)!important;opacity:0.6}
 :root[data-theme=dark] .floating{background:var(--surface);color:var(--ink)}
 @media(max-width:600px){.settingsPage{padding-top:22px}.settingsSection{padding:18px}.settingsDialog{inset:8px;margin:0;width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}.settingsDetails>div{grid-template-columns:1fr;gap:6px}.themeOption{padding:12px}.themeOptions{gap:8px}}
 @media(prefers-reduced-motion:reduce){body,.settingsDialog{transition:none;animation:none}}
