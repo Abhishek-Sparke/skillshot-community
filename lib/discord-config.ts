@@ -3,6 +3,7 @@ import type { CreatorRankId } from './creator-rank';
 export const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID?.trim() || '1548208097112236124';
 export const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID?.trim() || '1548215059103227904';
 export const DISCORD_RANK_CHANNEL_ID = process.env.DISCORD_RANK_CHANNEL_ID?.trim() || '';
+export const DISCORD_WELCOME_CHANNEL_ID = process.env.DISCORD_WELCOME_CHANNEL_ID?.trim() || '';
 export const DISCORD_API_BASE = 'https://discord.com/api/v10';
 export const DISCORD_EMBED_COLOR = 0xff5039; // Skillshot orange/coral accent
 export const VERIFY_BUTTON_CUSTOM_ID = 'skillshot_rank_verify';

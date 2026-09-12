@@ -49,5 +49,20 @@ export const DISCORD_MIGRATION = [
     created_at timestamptz NOT NULL DEFAULT now(),
     expires_at timestamptz NOT NULL
   )`,
-  `CREATE INDEX IF NOT EXISTS idx_discord_verif_sess_exp ON discord_verification_sessions(expires_at)`
+  `CREATE INDEX IF NOT EXISTS idx_discord_verif_sess_exp ON discord_verification_sessions(expires_at)`,
+
+  `CREATE TABLE IF NOT EXISTS discord_welcomed_members (
+    id text PRIMARY KEY,
+    discord_user_id text NOT NULL UNIQUE,
+    channel_id text NOT NULL,
+    welcomed_at timestamptz NOT NULL DEFAULT now()
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_discord_welcomed_user ON discord_welcomed_members(discord_user_id)`,
+
+  `CREATE TABLE IF NOT EXISTS discord_welcome_settings (
+    id text PRIMARY KEY,
+    channel_id text,
+    enabled boolean NOT NULL DEFAULT true,
+    updated_at timestamptz NOT NULL DEFAULT now()
+  )`
 ];

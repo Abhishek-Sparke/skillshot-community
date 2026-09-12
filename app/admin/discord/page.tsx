@@ -1,6 +1,13 @@
 import { requirePanel } from '../../../lib/authz';
 import { getReadyDb } from '../../../lib/db';
-import { getRankChannelStatus, getDiscordBotPermissions, getGuildChannels, findRankChannel } from '../../../lib/discord-service';
+import {
+  getRankChannelStatus,
+  getDiscordBotPermissions,
+  getGuildChannels,
+  findRankChannel,
+  getWelcomeSettings,
+  findWelcomeChannel,
+} from '../../../lib/discord-service';
 import DiscordAdminDashboard from '../../components/discord-admin-dashboard';
 
 export default async function DiscordAdminPage() {
@@ -11,7 +18,17 @@ export default async function DiscordAdminPage() {
 
   const sql = await getReadyDb();
 
-  const [countRows, lastSyncRows, userRows, rankChannel, botPermissions, guildChannels, defaultRankChannel] = await Promise.all([
+  const [
+    countRows,
+    lastSyncRows,
+    userRows,
+    rankChannel,
+    botPermissions,
+    guildChannels,
+    defaultRankChannel,
+    welcomeSettings,
+    defaultWelcomeChannel,
+  ] = await Promise.all([
     sql.query(`
       SELECT
         count(*)::int AS total,
@@ -57,6 +74,8 @@ export default async function DiscordAdminPage() {
     })),
     getGuildChannels().catch(() => []),
     findRankChannel().catch(() => null),
+    getWelcomeSettings().catch(() => ({ channelId: null, enabled: true })),
+    findWelcomeChannel().catch(() => null),
   ]);
 
   const counts = countRows[0] || {};
@@ -91,6 +110,8 @@ export default async function DiscordAdminPage() {
       initialBotPermissions={botPermissions}
       initialGuildChannels={guildChannels}
       initialDefaultRankChannel={defaultRankChannel}
+      initialWelcomeSettings={welcomeSettings}
+      initialDefaultWelcomeChannel={defaultWelcomeChannel}
     />
   );
 }

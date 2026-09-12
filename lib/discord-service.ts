@@ -3,6 +3,7 @@ import {
   DISCORD_API_BASE,
   DISCORD_GUILD_ID,
   DISCORD_RANK_CHANNEL_ID,
+  DISCORD_WELCOME_CHANNEL_ID,
   DISCORD_EMBED_COLOR,
   VERIFY_BUTTON_CUSTOM_ID,
   DISCORD_CREATOR_RANK_ROLES,
@@ -508,6 +509,24 @@ export async function findRankChannel(): Promise<{ id: string; name: string } | 
 }
 
 /**
+ * Automatically locate the welcome channel (#👋welcome, #🖐️welcome, #welcome) in the guild.
+ */
+export async function findWelcomeChannel(): Promise<{ id: string; name: string } | null> {
+  if (DISCORD_WELCOME_CHANNEL_ID) {
+    return { id: DISCORD_WELCOME_CHANNEL_ID, name: 'welcome' };
+  }
+  const channels = await getGuildChannels();
+  const exact = channels.find(c => {
+    const clean = c.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return clean === 'welcome';
+  });
+  if (exact) return exact;
+  const contains = channels.find(c => c.name.toLowerCase().includes('welcome'));
+  if (contains) return contains;
+  return null;
+}
+
+/**
  * Create a secure server-side verification session bound to the clicking Discord user ID.
  */
 export async function createDiscordVerificationSession(discordUserId: string, interactionToken?: string): Promise<string> {
@@ -820,4 +839,360 @@ export async function getRankChannelStatus(): Promise<{
     lastError: null,
   };
 }
+
+export type DiscordWelcomeSettings = {
+  channelId: string | null;
+  enabled: boolean;
+};
+
+/**
+ * Retrieve current welcome settings from the database.
+ */
+export async function getWelcomeSettings(): Promise<DiscordWelcomeSettings> {
+  const sql = await getReadyDb();
+  const rows = await sql.query(
+    `SELECT channel_id, enabled FROM discord_welcome_settings WHERE id = 'default' LIMIT 1`
+  );
+  if (rows.length) {
+    return {
+      channelId: rows[0].channel_id || DISCORD_WELCOME_CHANNEL_ID || null,
+      enabled: Boolean(rows[0].enabled),
+    };
+  }
+  return {
+    channelId: DISCORD_WELCOME_CHANNEL_ID || null,
+    enabled: true,
+  };
+}
+
+/**
+ * Update welcome settings (channel ID and enabled flag).
+ */
+export async function updateWelcomeSettings(channelId: string | null, enabled: boolean): Promise<DiscordWelcomeSettings> {
+  const sql = await getReadyDb();
+  await sql.query(
+    `INSERT INTO discord_welcome_settings (id, channel_id, enabled, updated_at)
+     VALUES ('default', $1, $2, now())
+     ON CONFLICT (id) DO UPDATE
+     SET channel_id = $1, enabled = $2, updated_at = now()`,
+    [channelId, enabled]
+  );
+  return {
+    channelId,
+    enabled,
+  };
+}
+
+/**
+ * Check if a Discord member has already been welcomed.
+ */
+export async function isMemberWelcomed(discordUserId: string): Promise<boolean> {
+  if (!discordUserId) return false;
+  const sql = await getReadyDb();
+  const rows = await sql.query(
+    `SELECT id FROM discord_welcomed_members WHERE discord_user_id = $1 LIMIT 1`,
+    [discordUserId]
+  );
+  return rows.length > 0;
+}
+
+/**
+ * Record a welcomed member in the database to prevent duplicate welcomes.
+ */
+export async function markMemberWelcomed(discordUserId: string, channelId: string): Promise<void> {
+  const sql = await getReadyDb();
+  await sql.query(
+    `INSERT INTO discord_welcomed_members (id, discord_user_id, channel_id, welcomed_at)
+     VALUES ($1, $2, $3, now())
+     ON CONFLICT (discord_user_id) DO NOTHING`,
+    [crypto.randomUUID(), discordUserId, channelId]
+  );
+}
+
+/**
+ * Get total count of welcomed members recorded.
+ */
+export async function getWelcomedMemberCount(): Promise<number> {
+  const sql = await getReadyDb();
+  const rows = await sql.query(`SELECT count(*)::int as count FROM discord_welcomed_members`);
+  return Number(rows[0]?.count || 0);
+}
+
+/**
+ * Construct the official Skillshot welcome message payload.
+ */
+export function buildWelcomePayload(memberId: string, isPreview = false) {
+  const mentionText = isPreview
+    ? `👋 Welcome to Skillshot, @NewMember! *(Preview / Test Sample)*`
+    : `👋 Welcome to Skillshot, <@${memberId}>!`;
+
+  return {
+    content: mentionText,
+    embeds: [
+      {
+        author: {
+          name: '🏆 Skillshot Community',
+          icon_url: 'https://skillshot-community.vercel.app/icon.png',
+        },
+        title: '👋 Welcome to the Skillshot Community!',
+        description:
+          'Welcome to the Skillshot community.\n\n' +
+          'Share your work, discover creators, connect with other creators, and grow your skills.\n\n' +
+          '**START HERE:**\n\n' +
+          '📜 **Read the rules**\n' +
+          '🏆 **Verify your Skillshot Rank**\n' +
+          '🎨 **Share your work**\n' +
+          '💬 **Meet the community**\n\n' +
+          'Enjoy your stay! 🚀',
+        color: DISCORD_EMBED_COLOR,
+        thumbnail: {
+          url: 'https://skillshot-community.vercel.app/icon.png',
+        },
+        footer: {
+          text: isPreview
+            ? 'Skillshot Community • Sample Preview'
+            : 'Skillshot Community • Welcome to the Community',
+        },
+      },
+    ],
+    components: [
+      {
+        type: 1, // Action Row
+        components: [
+          {
+            type: 2, // Button
+            style: 5, // Link button (no interaction timeouts)
+            label: '🏆 Verify Rank',
+            url: 'https://skillshot-community.vercel.app/api/discord/authorize',
+          },
+          {
+            type: 2, // Button
+            style: 5, // Link button
+            label: '📜 Read Rules',
+            url: 'https://skillshot-community.vercel.app/guidelines',
+          },
+          {
+            type: 2, // Button
+            style: 5, // Link button
+            label: '🌐 Open Skillshot',
+            url: 'https://skillshot-community.vercel.app',
+          },
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Dispatch a welcome message for a newly joined member.
+ * Enforces strict duplicate prevention and skips bots.
+ */
+export async function sendWelcomeMessageForMember(
+  member: { id: string; username?: string; isBot?: boolean },
+  channelIdOverride?: string
+): Promise<{
+  success: boolean;
+  skipped?: boolean;
+  reason?: string;
+  messageId?: string;
+  channelId?: string;
+}> {
+  if (!member || !member.id) {
+    return { success: false, skipped: true, reason: 'INVALID_MEMBER' };
+  }
+
+  // Strict check 1: Never welcome bots
+  if (member.isBot) {
+    return { success: false, skipped: true, reason: 'IS_BOT' };
+  }
+
+  // Strict check 2: Never duplicate welcome messages
+  if (await isMemberWelcomed(member.id)) {
+    return { success: false, skipped: true, reason: 'ALREADY_WELCOMED' };
+  }
+
+  // Strict check 3: Check if welcome system is enabled
+  const settings = await getWelcomeSettings();
+  if (!settings.enabled) {
+    return { success: false, skipped: true, reason: 'WELCOME_DISABLED' };
+  }
+
+  // Resolve channel
+  let channelId = channelIdOverride || settings.channelId;
+  if (!channelId) {
+    const detected = await findWelcomeChannel();
+    channelId = detected?.id || null;
+  }
+
+  if (!channelId) {
+    return { success: false, reason: 'NO_WELCOME_CHANNEL' };
+  }
+
+  const payload = buildWelcomePayload(member.id, false);
+  const postRes = await callDiscordApi(`/channels/${channelId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+  if (!postRes.ok) {
+    return {
+      success: false,
+      reason: postRes.data?.message || `Failed to post message (Discord HTTP ${postRes.status})`,
+      channelId,
+    };
+  }
+
+  // Persist record to prevent any future duplicate welcome
+  await markMemberWelcomed(member.id, channelId);
+
+  return {
+    success: true,
+    messageId: postRes.data?.id ? String(postRes.data.id) : undefined,
+    channelId,
+  };
+}
+
+/**
+ * Send a sample welcome preview message to the configured or specified channel.
+ */
+export async function sendTestWelcomeMessage(channelIdInput?: string): Promise<{
+  success: boolean;
+  message: string;
+  channelId?: string;
+  messageId?: string;
+}> {
+  let channelId = channelIdInput?.trim();
+  if (!channelId) {
+    const settings = await getWelcomeSettings();
+    channelId = settings.channelId || (await findWelcomeChannel())?.id || '';
+  }
+
+  if (!channelId) {
+    return {
+      success: false,
+      message: 'No welcome channel found or configured. Please select or provide a channel ID.',
+    };
+  }
+
+  const payload = buildWelcomePayload('preview', true);
+  const postRes = await callDiscordApi(`/channels/${channelId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+  if (!postRes.ok) {
+    return {
+      success: false,
+      message: `Failed to send sample welcome message: ${postRes.data?.message || `HTTP ${postRes.status}`}`,
+      channelId,
+    };
+  }
+
+  return {
+    success: true,
+    message: `Sample welcome message successfully sent to channel #${channelId}!`,
+    channelId,
+    messageId: postRes.data?.id ? String(postRes.data.id) : undefined,
+  };
+}
+
+/**
+ * Seeds all current guild members into the database as already-welcomed.
+ * This guarantees existing members who joined before this feature are never spammed.
+ */
+export async function seedExistingMembersAsWelcomed(): Promise<{ count: number }> {
+  const res = await callDiscordApi(`/guilds/${DISCORD_GUILD_ID}/members?limit=1000`);
+  if (!res.ok || !Array.isArray(res.data)) {
+    return { count: 0 };
+  }
+
+  let seeded = 0;
+  for (const m of res.data) {
+    if (m?.user?.id) {
+      await markMemberWelcomed(m.user.id, 'SEED');
+      seeded++;
+    }
+  }
+
+  return { count: seeded };
+}
+
+/**
+ * Scans recent guild members, welcomes un-welcomed members, and ignores bots or already-welcomed members.
+ * If the database has 0 welcomed members recorded, automatically seeds existing members first to avoid spam.
+ */
+export async function syncNewMemberWelcomes(options?: {
+  limit?: number;
+  channelIdOverride?: string;
+  seedIfEmpty?: boolean;
+}): Promise<{
+  success: boolean;
+  welcomed: number;
+  skipped: number;
+  total: number;
+  message: string;
+}> {
+  const limit = Math.min(100, Math.max(1, options?.limit || 25));
+  const seedIfEmpty = options?.seedIfEmpty !== false;
+
+  const currentCount = await getWelcomedMemberCount();
+  if (currentCount === 0 && seedIfEmpty) {
+    const seedResult = await seedExistingMembersAsWelcomed();
+    return {
+      success: true,
+      welcomed: 0,
+      skipped: seedResult.count,
+      total: seedResult.count,
+      message: `Initialized welcome registry by recording ${seedResult.count} existing server member(s). Future new joins will be welcomed.`,
+    };
+  }
+
+  const res = await callDiscordApi(`/guilds/${DISCORD_GUILD_ID}/members?limit=${limit}`);
+  if (!res.ok || !Array.isArray(res.data)) {
+    return {
+      success: false,
+      welcomed: 0,
+      skipped: 0,
+      total: 0,
+      message: res.data?.message || 'Failed to fetch guild members from Discord API',
+    };
+  }
+
+  let welcomed = 0;
+  let skipped = 0;
+
+  for (const m of res.data) {
+    const user = m.user;
+    if (!user || user.bot) {
+      skipped++;
+      continue;
+    }
+
+    const isWelcomed = await isMemberWelcomed(user.id);
+    if (isWelcomed) {
+      skipped++;
+      continue;
+    }
+
+    const sendRes = await sendWelcomeMessageForMember(
+      { id: user.id, username: user.username, isBot: user.bot },
+      options?.channelIdOverride
+    );
+
+    if (sendRes.success) {
+      welcomed++;
+    } else {
+      skipped++;
+    }
+  }
+
+  return {
+    success: true,
+    welcomed,
+    skipped,
+    total: res.data.length,
+    message: `Scanned ${res.data.length} recent member(s): ${welcomed} welcomed, ${skipped} skipped.`,
+  };
+}
+
 

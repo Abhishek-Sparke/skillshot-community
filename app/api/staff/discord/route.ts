@@ -11,6 +11,11 @@ import {
   getRankChannelStatus,
   getGuildChannels,
   findRankChannel,
+  findWelcomeChannel,
+  getWelcomeSettings,
+  updateWelcomeSettings,
+  sendTestWelcomeMessage,
+  syncNewMemberWelcomes,
 } from '../../../../lib/discord-service';
 import { DISCORD_CLIENT_ID, DISCORD_GUILD_ID } from '../../../../lib/discord-config';
 
@@ -24,7 +29,7 @@ export async function GET() {
 
   const sql = await getReadyDb();
 
-  const [countRows, lastSyncRows, userRows, rankChannel, botPermissions, guildChannels, defaultRankChannel] = await Promise.all([
+  const [countRows, lastSyncRows, userRows, rankChannel, botPermissions, guildChannels, defaultRankChannel, welcomeSettings, defaultWelcomeChannel] = await Promise.all([
     sql.query(`
       SELECT
         count(*)::int AS total,
@@ -70,6 +75,8 @@ export async function GET() {
     })),
     getGuildChannels().catch(() => []),
     findRankChannel().catch(() => null),
+    getWelcomeSettings().catch(() => ({ channelId: null, enabled: true })),
+    findWelcomeChannel().catch(() => null),
   ]);
 
   const counts = countRows[0] || {};
@@ -96,7 +103,16 @@ export async function GET() {
     lastError: row.last_error ? String(row.last_error) : null,
   }));
 
-  return NextResponse.json({ stats, connections, rankChannel, botPermissions, guildChannels, defaultRankChannel });
+  return NextResponse.json({
+    stats,
+    connections,
+    rankChannel,
+    botPermissions,
+    guildChannels,
+    defaultRankChannel,
+    welcomeSettings,
+    defaultWelcomeChannel,
+  });
 }
 
 export async function POST(request: Request) {
@@ -231,6 +247,30 @@ export async function POST(request: Request) {
   if (action === 'POST_VERIFICATION_MESSAGE') {
     const channelId = body.channelId ? String(body.channelId) : undefined;
     const result = await postOrUpdateRankVerificationMessage(channelId);
+    return NextResponse.json(result, { status: result.success ? 200 : 400 });
+  }
+
+  if (action === 'UPDATE_WELCOME_SETTINGS') {
+    const channelId = body.channelId !== undefined ? (body.channelId ? String(body.channelId).trim() : null) : null;
+    const enabled = body.enabled !== false;
+    const updated = await updateWelcomeSettings(channelId, enabled);
+    return NextResponse.json({
+      success: true,
+      message: 'Welcome settings saved successfully.',
+      welcomeSettings: updated,
+    });
+  }
+
+  if (action === 'SEND_TEST_WELCOME') {
+    const channelId = body.channelId ? String(body.channelId).trim() : undefined;
+    const result = await sendTestWelcomeMessage(channelId);
+    return NextResponse.json(result, { status: result.success ? 200 : 400 });
+  }
+
+  if (action === 'SYNC_WELCOME_MEMBERS') {
+    const limit = Math.min(100, Math.max(1, Number(body.limit) || 25));
+    const channelId = body.channelId ? String(body.channelId).trim() : undefined;
+    const result = await syncNewMemberWelcomes({ limit, channelIdOverride: channelId });
     return NextResponse.json(result, { status: result.success ? 200 : 400 });
   }
 

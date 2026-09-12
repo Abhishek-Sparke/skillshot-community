@@ -43,6 +43,11 @@ export interface DiscordBotPermissions {
   error?: string;
 }
 
+export interface DiscordWelcomeSettings {
+  channelId: string | null;
+  enabled: boolean;
+}
+
 export default function DiscordAdminDashboard({
   initialStats,
   initialConnections,
@@ -50,6 +55,8 @@ export default function DiscordAdminDashboard({
   initialBotPermissions,
   initialGuildChannels = [],
   initialDefaultRankChannel,
+  initialWelcomeSettings,
+  initialDefaultWelcomeChannel,
 }: {
   initialStats: DiscordAdminStats;
   initialConnections: DiscordAdminConnection[];
@@ -57,6 +64,8 @@ export default function DiscordAdminDashboard({
   initialBotPermissions?: DiscordBotPermissions;
   initialGuildChannels?: Array<{ id: string; name: string }>;
   initialDefaultRankChannel?: { id: string; name: string } | null;
+  initialWelcomeSettings?: DiscordWelcomeSettings;
+  initialDefaultWelcomeChannel?: { id: string; name: string } | null;
 }) {
   const [stats, setStats] = useState<DiscordAdminStats>(initialStats);
   const [connections, setConnections] = useState<DiscordAdminConnection[]>(initialConnections);
@@ -66,10 +75,19 @@ export default function DiscordAdminDashboard({
   const [channelInput, setChannelInput] = useState(
     initialRankChannel?.configuredChannelId || initialDefaultRankChannel?.id || ''
   );
+  const [welcomeSettings, setWelcomeSettings] = useState<DiscordWelcomeSettings>(
+    initialWelcomeSettings || { channelId: null, enabled: true }
+  );
+  const [welcomeChannelInput, setWelcomeChannelInput] = useState(
+    initialWelcomeSettings?.channelId || initialDefaultWelcomeChannel?.id || ''
+  );
   const [busyUser, setBusyUser] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [registerBusy, setRegisterBusy] = useState(false);
   const [postBusy, setPostBusy] = useState(false);
+  const [welcomeBusy, setWelcomeBusy] = useState(false);
+  const [testWelcomeBusy, setTestWelcomeBusy] = useState(false);
+  const [syncWelcomeBusy, setSyncWelcomeBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const handlePostVerificationMessage = async () => {
@@ -118,6 +136,83 @@ export default function DiscordAdminDashboard({
     }
   };
 
+  const handleSaveWelcomeSettings = async (channelIdOverride?: string, enabledOverride?: boolean) => {
+    setWelcomeBusy(true);
+    setMessage(null);
+    try {
+      const channelId = channelIdOverride !== undefined ? channelIdOverride : welcomeChannelInput;
+      const enabled = enabledOverride !== undefined ? enabledOverride : welcomeSettings.enabled;
+      const res = await fetch('/api/staff/discord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UPDATE_WELCOME_SETTINGS',
+          channelId: channelId.trim() || null,
+          enabled,
+        }),
+      });
+      const data = await res.json();
+      setMessage({
+        text: data.message || (data.success ? 'Welcome settings saved.' : data.error || 'Failed to save welcome settings.'),
+        type: data.success ? 'success' : 'error',
+      });
+      await refreshData();
+    } catch {
+      setMessage({ text: 'Network error saving welcome settings.', type: 'error' });
+    } finally {
+      setWelcomeBusy(false);
+    }
+  };
+
+  const handleSendTestWelcome = async () => {
+    setTestWelcomeBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/staff/discord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'SEND_TEST_WELCOME',
+          channelId: welcomeChannelInput.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      setMessage({
+        text: data.message || (data.success ? 'Sample welcome message sent!' : data.error || 'Failed to send sample welcome message.'),
+        type: data.success ? 'success' : 'error',
+      });
+    } catch {
+      setMessage({ text: 'Network error sending test welcome message.', type: 'error' });
+    } finally {
+      setTestWelcomeBusy(false);
+    }
+  };
+
+  const handleSyncWelcomeMembers = async () => {
+    setSyncWelcomeBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/staff/discord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'SYNC_WELCOME_MEMBERS',
+          channelId: welcomeChannelInput.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      setMessage({
+        text: data.message || (data.success ? 'Scanned recent members.' : data.error || 'Failed to scan members.'),
+        type: data.success ? 'success' : 'error',
+      });
+      await refreshData();
+    } catch {
+      setMessage({ text: 'Network error syncing welcome members.', type: 'error' });
+    } finally {
+      setSyncWelcomeBusy(false);
+    }
+  };
+
   const refreshData = async () => {
     try {
       const res = await fetch('/api/staff/discord');
@@ -128,6 +223,10 @@ export default function DiscordAdminDashboard({
         if (data.rankChannel) setRankChannel(data.rankChannel);
         if (data.botPermissions) setBotPermissions(data.botPermissions);
         if (data.guildChannels) setGuildChannels(data.guildChannels);
+        if (data.welcomeSettings) setWelcomeSettings(data.welcomeSettings);
+        if (data.defaultWelcomeChannel && !welcomeChannelInput) {
+          setWelcomeChannelInput(data.defaultWelcomeChannel.id);
+        }
       }
     } catch {
       // Graceful fallback
@@ -399,6 +498,136 @@ export default function DiscordAdminDashboard({
           <span style={{ fontSize: 12, color: 'var(--muted)' }}>
             Posts exactly one permanent embed message with the &quot;🔗 Verify Skillshot&quot; button. If one exists, it updates it.
           </span>
+        </div>
+      </section>
+
+      {/* WELCOME MESSAGE SYSTEM */}
+      <section className="staffSection" style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+          <h2 style={{ fontSize: 16, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            👋 Discord Welcome Message System
+          </h2>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              padding: '3px 8px',
+              borderRadius: 6,
+              background: welcomeSettings.enabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+              color: welcomeSettings.enabled ? 'var(--success, #22c55e)' : 'var(--danger, #ef4444)',
+            }}
+          >
+            {welcomeSettings.enabled ? 'System Enabled' : 'System Disabled'}
+          </span>
+        </div>
+
+        <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>
+          Automatically greets new members joining your Discord server in the configured welcome channel (auto-detects #🖐️welcome, #👋welcome, or #welcome). Includes creator onboarding checklist, rules link, and one-click rank verification. Old members and bots are never messaged.
+        </p>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 12,
+            marginBottom: 16,
+            background: 'rgba(0, 0, 0, 0.2)',
+            padding: 12,
+            borderRadius: 8,
+          }}
+        >
+          <div>
+            <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase' }}>Target Welcome Channel</span>
+            {guildChannels.length > 0 ? (
+              <select
+                value={welcomeChannelInput}
+                onChange={e => setWelcomeChannelInput(e.target.value)}
+                className="input"
+                style={{ width: '100%', marginTop: 4, fontSize: 13, background: 'var(--card-bg, #161822)', color: 'inherit' }}
+              >
+                <option value="">Auto-detect (#welcome / #🖐️welcome)</option>
+                {guildChannels.map(c => (
+                  <option key={c.id} value={c.id}>
+                    #{c.name} ({c.id})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={welcomeChannelInput}
+                onChange={e => setWelcomeChannelInput(e.target.value)}
+                placeholder="Auto-detect or enter channel ID"
+                className="input"
+                style={{ width: '100%', marginTop: 4, fontSize: 13 }}
+              />
+            )}
+          </div>
+
+          <div>
+            <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase' }}>Bot Permissions</span>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8, fontSize: 12 }}>
+              <span style={{ color: botPermissions?.viewChannel ? 'var(--success, #22c55e)' : 'var(--danger, #ef4444)' }}>
+                View {botPermissions?.viewChannel ? '✓' : '✕'}
+              </span>
+              <span>•</span>
+              <span style={{ color: botPermissions?.sendMessages ? 'var(--success, #22c55e)' : 'var(--danger, #ef4444)' }}>
+                Send {botPermissions?.sendMessages ? '✓' : '✕'}
+              </span>
+              <span>•</span>
+              <span style={{ color: botPermissions?.embedLinks ? 'var(--success, #22c55e)' : 'var(--danger, #ef4444)' }}>
+                Embed Links {botPermissions?.embedLinks ? '✓' : '✕'}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <span style={{ display: 'block', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase' }}>Toggle Welcome Bot</span>
+            <button
+              type="button"
+              className="button secondary"
+              onClick={() => {
+                const nextState = !welcomeSettings.enabled;
+                setWelcomeSettings(prev => ({ ...prev, enabled: nextState }));
+                handleSaveWelcomeSettings(welcomeChannelInput, nextState);
+              }}
+              style={{ marginTop: 6, fontSize: 12, padding: '6px 12px' }}
+            >
+              {welcomeSettings.enabled ? 'Pause Welcome System' : 'Enable Welcome System'}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="button secondary"
+            onClick={() => handleSaveWelcomeSettings()}
+            disabled={welcomeBusy}
+            style={{ fontSize: 13, padding: '8px 14px' }}
+          >
+            {welcomeBusy ? 'Saving…' : '💾 Save Channel Settings'}
+          </button>
+
+          <button
+            type="button"
+            className="button secondary"
+            onClick={handleSendTestWelcome}
+            disabled={testWelcomeBusy}
+            style={{ fontSize: 13, padding: '8px 14px' }}
+          >
+            {testWelcomeBusy ? 'Sending Preview…' : '📨 Send Sample Welcome Message'}
+          </button>
+
+          <button
+            type="button"
+            className="button secondary"
+            onClick={handleSyncWelcomeMembers}
+            disabled={syncWelcomeBusy}
+            style={{ fontSize: 13, padding: '8px 14px' }}
+          >
+            {syncWelcomeBusy ? 'Scanning…' : '🔄 Scan & Welcome Recent Joins'}
+          </button>
         </div>
       </section>
 
