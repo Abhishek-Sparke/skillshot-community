@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { requirePrincipal } from '../../../../lib/authz';
 import { getReadyDb } from '../../../../lib/db';
 import { DISCORD_API_BASE, DISCORD_CLIENT_ID } from '../../../../lib/discord-config';
-import { syncMemberCreatorRank } from '../../../../lib/discord-service';
+import { syncMemberCreatorRank, sendWelcomeMessageForMember } from '../../../../lib/discord-service';
 import { rankFromXp } from '../../../../lib/creator-rank';
 
 export const dynamic = 'force-dynamic';
@@ -164,6 +164,13 @@ export async function GET(request: Request) {
   if (!syncResult.inGuild) {
     return redirectSettings(`verified=1&connected=1&warning=not_in_guild${wasAlreadyLinked ? '&already_linked=1' : ''}`);
   }
+
+  // 9. Dispatch welcome message if user has not been welcomed yet
+  await sendWelcomeMessageForMember({
+    id: discordUserId,
+    username: discordUsername,
+    isBot: false,
+  }).catch(() => null);
 
   return redirectSettings(`verified=1&connected=1${wasAlreadyLinked ? '&already_linked=1' : ''}`);
 }

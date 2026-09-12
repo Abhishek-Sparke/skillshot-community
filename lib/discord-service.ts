@@ -979,7 +979,8 @@ export function buildWelcomePayload(memberId: string, isPreview = false) {
  */
 export async function sendWelcomeMessageForMember(
   member: { id: string; username?: string; isBot?: boolean },
-  channelIdOverride?: string
+  channelIdOverride?: string,
+  bypassDuplicateCheck = false
 ): Promise<{
   success: boolean;
   skipped?: boolean;
@@ -996,8 +997,8 @@ export async function sendWelcomeMessageForMember(
     return { success: false, skipped: true, reason: 'IS_BOT' };
   }
 
-  // Strict check 2: Never duplicate welcome messages
-  if (await isMemberWelcomed(member.id)) {
+  // Strict check 2: Never duplicate welcome messages unless explicitly bypassed
+  if (!bypassDuplicateCheck && (await isMemberWelcomed(member.id))) {
     return { success: false, skipped: true, reason: 'ALREADY_WELCOMED' };
   }
 
@@ -1087,6 +1088,48 @@ export async function sendTestWelcomeMessage(channelIdInput?: string): Promise<{
 }
 
 /**
+ * Reset the welcomed members registry table in the database.
+ */
+export async function resetWelcomedMembers(): Promise<{ deleted: number }> {
+  const sql = await getReadyDb();
+  const res = await sql.query(`DELETE FROM discord_welcomed_members RETURNING id`);
+  return { deleted: res.length };
+}
+
+/**
+ * Fetch all guild members and their welcomed status in the registry.
+ */
+export async function getGuildMembersStatus(): Promise<Array<{
+  id: string;
+  username: string;
+  isBot: boolean;
+  joinedAt: string | null;
+  welcomed: boolean;
+}>> {
+  const res = await callDiscordApi(`/guilds/${DISCORD_GUILD_ID}/members?limit=1000`);
+  if (!res.ok || !Array.isArray(res.data)) return [];
+
+  const sql = await getReadyDb();
+  const welcomedRows = await sql.query(`SELECT discord_user_id FROM discord_welcomed_members`);
+  const welcomedSet = new Set<string>(welcomedRows.map((r: any) => String(r.discord_user_id)));
+
+  return res.data
+    .filter((m: any) => m?.user?.id)
+    .map((m: any) => ({
+      id: String(m.user.id),
+      username: String(m.user.username),
+      isBot: Boolean(m.user.bot),
+      joinedAt: m.joined_at || null,
+      welcomed: welcomedSet.has(String(m.user.id)),
+    }))
+    .sort((a: any, b: any) => {
+      if (!a.joinedAt) return 1;
+      if (!b.joinedAt) return -1;
+      return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+    });
+}
+
+/**
  * Seeds all current guild members into the database as already-welcomed.
  * This guarantees existing members who joined before this feature are never spammed.
  */
@@ -1108,34 +1151,47 @@ export async function seedExistingMembersAsWelcomed(): Promise<{ count: number }
 }
 
 /**
- * Scans recent guild members, welcomes un-welcomed members, and ignores bots or already-welcomed members.
- * If the database has 0 welcomed members recorded, automatically seeds existing members first to avoid spam.
+ * Scans guild members (sorted newest first), welcomes un-welcomed members, and ignores bots.
+ * Supports force welcoming a specific member ID or bypassing duplicate checks for testing.
  */
 export async function syncNewMemberWelcomes(options?: {
   limit?: number;
   channelIdOverride?: string;
   seedIfEmpty?: boolean;
+  forceWelcomeMemberId?: string;
+  bypassDuplicateCheck?: boolean;
 }): Promise<{
   success: boolean;
   welcomed: number;
   skipped: number;
   total: number;
   message: string;
+  welcomedUsers?: string[];
 }> {
-  const limit = Math.min(100, Math.max(1, options?.limit || 25));
-  const seedIfEmpty = options?.seedIfEmpty !== false;
-
-  const currentCount = await getWelcomedMemberCount();
-  if (currentCount === 0 && seedIfEmpty) {
-    const seedResult = await seedExistingMembersAsWelcomed();
+  // If a specific member ID is requested, welcome them directly
+  if (options?.forceWelcomeMemberId) {
+    const member = await getDiscordGuildMember(options.forceWelcomeMemberId);
+    if (!member) {
+      return { success: false, welcomed: 0, skipped: 0, total: 0, message: `Member ID ${options.forceWelcomeMemberId} not found in Discord server.` };
+    }
+    const sendRes = await sendWelcomeMessageForMember(
+      { id: member.user.id, username: member.user.username, isBot: false },
+      options?.channelIdOverride,
+      true
+    );
     return {
-      success: true,
-      welcomed: 0,
-      skipped: seedResult.count,
-      total: seedResult.count,
-      message: `Initialized welcome registry by recording ${seedResult.count} existing server member(s). Future new joins will be welcomed.`,
+      success: sendRes.success,
+      welcomed: sendRes.success ? 1 : 0,
+      skipped: sendRes.success ? 0 : 1,
+      total: 1,
+      message: sendRes.success
+        ? `Sent welcome message for @${member.user.username} to #${sendRes.channelId}!`
+        : `Failed to welcome member: ${sendRes.reason}`,
+      welcomedUsers: sendRes.success ? [member.user.username] : [],
     };
   }
+
+  const limit = Math.min(1000, Math.max(1, options?.limit || 100));
 
   const res = await callDiscordApi(`/guilds/${DISCORD_GUILD_ID}/members?limit=${limit}`);
   if (!res.ok || !Array.isArray(res.data)) {
@@ -1148,10 +1204,18 @@ export async function syncNewMemberWelcomes(options?: {
     };
   }
 
+  // Sort members by joined_at descending (most recent first)
+  const sortedMembers = [...res.data].sort((a: any, b: any) => {
+    if (!a.joined_at) return 1;
+    if (!b.joined_at) return -1;
+    return new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime();
+  });
+
   let welcomed = 0;
   let skipped = 0;
+  const welcomedUsers: string[] = [];
 
-  for (const m of res.data) {
+  for (const m of sortedMembers) {
     const user = m.user;
     if (!user || user.bot) {
       skipped++;
@@ -1159,18 +1223,20 @@ export async function syncNewMemberWelcomes(options?: {
     }
 
     const isWelcomed = await isMemberWelcomed(user.id);
-    if (isWelcomed) {
+    if (isWelcomed && !options?.bypassDuplicateCheck) {
       skipped++;
       continue;
     }
 
     const sendRes = await sendWelcomeMessageForMember(
       { id: user.id, username: user.username, isBot: user.bot },
-      options?.channelIdOverride
+      options?.channelIdOverride,
+      options?.bypassDuplicateCheck
     );
 
     if (sendRes.success) {
       welcomed++;
+      welcomedUsers.push(user.username);
     } else {
       skipped++;
     }
@@ -1181,7 +1247,8 @@ export async function syncNewMemberWelcomes(options?: {
     welcomed,
     skipped,
     total: res.data.length,
-    message: `Scanned ${res.data.length} recent member(s): ${welcomed} welcomed, ${skipped} skipped.`,
+    welcomedUsers,
+    message: `Scanned ${res.data.length} server member(s): ${welcomed} welcomed, ${skipped} skipped.`,
   };
 }
 

@@ -16,6 +16,8 @@ import {
   updateWelcomeSettings,
   sendTestWelcomeMessage,
   syncNewMemberWelcomes,
+  resetWelcomedMembers,
+  getGuildMembersStatus,
 } from '../../../../lib/discord-service';
 import { DISCORD_CLIENT_ID, DISCORD_GUILD_ID } from '../../../../lib/discord-config';
 
@@ -29,7 +31,18 @@ export async function GET() {
 
   const sql = await getReadyDb();
 
-  const [countRows, lastSyncRows, userRows, rankChannel, botPermissions, guildChannels, defaultRankChannel, welcomeSettings, defaultWelcomeChannel] = await Promise.all([
+  const [
+    countRows,
+    lastSyncRows,
+    userRows,
+    rankChannel,
+    botPermissions,
+    guildChannels,
+    defaultRankChannel,
+    welcomeSettings,
+    defaultWelcomeChannel,
+    guildMembersRaw,
+  ] = await Promise.all([
     sql.query(`
       SELECT
         count(*)::int AS total,
@@ -77,6 +90,7 @@ export async function GET() {
     findRankChannel().catch(() => null),
     getWelcomeSettings().catch(() => ({ channelId: null, enabled: true })),
     findWelcomeChannel().catch(() => null),
+    getGuildMembersStatus().catch(() => []),
   ]);
 
   const counts = countRows[0] || {};
@@ -103,6 +117,8 @@ export async function GET() {
     lastError: row.last_error ? String(row.last_error) : null,
   }));
 
+  const guildMembers = (guildMembersRaw as any[]) || [];
+
   return NextResponse.json({
     stats,
     connections,
@@ -112,6 +128,7 @@ export async function GET() {
     defaultRankChannel,
     welcomeSettings,
     defaultWelcomeChannel,
+    guildMembers,
   });
 }
 
@@ -268,9 +285,36 @@ export async function POST(request: Request) {
   }
 
   if (action === 'SYNC_WELCOME_MEMBERS') {
-    const limit = Math.min(100, Math.max(1, Number(body.limit) || 25));
     const channelId = body.channelId ? String(body.channelId).trim() : undefined;
-    const result = await syncNewMemberWelcomes({ limit, channelIdOverride: channelId });
+    const force = Boolean(body.force);
+    const result = await syncNewMemberWelcomes({
+      channelIdOverride: channelId,
+      bypassDuplicateCheck: force,
+    });
+    return NextResponse.json({
+      ...result,
+      message: `Synced new member welcomes: ${result.welcomed} welcomed, ${result.skipped} skipped.`,
+    });
+  }
+
+  if (action === 'RESET_WELCOME_REGISTRY') {
+    const result = await resetWelcomedMembers();
+    return NextResponse.json({
+      success: true,
+      message: `Reset welcome registry: ${result.deleted} record(s) cleared. Members can now be welcomed again.`,
+      ...result,
+    });
+  }
+
+  if (action === 'WELCOME_MEMBER') {
+    const userId = body.userId ? String(body.userId).trim() : '';
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+    const result = await syncNewMemberWelcomes({
+      forceWelcomeMemberId: userId,
+      channelIdOverride: body.channelId ? String(body.channelId).trim() : undefined,
+    });
     return NextResponse.json(result, { status: result.success ? 200 : 400 });
   }
 

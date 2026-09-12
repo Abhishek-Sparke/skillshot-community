@@ -88,6 +88,9 @@ export default function DiscordAdminDashboard({
   const [welcomeBusy, setWelcomeBusy] = useState(false);
   const [testWelcomeBusy, setTestWelcomeBusy] = useState(false);
   const [syncWelcomeBusy, setSyncWelcomeBusy] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [forceBusy, setForceBusy] = useState(false);
+  const [forceUserIdInput, setForceUserIdInput] = useState('');
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const handlePostVerificationMessage = async () => {
@@ -210,6 +213,60 @@ export default function DiscordAdminDashboard({
       setMessage({ text: 'Network error syncing welcome members.', type: 'error' });
     } finally {
       setSyncWelcomeBusy(false);
+    }
+  };
+
+  const handleResetWelcomeRegistry = async () => {
+    setResetBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/staff/discord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'RESET_WELCOME_REGISTRY' }),
+      });
+      const data = await res.json();
+      setMessage({
+        text: data.message || 'Welcome registry reset.',
+        type: data.success ? 'success' : 'error',
+      });
+      await refreshData();
+    } catch {
+      setMessage({ text: 'Network error resetting welcome registry.', type: 'error' });
+    } finally {
+      setResetBusy(false);
+    }
+  };
+
+  const handleForceWelcomeMember = async (targetId?: string) => {
+    const idToWelcome = targetId || forceUserIdInput.trim();
+    if (!idToWelcome) {
+      setMessage({ text: 'Please enter a Discord User ID to welcome.', type: 'error' });
+      return;
+    }
+    setForceBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/staff/discord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'WELCOME_MEMBER',
+          userId: idToWelcome,
+          channelId: welcomeChannelInput.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      setMessage({
+        text: data.message || (data.success ? 'Welcome message dispatched!' : data.error || 'Failed to welcome member.'),
+        type: data.success ? 'success' : 'error',
+      });
+      if (data.success && !targetId) setForceUserIdInput('');
+      await refreshData();
+    } catch {
+      setMessage({ text: 'Network error dispatching welcome message.', type: 'error' });
+    } finally {
+      setForceBusy(false);
     }
   };
 
@@ -628,6 +685,44 @@ export default function DiscordAdminDashboard({
           >
             {syncWelcomeBusy ? 'Scanning…' : '🔄 Scan & Welcome Recent Joins'}
           </button>
+
+          <button
+            type="button"
+            className="button secondary"
+            onClick={handleResetWelcomeRegistry}
+            disabled={resetBusy}
+            style={{ fontSize: 13, padding: '8px 14px', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+          >
+            {resetBusy ? 'Resetting…' : '🗑️ Reset Welcome Registry'}
+          </button>
+        </div>
+
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--line)', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>Test Welcome Specific Member:</span>
+          <input
+            type="text"
+            value={forceUserIdInput}
+            onChange={e => setForceUserIdInput(e.target.value)}
+            placeholder="Discord User ID (e.g. 15482...)"
+            className="input"
+            style={{ fontSize: 12, width: 220, padding: '6px 10px' }}
+          />
+          <button
+            type="button"
+            className="button secondary"
+            onClick={() => handleForceWelcomeMember()}
+            disabled={forceBusy || !forceUserIdInput.trim()}
+            style={{ fontSize: 12, padding: '6px 12px' }}
+          >
+            {forceBusy ? 'Dispatching…' : '👋 Welcome Member Now'}
+          </button>
+          <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+            Immediately sends a welcome mention &amp; embed to the active welcome channel for this user ID.
+          </span>
+        </div>
+
+        <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(0, 0, 0, 0.15)', borderRadius: 6, fontSize: 12, color: 'var(--muted)' }}>
+          💡 <strong>How it works:</strong> Discord Gateway does not push member join events through HTTP webhooks to serverless platforms. Welcome messages are dispatched through the automated Vercel cron reconciler (every minute), clicking &quot;Scan &amp; Welcome Recent Joins&quot;, or running the persistent 24/7 Gateway worker: <code style={{ color: 'var(--accent)' }}>npm run bot</code>.
         </div>
       </section>
 
