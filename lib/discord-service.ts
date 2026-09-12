@@ -648,28 +648,21 @@ export async function postOrUpdateRankVerificationMessage(channelIdInput?: strin
   // Reference custom IDs: VERIFY_BUTTON_CUSTOM_ID, 'skillshot_how_it_works'
 
   let messageId: string | null = null;
-  let updatedExisting = false;
 
+  // If a previous verification message exists, delete it first to completely purge any cached client error states
   if (existingMessageId) {
-    const patchRes = await callDiscordApi(`/channels/${channelId}/messages/${existingMessageId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(payload),
-    });
-
-    if (patchRes.ok && patchRes.data?.id) {
-      messageId = String(patchRes.data.id);
-      updatedExisting = true;
-    }
+    await callDiscordApi(`/channels/${channelId}/messages/${existingMessageId}`, {
+      method: 'DELETE',
+    }).catch(() => null);
   }
 
-  if (!messageId) {
-    const postRes = await callDiscordApi(`/channels/${channelId}/messages`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+  const postRes = await callDiscordApi(`/channels/${channelId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 
-    if (!postRes.ok) {
-      const errMsg = postRes.data?.message || `Failed to post message (Discord HTTP ${postRes.status})`;
+  if (!postRes.ok) {
+    const errMsg = postRes.data?.message || `Failed to post message (Discord HTTP ${postRes.status})`;
       await sql.query(
         `INSERT INTO discord_verification_messages (id, channel_id, message_id, last_posted_at, status, last_error)
          VALUES ($1, $2, null, now(), 'FAILED', $3)
@@ -685,25 +678,22 @@ export async function postOrUpdateRankVerificationMessage(channelIdInput?: strin
     }
 
     messageId = String(postRes.data?.id);
+
+    await sql.query(
+      `INSERT INTO discord_verification_messages (id, channel_id, message_id, last_posted_at, status, last_error)
+       VALUES ($1, $2, $3, now(), 'ACTIVE', null)
+       ON CONFLICT (channel_id) DO UPDATE
+       SET message_id = $3, last_posted_at = now(), status = 'ACTIVE', last_error = null`,
+      [crypto.randomUUID(), channelId, messageId]
+    );
+
+    return {
+      success: true,
+      message: `Posted fresh rank verification message to #${channelId}!`,
+      messageId,
+      channelId,
+    };
   }
-
-  await sql.query(
-    `INSERT INTO discord_verification_messages (id, channel_id, message_id, last_posted_at, status, last_error)
-     VALUES ($1, $2, $3, now(), 'ACTIVE', null)
-     ON CONFLICT (channel_id) DO UPDATE
-     SET message_id = $3, last_posted_at = now(), status = 'ACTIVE', last_error = null`,
-    [crypto.randomUUID(), channelId, messageId]
-  );
-
-  return {
-    success: true,
-    message: updatedExisting
-      ? `Updated existing rank verification message in #${channelId}.`
-      : `Posted new rank verification message to #${channelId}!`,
-    messageId,
-    channelId,
-  };
-}
 
 export type BotPermissionCheck = {
   viewChannel: boolean;

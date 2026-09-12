@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
   const auth = await requirePrincipal();
   if ('error' in auth) {
-    const callbackPath = vt ? `/api/discord/authorize?vt=${encodeURIComponent(vt)}` : '/settings/connections';
+    const callbackPath = vt ? `/api/discord/authorize?vt=${encodeURIComponent(vt)}` : '/api/discord/authorize';
     return NextResponse.redirect(new URL(`/signin?callbackUrl=${encodeURIComponent(callbackPath)}`, url.origin));
   }
 
