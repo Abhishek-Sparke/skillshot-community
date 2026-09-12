@@ -344,8 +344,6 @@ export default function DiscussionDetailView({
                 username={discussion.author.username}
                 role={discussion.author.role}
                 creatorRank={discussion.author.creatorRank}
-                enableCard={true}
-                cardData={{ avatarUrl: discussion.author.avatarUrl }}
               />
               <div className="discussionPostMeta">
                 <time dateTime={new Date(discussion.createdAt).toISOString()} title={formattedExactDate}>
@@ -608,8 +606,6 @@ export default function DiscussionDetailView({
                         username={reply.author.username}
                         role={reply.author.role}
                         creatorRank={reply.author.creatorRank}
-                        enableCard={true}
-                        cardData={{ avatarUrl: reply.author.avatarUrl }}
                       />
                       <time dateTime={new Date(reply.createdAt).toISOString()} className="replyCardTime">
                         {formatRelativeTime(reply.createdAt)}

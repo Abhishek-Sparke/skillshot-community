@@ -2279,6 +2279,196 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   opacity: 0.85;
 }
 
+.creatorUsernameWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.creatorPopoverCard {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1200;
+  pointer-events: auto;
+  animation: creatorCardFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes creatorCardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.creatorIdentityCard {
+  width: 270px;
+  background: rgba(18, 20, 29, 0.97);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #f1f3f9;
+  text-align: left;
+  white-space: normal;
+}
+
+.creatorIdentityCard .cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.creatorIdentityCard .cardAvatarWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+}
+
+.creatorIdentityCard .cardAvatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.creatorIdentityCard .cardAvatarFallback {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.creatorIdentityCard .cardIdentityDetails {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.creatorIdentityCard .cardNameRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.creatorIdentityCard .cardRankTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a78bfa;
+  line-height: 1.2;
+}
+
+.creatorIdentityCard .cardHandle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.creatorIdentityCard .cardSkillsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.creatorIdentityCard .cardSkillPill {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.creatorIdentityCard .cardStatsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 9px;
+  padding: 8px 10px;
+}
+
+.creatorIdentityCard .cardStat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.creatorIdentityCard .cardStat strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.creatorIdentityCard .cardStat span {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.creatorIdentityCard .cardActionsRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.creatorIdentityCard .cardFollowBtn {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.creatorIdentityCard .cardFollowBtn:hover {
+  background: #4f46e5;
+}
+
+.creatorIdentityCard .cardFollowBtn.isFollowing {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.creatorIdentityCard .cardViewProfileBtn {
+  flex: 1;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.15s ease;
+}
+
+.creatorIdentityCard .cardViewProfileBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 .creatorUsername {
   display: inline-block;
   font-weight: 700;

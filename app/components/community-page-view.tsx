@@ -125,7 +125,7 @@ function DiscussionCard({ discussion: disc, currentUser, formatDate, onOpen, onR
         {disc.author.avatarUrl ? <img src={disc.author.avatarUrl} alt="" /> : <span className="avatarFallback">{disc.author.displayName.slice(0, 1).toUpperCase()}</span>}
       </span>
       <div className="discussionCardAuthorCopy">
-        <CreatorUsername name={disc.author.displayName} username={disc.author.username} role={disc.author.role} creatorRank={disc.author.creatorRank} enableCard cardData={{ avatarUrl: disc.author.avatarUrl }} />
+        <CreatorUsername name={disc.author.displayName} username={disc.author.username} role={disc.author.role} creatorRank={disc.author.creatorRank} />
         <span className="discussionCardMeta">{disc.category} <span aria-hidden="true">·</span> <time dateTime={new Date(disc.createdAt).toISOString()}>{formatDate(disc.createdAt)}</time></span>
       </div>
       {disc.isPinned && <span className="discussionPinnedIcon" title="Pinned discussion"><UiIcon name="pin" size={15} /></span>}
@@ -588,8 +588,6 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                       username={activeDiscussion.author.username}
                       role={activeDiscussion.author.role}
                       creatorRank={activeDiscussion.author.creatorRank}
-                      enableCard={true}
-                      cardData={{ avatarUrl: activeDiscussion.author.avatarUrl }}
                     />
                     <div className="modalPostDate">{formatDate(activeDiscussion.createdAt)}</div>
                   </div>
@@ -679,8 +677,6 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                               username={reply.author.username}
                               role={reply.author.role}
                               creatorRank={reply.author.creatorRank}
-                              enableCard={true}
-                              cardData={{ avatarUrl: reply.author.avatarUrl }}
                             />
                             <span className="replyTime">{formatDate(reply.createdAt)}</span>
                           </div>

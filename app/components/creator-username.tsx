@@ -51,6 +51,7 @@ export default function CreatorUsername({
   const [showPopover, setShowPopover] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
   const closeTimer = useRef<NodeJS.Timeout | null>(null);
+  const openTimer = useRef<NodeJS.Timeout | null>(null);
 
   const usernameEffect = getUsernameEffect({ creatorRank, staffRole, role });
   const rankKey = usernameEffect.creatorRank;
@@ -62,19 +63,23 @@ export default function CreatorUsername({
   const handleMouseEnter = () => {
     if (!enableCard) return;
     if (closeTimer.current) clearTimeout(closeTimer.current);
-    setShowPopover(true);
+    openTimer.current = setTimeout(() => {
+      setShowPopover(true);
+    }, 250);
   };
 
   const handleMouseLeave = () => {
     if (!enableCard) return;
+    if (openTimer.current) clearTimeout(openTimer.current);
     if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = setTimeout(() => {
       setShowPopover(false);
-    }, 280);
+    }, 200);
   };
 
   useEffect(() => {
     return () => {
+      if (openTimer.current) clearTimeout(openTimer.current);
       if (closeTimer.current) clearTimeout(closeTimer.current);
     };
   }, []);
