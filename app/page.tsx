@@ -165,7 +165,7 @@ export default async function Home() {
 
   return (
     <main style={{ position: 'relative', overflowX: 'clip' }}>
-      <PublicNavbar returnTo="/" />
+      <PublicNavbar returnTo="/"/>
       <DesktopSideAnimations />
       {/* 1. HERO (Tighter vertical spacing) */}
       <section className="hero shell">

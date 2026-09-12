@@ -91,7 +91,20 @@ export async function POST(request: Request) {
     const isGif = avatar.type === 'image/gif';
     try {
       optimized = await processAvatar(Buffer.from(await avatar.arrayBuffer()), avatar.type, true);
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg === 'FILE_TOO_LARGE') {
+        await recordAvatarUpload(user.userId, 'FAILED', avatar.size, 'FILE_TOO_LARGE');
+        return redirectError(request, 'avatar-size');
+      }
+      if (msg === 'UNSUPPORTED_FORMAT') {
+        await recordAvatarUpload(user.userId, 'FAILED', avatar.size, 'UNSUPPORTED_FORMAT');
+        return redirectError(request, 'avatar-type');
+      }
+      if (msg === 'GIF_TOO_COMPLEX' || msg === 'HUGE_DIMENSIONS') {
+        await recordAvatarUpload(user.userId, 'FAILED', avatar.size, msg);
+        return redirectError(request, 'avatar-complex');
+      }
       await recordAvatarUpload(user.userId, 'FAILED', avatar.size, 'INVALID_IMAGE');
       return redirectError(request, 'avatar-invalid');
     }
@@ -136,7 +149,11 @@ export async function POST(request: Request) {
     const isBannerGif = banner.type === 'image/gif';
     try {
       optimizedBanner = await processBanner(Buffer.from(await banner.arrayBuffer()), banner.type);
-    } catch {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg === 'FILE_TOO_LARGE') return redirectError(request, 'banner-size');
+      if (msg === 'UNSUPPORTED_FORMAT') return redirectError(request, 'banner-type');
+      if (msg === 'GIF_TOO_COMPLEX' || msg === 'HUGE_DIMENSIONS') return redirectError(request, 'banner-complex');
       return redirectError(request, 'banner-invalid');
     }
     let bannerSafe = false;

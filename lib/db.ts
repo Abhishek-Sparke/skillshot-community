@@ -45,6 +45,7 @@ export async function getReadyDb() {
     await sql.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS creator_xp integer NOT NULL DEFAULT 0`);
     if (PRIMARY_ADMIN_EMAIL) await sql.query(`UPDATE users SET role='ADMIN' WHERE lower(email)=$1 AND role NOT IN ('OWNER','ADMIN')`, [PRIMARY_ADMIN_EMAIL]);
     if (OWNER_EMAIL) await sql.query(`UPDATE users SET role='OWNER' WHERE lower(email)=$1`, [OWNER_EMAIL]);
+    await sql.query(`UPDATE users SET creator_xp=GREATEST(creator_xp, 50000), creator_rank='LEGEND' WHERE role IN ('ADMIN','OWNER') AND (creator_xp < 50000 OR creator_rank <> 'LEGEND')`);
     await sql.query(`CREATE TABLE IF NOT EXISTS posts (id text PRIMARY KEY, user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, title text NOT NULL, description text NOT NULL DEFAULT '', tags jsonb NOT NULL DEFAULT '[]'::jsonb, image_url text NOT NULL, image_type text NOT NULL, image_size integer NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now())`);
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'VISIBLE'`);
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS moderation_category text`);
@@ -120,13 +121,27 @@ export async function ensureUser(user: AppUser) {
     const assignedRole = roleForEmail(user.email);
     if (assignedRole && normalizeRole(existing[0].role) !== assignedRole) {
       const promoted = await sql.query(`UPDATE users SET role=$2 WHERE id=$1 RETURNING *`, [user.userId, assignedRole]);
+      if (['ADMIN', 'OWNER'].includes(assignedRole)) {
+        await sql.query(`UPDATE users SET creator_xp=GREATEST(creator_xp, 50000), creator_rank='LEGEND' WHERE id=$1`, [user.userId]);
+        promoted[0].creator_xp = Math.max(50000, Number(promoted[0].creator_xp || 0));
+        promoted[0].creator_rank = 'LEGEND';
+      }
       return promoted[0] as Record<string, unknown>;
+    }
+    if (['ADMIN', 'OWNER'].includes(normalizeRole(existing[0].role))) {
+      if (Number(existing[0].creator_xp || 0) < 50000 || existing[0].creator_rank !== 'LEGEND') {
+        await sql.query(`UPDATE users SET creator_xp=GREATEST(creator_xp, 50000), creator_rank='LEGEND' WHERE id=$1`, [user.userId]);
+        existing[0].creator_xp = Math.max(50000, Number(existing[0].creator_xp || 0));
+        existing[0].creator_rank = 'LEGEND';
+      }
     }
     return existing[0] as Record<string, unknown>;
   }
   const base = user.email.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase().slice(0, 20) || 'creator';
   const suffix = crypto.randomUUID().slice(0, 6);
-  await sql.query(`INSERT INTO users (id, email, display_name, username, role) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`, [user.userId, user.email, user.displayName, `${base}-${suffix}`, roleForEmail(user.email) ?? 'USER']);
+  const initialRole = roleForEmail(user.email) ?? 'USER';
+  const isAdmin = ['ADMIN', 'OWNER'].includes(initialRole);
+  await sql.query(`INSERT INTO users (id, email, display_name, username, role, creator_xp, creator_rank) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO NOTHING`, [user.userId, user.email, user.displayName, `${base}-${suffix}`, initialRole, isAdmin ? 50000 : 0, isAdmin ? 'LEGEND' : 'NEWCOMER']);
   const created = await sql.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [user.userId]);
   return created[0] as Record<string, unknown>;
 }

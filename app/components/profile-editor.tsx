@@ -203,11 +203,13 @@ export default function ProfileEditor({
           'avatar-invalid': "That image couldn't be read. Please choose another image or GIF.",
           'avatar-upload': "Couldn't upload your profile picture. Please try again.",
           'avatar-moderation': 'This profile image could not be approved. Try another image or contact the team.',
+          'avatar-complex': 'GIF is too large or has too many frames. Please upload a smaller file.',
           'banner-size': 'Banner is too large. Please choose an image of 5 MB or less.',
           'banner-type': 'Please upload a PNG, JPG, WebP, or GIF banner.',
           'banner-invalid': "That banner couldn't be read. Please choose another image or GIF.",
           'banner-upload': "Couldn't upload your banner. Please try again.",
           'banner-moderation': 'This banner could not be approved. Try another image or contact the team.',
+          'banner-complex': 'GIF is too large or has too many frames. Please upload a smaller file.',
           save: 'Your profile could not be saved. Please try again.',
         };
         if (error === 'username' || error === 'username-taken' || error === 'website' || error.startsWith('social')) {

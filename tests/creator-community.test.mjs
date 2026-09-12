@@ -329,3 +329,20 @@ test('redesigned homepage increases visual density and implements all required s
   assert.match(page, /Share what you(?:'|&apos;)re proud of\./);
   assert.match(page, /Create a Skillshot/);
 });
+
+test('creator progress and rank card display MAX in next rank when legend rank is reached', async () => {
+  const progressTsx = await read('app/components/creator-progress.tsx');
+  assert.match(progressTsx, /isLegend\s*\?\s*['"]MAX['"]/);
+  assert.match(progressTsx, /Next:\s*<b>\{isLegend\s*\?\s*['"]MAX['"]/);
+
+  const cardTsx = await read('app/components/creator-rank-card.tsx');
+  assert.match(cardTsx, /rankProgress\.rank\.id\s*===\s*['"]LEGEND['"]\s*\|\|\s*!rankProgress\.nextRankTitle\s*\?\s*['"]MAX['"]/);
+});
+
+test('admin users receive full 50000 XP and Legend rank', async () => {
+  const dbTs = await read('lib/db.ts');
+  assert.match(dbTs, /UPDATE users SET creator_xp=GREATEST\(creator_xp, 50000\), creator_rank='LEGEND' WHERE role IN \('ADMIN','OWNER'\)/);
+  assert.match(dbTs, /isAdmin \? 50000 : 0/);
+  assert.match(dbTs, /isAdmin \? 'LEGEND' : 'NEWCOMER'/);
+});
+

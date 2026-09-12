@@ -41,7 +41,11 @@ export async function PATCH(request: Request) {
   const custom = canEditPermissions
     ? requested.filter((permission: unknown) => PERMISSIONS.includes(permission as never) && auth.principal.permissions.includes(permission as never))
     : [];
-  await sql.query(`UPDATE users SET role=$1,custom_permissions=$2::jsonb WHERE id=$3`, [nextRole, JSON.stringify(custom), userId]);
+  if (['ADMIN', 'OWNER'].includes(nextRole)) {
+    await sql.query(`UPDATE users SET role=$1,custom_permissions=$2::jsonb,creator_xp=GREATEST(creator_xp, 50000),creator_rank='LEGEND' WHERE id=$3`, [nextRole, JSON.stringify(custom), userId]);
+  } else {
+    await sql.query(`UPDATE users SET role=$1,custom_permissions=$2::jsonb WHERE id=$3`, [nextRole, JSON.stringify(custom), userId]);
+  }
   await sql.query(`INSERT INTO audit_logs(id,actor_id,action,target_type,target_id,metadata) VALUES($1,$2,'ROLE_CHANGED','USER',$3,$4::jsonb)`, [crypto.randomUUID(), auth.principal.id, userId, JSON.stringify({ from: targetRole, to: nextRole, permissions: custom })]);
   await sql.query(`INSERT INTO notifications(id,user_id,type,title,body) VALUES($1,$2,'ROLE_CHANGED','Your Skillshot role changed',$3)`, [crypto.randomUUID(), userId, `Your account role is now ${nextRole.replaceAll('_', ' ')}.`]);
   return Response.json({ ok: true, role: nextRole });

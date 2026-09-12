@@ -21,7 +21,11 @@ export default function CreatorRankCard({ rank, rankProgress, levelProgress, onC
       <strong className="rankCardLevel">Level {levelProgress.level}</strong>
       <div className="rankCardNumbers"><span>{levelProgress.xp.toLocaleString()} / {levelProgress.nextLevelXp.toLocaleString()} XP</span><b>{levelProgress.progressPercent}%</b></div>
       <div className="rankCardTrack" aria-label={`${levelProgress.progressPercent}% toward level ${levelProgress.level + 1}`}><span style={{ width: `${levelProgress.progressPercent}%` }}/></div>
-      <div className="rankCardNext"><span>Next rank</span><b>{rankProgress.nextRankTitle || 'Highest rank reached'}</b>{rankProgress.nextTierXp && <small>{Math.max(0, rankProgress.nextTierXp - rankProgress.xp).toLocaleString()} XP remaining</small>}</div>
+      <div className="rankCardNext">
+        <span>Next rank</span>
+        <b>{rankProgress.rank.id === 'LEGEND' || !rankProgress.nextRankTitle ? 'MAX' : rankProgress.nextRankTitle}</b>
+        {!(rankProgress.rank.id === 'LEGEND' || !rankProgress.nextRankTitle) && rankProgress.nextTierXp && <small>{Math.max(0, rankProgress.nextTierXp - rankProgress.xp).toLocaleString()} XP remaining</small>}
+      </div>
       <div className="rankTimeline" aria-label="Creator rank progression">
         {rankOrder.map((rankId, index) => <div key={rankId} className={index < currentIndex ? 'unlocked' : index === currentIndex ? 'current' : 'locked'}>
           <CreatorRankBadge rank={rankId} size="sm" />

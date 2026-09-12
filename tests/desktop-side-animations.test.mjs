@@ -48,5 +48,5 @@ test('homepage integrates side animations without changing hero, feed, or navbar
   assert.match(page, /<DesktopSideAnimations/);
   assert.match(page, /<section className="hero shell">/);
   assert.match(page, /<section className="feed shell" id="explore">/);
-  assert.match(page, /<Suspense fallback={<HomeFreshSkeleton\/>/);
+  assert.match(page, /<Suspense fallback={<HomeFreshSkeleton\s*\/>/);
 });

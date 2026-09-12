@@ -42,7 +42,7 @@ export function uploadError(file: File, maximumBytes: number, kind: 'avatar' | '
 }
 
 export async function moderationPreview(buffer: Buffer, declaredType: string) {
-  const source = sharp(buffer, { failOn: 'warning', limitInputPixels: MAX_IMAGE_PIXELS, sequentialRead: true });
+  const source = sharp(buffer, { failOn: 'error', limitInputPixels: MAX_IMAGE_PIXELS, sequentialRead: true });
   const { width, height } = assertDecodedImage(await source.metadata(), declaredType);
   if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT || width * height > MAX_IMAGE_PIXELS) throw new Error('HUGE_DIMENSIONS');
   // Decode a bounded copy for the scanner: private Blob URLs cannot be read by
@@ -51,31 +51,59 @@ export async function moderationPreview(buffer: Buffer, declaredType: string) {
   return `data:image/webp;base64,${preview.toString('base64')}`;
 }
 
-export async function moderationFrames(buffer:Buffer,declaredType:string){
-  if(declaredType!=='image/gif')return [await moderationPreview(buffer,declaredType)];
-  const metadata=await sharp(buffer,{limitInputPixels:GIF_MAX_TOTAL_PIXELS,failOn:'warning'}).metadata();
-  const {width,height}=assertDecodedImage(metadata,declaredType,true);
-  if(width>MAX_IMAGE_WIDTH||height>MAX_IMAGE_HEIGHT)throw Error('HUGE_DIMENSIONS');
-  const previews:string[]=[];
-  for(const page of sampledFrames(metadata.pages||1)){
-    const frame=await sharp(buffer,{page,pages:1,limitInputPixels:GIF_MAX_TOTAL_PIXELS,failOn:'warning'}).resize({width:1024,height:1024,fit:'inside',withoutEnlargement:true}).webp({quality:82}).toBuffer();
-    previews.push(`data:image/webp;base64,${frame.toString('base64')}`);
+export async function moderationFrames(buffer: Buffer, declaredType: string) {
+  if (declaredType !== 'image/gif') return [await moderationPreview(buffer, declaredType)];
+  const metadata = await sharp(buffer, { limitInputPixels: GIF_MAX_TOTAL_PIXELS, failOn: 'none' }).metadata();
+  const { width, height } = assertDecodedImage(metadata, declaredType, true);
+  if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT) throw Error('HUGE_DIMENSIONS');
+  const previews: string[] = [];
+  const pagesToSample = sampledFrames(metadata.pages || 1);
+  for (const page of pagesToSample) {
+    try {
+      const frame = await sharp(buffer, { page, pages: 1, limitInputPixels: GIF_MAX_TOTAL_PIXELS, failOn: 'none' })
+        .resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 82 })
+        .toBuffer();
+      previews.push(`data:image/webp;base64,${frame.toString('base64')}`);
+    } catch {
+      if (previews.length === 0) {
+        const frame0 = await sharp(buffer, { page: 0, pages: 1, limitInputPixels: GIF_MAX_TOTAL_PIXELS, failOn: 'none' })
+          .resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 82 })
+          .toBuffer();
+        previews.push(`data:image/webp;base64,${frame0.toString('base64')}`);
+      }
+    }
+  }
+  if (previews.length === 0) {
+    const fallback = await sharp(buffer, { page: 0, pages: 1, limitInputPixels: GIF_MAX_TOTAL_PIXELS, failOn: 'none' })
+      .resize({ width: 1024, height: 1024, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+    previews.push(`data:image/webp;base64,${fallback.toString('base64')}`);
   }
   return previews;
 }
 
 export async function processSkillshot(buffer: Buffer, declaredType?: string): Promise<ProcessedImage> {
-  const source = sharp(buffer, { failOn: 'warning', limitInputPixels: MAX_IMAGE_PIXELS, sequentialRead: true });
+  const isGif = declaredType === 'image/gif';
+  const source = sharp(buffer, { failOn: isGif ? 'none' : 'error', limitInputPixels: MAX_IMAGE_PIXELS, sequentialRead: true });
   const metadata = await source.metadata();
-  const { width, height } = assertDecodedImage(metadata, declaredType,true);
+  const { width, height } = assertDecodedImage(metadata, declaredType, true);
   if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT || width * height > MAX_IMAGE_PIXELS) throw new Error('HUGE_DIMENSIONS');
 
-  if(metadata.format==='gif'){
-    const display=await sharp(buffer,{animated:true,failOn:'warning',limitInputPixels:GIF_MAX_TOTAL_PIXELS}).resize({width:1600,height:1600,fit:'inside',withoutEnlargement:true}).webp({quality:85,effort:3,loop:metadata.loop||0}).toBuffer();
-    const thumbnail=await sharp(buffer,{page:0,pages:1,failOn:'warning',limitInputPixels:GIF_MAX_TOTAL_PIXELS}).resize({width:960,height:720,fit:'inside',withoutEnlargement:true}).webp({quality:80}).toBuffer();
-    return {width,height,display,thumbnail};
+  if (metadata.format === 'gif') {
+    const display = await sharp(buffer, { animated: true, failOn: 'none', limitInputPixels: GIF_MAX_TOTAL_PIXELS })
+      .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 85, effort: 3, loop: metadata.loop || 0 })
+      .toBuffer();
+    const thumbnail = await sharp(buffer, { page: 0, pages: 1, failOn: 'none', limitInputPixels: GIF_MAX_TOTAL_PIXELS })
+      .resize({ width: 960, height: 720, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+    return { width, height, display, thumbnail };
   }
-  const normalized = sharp(buffer, { failOn: 'warning', limitInputPixels: MAX_IMAGE_PIXELS, sequentialRead: true }).rotate();
+  const normalized = sharp(buffer, { failOn: 'error', limitInputPixels: MAX_IMAGE_PIXELS, sequentialRead: true }).rotate();
   const display = await normalized.clone().resize({ width: 2400, height: 2400, fit: 'inside', withoutEnlargement: true }).webp({ quality: 88, effort: 4, smartSubsample: true }).toBuffer();
   const thumbnail = await normalized.clone().resize({ width: 960, height: 720, fit: 'inside', withoutEnlargement: true }).webp({ quality: 80, effort: 4, smartSubsample: true }).toBuffer();
   const swapped = [5, 6, 7, 8].includes(metadata.orientation || 1);
@@ -83,29 +111,47 @@ export async function processSkillshot(buffer: Buffer, declaredType?: string): P
 }
 
 export async function processAvatar(buffer: Buffer, declaredType?: string, allowGif = false) {
-  const source = sharp(buffer, { failOn: 'warning', limitInputPixels: 20_000_000, sequentialRead: true });
+  const isGif = declaredType === 'image/gif';
+  const source = sharp(buffer, { failOn: isGif ? 'none' : 'error', limitInputPixels: 20_000_000, sequentialRead: true });
   const metadata = await source.metadata();
   const { width, height } = assertDecodedImage(metadata, declaredType, allowGif);
   if (width > 8_000 || height > 8_000 || width * height > 20_000_000) throw new Error('HUGE_DIMENSIONS');
   if (metadata.format === 'gif' && allowGif) {
-    return sharp(buffer, { animated: true, failOn: 'warning', limitInputPixels: GIF_MAX_TOTAL_PIXELS })
-      .resize(512, 512, { fit: 'cover', position: 'attention', withoutEnlargement: false })
-      .gif({ loop: metadata.loop || 0 })
-      .toBuffer();
+    if (buffer.length <= AVATAR_MAX_BYTES && width <= 512 && height <= 512 && width === height) {
+      return buffer;
+    }
+    try {
+      return await sharp(buffer, { animated: true, failOn: 'none', limitInputPixels: GIF_MAX_TOTAL_PIXELS })
+        .resize(512, 512, { fit: 'cover', position: 'attention', withoutEnlargement: false })
+        .gif({ loop: metadata.loop || 0, delay: metadata.delay || undefined })
+        .toBuffer();
+    } catch {
+      if (buffer.length <= AVATAR_MAX_BYTES) return buffer;
+      throw new Error('INVALID_IMAGE');
+    }
   }
   return source.rotate().resize(512, 512, { fit: 'cover', position: 'attention', withoutEnlargement: false }).webp({ quality: 84, effort: 4 }).toBuffer();
 }
 
 export async function processBanner(buffer: Buffer, declaredType?: string) {
-  const source = sharp(buffer, { failOn: 'warning', limitInputPixels: GIF_MAX_TOTAL_PIXELS, sequentialRead: true });
+  const isGif = declaredType === 'image/gif';
+  const source = sharp(buffer, { failOn: isGif ? 'none' : 'error', limitInputPixels: GIF_MAX_TOTAL_PIXELS, sequentialRead: true });
   const metadata = await source.metadata();
   const { width, height } = assertDecodedImage(metadata, declaredType, true);
   if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT || width * height > MAX_IMAGE_PIXELS) throw new Error('HUGE_DIMENSIONS');
   if (metadata.format === 'gif') {
-    return sharp(buffer, { animated: true, failOn: 'warning', limitInputPixels: GIF_MAX_TOTAL_PIXELS })
-      .resize({ width: 1600, height: 600, fit: 'inside', withoutEnlargement: true })
-      .gif({ loop: metadata.loop || 0 })
-      .toBuffer();
+    if (buffer.length <= BANNER_MAX_BYTES && width <= 1920 && height <= 1080) {
+      return buffer;
+    }
+    try {
+      return await sharp(buffer, { animated: true, failOn: 'none', limitInputPixels: GIF_MAX_TOTAL_PIXELS })
+        .resize({ width: 1600, height: 600, fit: 'inside', withoutEnlargement: true })
+        .gif({ loop: metadata.loop || 0, delay: metadata.delay || undefined })
+        .toBuffer();
+    } catch {
+      if (buffer.length <= BANNER_MAX_BYTES) return buffer;
+      throw new Error('INVALID_IMAGE');
+    }
   }
   return source.rotate().resize({ width: 1920, height: 720, fit: 'inside', withoutEnlargement: true }).webp({ quality: 86, effort: 4 }).toBuffer();
 }

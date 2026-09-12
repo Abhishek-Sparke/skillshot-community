@@ -61,7 +61,9 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
   const commentCount = Number(row.comment_count);
   const skillsList = Array.isArray(row.skills) ? row.skills.map(String) : [];
 
-  const xp = Math.max(0, Number(row.creator_xp || 0));
+  const userRole = normalizeRole(row.role);
+  const isAdmin = ['ADMIN', 'OWNER'].includes(userRole);
+  const xp = isAdmin ? Math.max(50000, Number(row.creator_xp || 0)) : Math.max(0, Number(row.creator_xp || 0));
   const rankProgress = calculateRankProgress(xp);
   const levelProgress = calculateLevelProgress(xp);
 

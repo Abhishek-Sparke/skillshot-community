@@ -13,7 +13,7 @@ import * as settingsPolicy from '../lib/settings-policy.ts';
 import * as trustedPolicy from '../lib/trusted-policy.ts';
 import * as searchPolicy from '../lib/search-query.ts';
 import * as roles from '../lib/roles.ts';
-import { moderationFrames,processSkillshot,processAvatar } from '../lib/image-processing.ts';
+import { moderationFrames, processSkillshot, processAvatar, processBanner } from '../lib/image-processing.ts';
 import { sampledFrames } from '../lib/upload-policy.ts';
 import { gifInfo } from '../lib/gif-info.ts';
 import * as casePolicy from '../lib/report-case-policy.ts';
@@ -50,6 +50,34 @@ test('GIF frames span the animation, animated display survives, thumbnails stay 
   const processed=await processSkillshot(gif,'image/gif');assert.equal((await sharp(processed.display).metadata()).pages,3);assert.equal((await sharp(processed.thumbnail).metadata()).pages||1,1);
   await assert.rejects(processAvatar(gif,'image/gif'));
   await assert.rejects(moderationFrames(gif,'image/png'));
+});
+test('GIF banner and avatar handling supports variable delays, comments, trailing padding, and preserves GIF', async () => {
+  const f1 = await sharp({ create: { width: 50, height: 50, channels: 4, background: { r: 255, g: 0, b: 0, alpha: 1 } } }).png().toBuffer();
+  const f2 = await sharp({ create: { width: 50, height: 50, channels: 4, background: { r: 0, g: 255, b: 0, alpha: 0.5 } } }).png().toBuffer();
+  const f3 = await sharp({ create: { width: 50, height: 50, channels: 4, background: { r: 0, g: 0, b: 255, alpha: 0 } } }).png().toBuffer();
+
+  const baseGif = await sharp([f1, f2, f3], { join: { animated: true } }).gif({ delay: [50, 150, 250], loop: 0 }).toBuffer();
+  const commentExt = Buffer.from([0x21, 0xFE, 0x05, 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00]);
+  const trailerIdx = baseGif.lastIndexOf(0x3b);
+  const gifWithCommentAndTrailing = Buffer.concat([baseGif.subarray(0, trailerIdx), commentExt, baseGif.subarray(trailerIdx), Buffer.from([0x00, 0x00])]);
+
+  const info = gifInfo(gifWithCommentAndTrailing);
+  assert.equal(info.frames, 3);
+  assert.equal(info.width, 50);
+  assert.equal(info.height, 50);
+
+  const frames = await moderationFrames(gifWithCommentAndTrailing, 'image/gif');
+  assert.equal(frames.length, 3);
+
+  const banner = await processBanner(gifWithCommentAndTrailing, 'image/gif');
+  assert.ok(banner.length > 0);
+  const bannerMeta = await sharp(banner).metadata();
+  assert.equal(bannerMeta.format, 'gif');
+
+  const avatar = await processAvatar(gifWithCommentAndTrailing, 'image/gif', true);
+  assert.ok(avatar.length > 0);
+  const avatarMeta = await sharp(avatar).metadata();
+  assert.equal(avatarMeta.format, 'gif');
 });
 test('real PostgreSQL search and related results exclude held posts and bound results',async()=>{
   const ctx=await setup();try{

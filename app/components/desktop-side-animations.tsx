@@ -123,7 +123,7 @@ export default function DesktopSideAnimations({ initialShots = [] }: DesktopSide
   const rightItem3 = shots[5];
 
   return (
-    <div className="desktopSideDecor" aria-hidden="true">
+    <div className="desktopSideDecor" aria-hidden="true" style={{ display: 'none' }}>
       {/* Left side composition (organic staggered zigzag) */}
       <div className="sideDecorTrack sideDecorLeft" ref={leftTrackRef}>
         <div className="sideDecorItem">
