@@ -126,6 +126,9 @@ test('9. User Settings and Admin Navigation include Discord integration entries'
   const settingsPage = await read('app/settings/page.tsx');
   assert.match(settingsPage, /\/settings\/connections/);
 
+  const settingsMenu = await read('app/components/settings-menu.tsx');
+  assert.match(settingsMenu, /\/settings\/connections/);
+
   const staffUi = await read('lib/staff-ui.ts');
   assert.match(staffUi, /\/admin\/discord/);
 });

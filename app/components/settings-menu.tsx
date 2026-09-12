@@ -10,6 +10,7 @@ const sections = [
     ['Appearance', '/settings/appearance'],
     ['Privacy', '/settings/privacy'],
     ['Security', '/settings/security'],
+    ['Connections', '/settings/connections'],
     ['Trusted Contributor', '/settings/trusted-contributor'],
   ]],
   ['SUPPORT', [
