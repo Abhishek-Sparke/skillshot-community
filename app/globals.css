@@ -936,7 +936,7 @@ footer a:hover { color:var(--red); }
 
 .roleBadge { display:inline-flex; align-items:center; justify-content:center; flex:none; border-radius:999px; font:800 12px/1 'Plus Jakarta Sans',Arial,sans-serif; vertical-align:middle; position:relative; outline-offset:3px; }
 .roleBadge.compact { width:22px; height:22px; margin-left:6px; box-shadow:0 1px 2px rgba(0,0,0,0.06); }
-.roleBadge.profile { gap:6px; padding:7px 10px; border:1px solid currentColor; }
+.roleBadge.profile { width:22px; height:22px; min-width:22px; min-height:22px; padding:0; border:1px solid currentColor; border-radius:50%; display:inline-grid; place-items:center; box-sizing:border-box; }
 .roleBadge.compact::after{content:attr(data-tooltip);position:absolute;z-index:40;left:50%;bottom:calc(100% + 7px);translate:-50% 3px;white-space:nowrap;max-width:min(190px,calc(100vw - 24px));padding:6px 8px;border-radius:7px;background:#1d1d1d;color:#fff;font:700 11px/1.2 Arial,sans-serif;box-shadow:0 5px 18px #0003;opacity:0;pointer-events:none;transition:opacity .16s ease,translate .16s ease}.roleBadge.compact:hover::after,.roleBadge.compact:focus-visible::after{opacity:1;translate:-50% 0}.roleOWNER { color:#d94c43; background:#fff0ed; border:1px solid #ffd8d3; }.roleADMIN { color:#7444bd; background:#f2eaff; border:1px solid #e3d2fd; }.roleHEAD_MODERATOR { color:#9b5b13; background:#fff2dd; border:1px solid #fedfa8; }.roleMODERATOR { color:#2876c7; background:#eaf4ff; border:1px solid #cde4fe; }.roleTRUSTED_CONTRIBUTOR { color:#278552; background:#e9f8ef; border:1px solid #c0ebd2; }
 .staffPage { min-height:100vh; padding-top:28px; padding-bottom:80px; }.staffNav { display:flex; align-items:center; gap:24px; border-bottom:1px solid var(--line); padding-bottom:22px; }.staffNav a:not(.brand){color:var(--ink);font-weight:800;text-decoration:none}.staffPage>header{padding:48px 0 30px}.staffPage h1{margin:5px 0 10px;font:clamp(38px,5vw,58px)/1 Georgia,serif}.staffPage header p:last-child{color:#6c6861}.staffStats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:35px}.staffStats div{display:grid;gap:6px;border:1px solid var(--line);border-radius:13px;padding:18px;background:#fff}.staffStats strong{font-size:28px}.staffStats span{text-transform:capitalize;color:#777;font-size:12px}.staffSection{border:1px solid var(--line);border-radius:16px;padding:24px;background:#fff}.staffSection h2{margin-top:0}.staffTable{display:grid}.staffTable article{display:flex;justify-content:space-between;gap:20px;padding:16px 0;border-top:1px solid var(--line)}.staffTable article>div{display:grid;gap:5px}.staffTable article>div:last-child{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end}.staffTable span,.staffTable small{color:#777}.staffTable button{border:1px solid var(--line);border-radius:7px;padding:7px 9px;background:#faf9f6;cursor:pointer}.teamSearch{display:flex;gap:10px;margin:0 0 25px}.teamSearch input{flex:1}
 @media(max-width:768px){.staffStats{grid-template-columns:repeat(2,minmax(0,1fr))}.staffTable article{align-items:flex-start;flex-direction:column}.staffTable article>div:last-child{justify-content:flex-start}.teamSearch{flex-direction:column}}
@@ -4007,22 +4007,22 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .discussionActionBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 13px;
-  border-radius: 8px;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1;
   border: 1px solid var(--line);
   background: var(--surface);
-  color: var(--secondary-text);
+  color: var(--ink);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .discussionActionBtn:hover {
   border-color: var(--ink);
-  color: var(--ink);
   background: color-mix(in srgb, var(--ink) 4%, var(--surface));
 }
 
@@ -4033,9 +4033,26 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 }
 
 .discussionActionBtn.bookmarkBtn.saved {
-  background: color-mix(in srgb, var(--ink) 10%, var(--surface));
-  border-color: var(--ink);
+  background: color-mix(in srgb, var(--red) 12%, var(--surface));
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.discussionToolbar .discussionActionBtn,
+.discussionToolbar .discussionActionBtn.reactionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid var(--line);
+  background: var(--surface);
   color: var(--ink);
+  cursor: pointer;
 }
 
 .discussionSummaryQuote {
@@ -4247,6 +4264,22 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 
 :root[data-theme=dark] .discussionLockedNoticeBanner {
   color: #fbbf24;
+}
+
+:root[data-theme=dark] .discussionMainCard,
+:root[data-theme=dark] .discussionRepliesCard {
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+:root[data-theme=dark] .discussionSummaryQuote {
+  background: rgba(255, 255, 255, 0.035);
+}
+:root[data-theme=dark] .discussionReplyComposer {
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+:root[data-theme=dark] .replyCard {
+  border-color: rgba(255, 255, 255, 0.07);
 }
 
 .discussionReplyComposer {
@@ -5702,9 +5735,9 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .discussionImagePreview img{display:block;width:100%;height:auto;max-height:280px;object-fit:contain}
 .discussionCardBottom{margin-top:auto;padding-top:13px}
 .discussionInteractions{min-width:0;gap:6px}
-.reactionBtn,.replyCountBtn{min-height:30px;padding:5px 8px;border:0;background:transparent;color:var(--secondary-text)}
-.reactionBtn:hover,.replyCountBtn:hover{background:color-mix(in srgb,var(--ink) 5%,transparent);border-color:transparent}
-.reactionBtn.reacted{border:0;background:color-mix(in srgb,var(--red) 9%,transparent)}
+.discussionCard .reactionBtn,.discussionCard .replyCountBtn{min-height:30px;padding:5px 8px;border:0;background:transparent;color:var(--secondary-text);display:inline-flex;align-items:center;gap:6px;line-height:1}
+.discussionCard .reactionBtn:hover,.discussionCard .replyCountBtn:hover{background:color-mix(in srgb,var(--ink) 5%,transparent);border-color:transparent}
+.discussionCard .reactionBtn.reacted{border:0;background:color-mix(in srgb,var(--red) 9%,transparent);color:var(--red)}
 .discussionSaveState{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;color:var(--secondary-text)}
 .discussionSaveState.saved{background:color-mix(in srgb,var(--red) 9%,transparent);color:var(--red)}
 .staffQuickControls .staffActionBtn{display:grid;place-items:center;width:29px;height:29px;padding:0;color:var(--secondary-text)}

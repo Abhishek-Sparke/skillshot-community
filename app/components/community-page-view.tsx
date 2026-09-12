@@ -153,6 +153,7 @@ function DiscussionCard({ discussion: disc, currentUser, formatDate, onOpen, onR
 }
 
 export default function CommunityPageView({ currentUser }: CommunityPageViewProps) {
+  const router = useRouter();
   const [discussions, setDiscussions] = useState<CommunityDiscussion[]>([]);
   const [pinnedDiscussions, setPinnedDiscussions] = useState<CommunityDiscussion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -223,26 +224,8 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
     fetchPinned();
   }, [fetchPinned]);
 
-  const openDiscussionModal = async (disc: CommunityDiscussion) => {
-    if (disc.isAnnouncement) {
-      window.location.href = `/announcements/${encodeURIComponent(disc.id)}`;
-      return;
-    }
-    setActiveDiscussion(disc);
-    setLoadingReplies(true);
-    setReplies([]);
-    try {
-      const res = await fetch(`/api/discussions/${disc.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setActiveDiscussion(data.discussion);
-        setReplies(data.discussion.replies || []);
-      }
-    } catch (e) {
-      console.error('Failed to load discussion details', e);
-    } finally {
-      setLoadingReplies(false);
-    }
+  const openDiscussion = (disc: CommunityDiscussion) => {
+    router.push(`/discussion/${encodeURIComponent(disc.id)}`);
   };
 
   const handleToggleReaction = async (id: string, e?: React.MouseEvent) => {
@@ -479,7 +462,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
               <div className="pinnedHeader">
                 <span className="pinnedHeaderBadge">OFFICIAL ANNOUNCEMENTS</span>
               </div>
-              <AnnouncementCard item={pinnedDiscussions[0]} formatDate={formatDate} onOpen={openDiscussionModal} />
+              <AnnouncementCard item={pinnedDiscussions[0]} formatDate={formatDate} onOpen={openDiscussion} />
             </div>
           )}
 
@@ -555,7 +538,7 @@ export default function CommunityPageView({ currentUser }: CommunityPageViewProp
                   discussion={disc}
                   currentUser={currentUser}
                   formatDate={formatDate}
-                  onOpen={openDiscussionModal}
+                  onOpen={openDiscussion}
                   onReact={handleToggleReaction}
                   onPin={handleTogglePin}
                   onLock={handleToggleLock}

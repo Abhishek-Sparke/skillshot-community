@@ -10,7 +10,7 @@
 /* 2. Desktop Only: min-width 1200px */
 @media (min-width: 1200px) {
   .desktopSideDecor {
-    display: none !important;
+    display: flex !important;
     position: absolute;
     top: 70px;
     left: 0;

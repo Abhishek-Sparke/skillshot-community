@@ -123,105 +123,81 @@ export default function DesktopSideAnimations({ initialShots = [] }: DesktopSide
   const rightItem3 = shots[5];
 
   return (
-    <div className="desktopSideDecor" aria-hidden="true" style={{ display: 'none' }}>
+    <div className="desktopSideDecor" aria-hidden="true">
       {/* Left side composition (organic staggered zigzag) */}
       <div className="sideDecorTrack sideDecorLeft" ref={leftTrackRef}>
         <div className="sideDecorItem">
           <div className="sideDecorFloat">
-            {leftItem1 ? (
-              <ShotCard shot={leftItem1} />
-            ) : (
-              <AbstractCard
-                id={`${uniqueId}-ab1`}
-                eyebrow="Curated"
-                title="Motion Systems"
-                badge="✦ 60fps"
-                type="motion"
-              />
-            )}
+            <AbstractCard
+              id={`${uniqueId}-ab1`}
+              eyebrow="Curated"
+              title="Motion Systems"
+              badge="✦ 60fps"
+              type="motion"
+            />
           </div>
         </div>
 
         <div className="sideDecorItem">
           <div className="sideDecorFloat">
-            {leftItem2 ? (
-              <ShotCard shot={leftItem2} />
-            ) : (
-              <AbstractCard
-                id={`${uniqueId}-ab2`}
-                eyebrow="Archive"
-                title="Spatial Composition"
-                badge="Editorial"
-                type="geometric"
-              />
-            )}
+            <AbstractCard
+              id={`${uniqueId}-ab2`}
+              eyebrow="Archive"
+              title="Spatial Composition"
+              badge="Editorial"
+              type="geometric"
+            />
           </div>
         </div>
 
         <div className="sideDecorItem">
           <div className="sideDecorFloat">
-            {leftItem3 ? (
-              <ShotCard shot={leftItem3} />
-            ) : (
-              <AbstractCard
-                id={`${uniqueId}-ab3`}
-                eyebrow="Craft"
-                title="Interactive Design"
-                badge="Issue 04"
-                type="waveform"
-              />
-            )}
+            <AbstractCard
+              id={`${uniqueId}-ab3`}
+              eyebrow="Craft"
+              title="Interactive Design"
+              badge="Issue 04"
+              type="waveform"
+            />
           </div>
         </div>
       </div>
 
-      {/* Center 1220px boundary spacer - guarantees decorative cards never overlap hero */}
+      {/* Center boundary spacer - guarantees decorative cards never overlap hero */}
       <div className="sideDecorSpacer" />
 
       {/* Right side composition (asymmetrical editorial balance) */}
       <div className="sideDecorTrack sideDecorRight" ref={rightTrackRef}>
         <div className="sideDecorItem">
           <div className="sideDecorFloat">
-            {rightItem1 ? (
-              <ShotCard shot={rightItem1} />
-            ) : (
-              <AbstractCard
-                id={`${uniqueId}-ab4`}
-                eyebrow="Selected"
-                title="Visual Architecture"
-                badge="Spotlight"
-                type="concentric"
-              />
-            )}
+            <AbstractCard
+              id={`${uniqueId}-ab4`}
+              eyebrow="Selected"
+              title="Visual Architecture"
+              badge="Spotlight"
+              type="concentric"
+            />
           </div>
         </div>
 
         <div className="sideDecorItem">
           <div className="sideDecorFloat">
-            {rightItem2 ? (
-              <ShotCard shot={rightItem2} />
-            ) : (
-              <div className="sideDecorPillCard">
-                <span className="sideDecorPillIcon">✦</span>
-                <span className="sideDecorPillText">Skillshot Community</span>
-              </div>
-            )}
+            <div className="sideDecorPillCard">
+              <span className="sideDecorPillIcon">✦</span>
+              <span className="sideDecorPillText">Skillshot Community</span>
+            </div>
           </div>
         </div>
 
         <div className="sideDecorItem">
           <div className="sideDecorFloat">
-            {rightItem3 ? (
-              <ShotCard shot={rightItem3} />
-            ) : (
-              <AbstractCard
-                id={`${uniqueId}-ab5`}
-                eyebrow="Exploration"
-                title="Tactile Surfaces"
-                badge="Original"
-                type="geometric"
-              />
-            )}
+            <AbstractCard
+              id={`${uniqueId}-ab5`}
+              eyebrow="Exploration"
+              title="Tactile Surfaces"
+              badge="Original"
+              type="geometric"
+            />
           </div>
         </div>
       </div>
