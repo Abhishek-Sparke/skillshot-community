@@ -37,7 +37,19 @@ export async function GET(request: Request) {
     };
   }
 
-  // 5. Bot Permissions Check
+  // 5. Register Guild Slash Commands (/rank, /verify, /link, /sync)
+  const commands = [
+    { name: 'rank', description: 'Display your current Skillshot Creator Rank, level, and XP progress', type: 1 },
+    { name: 'verify', description: 'Verify your Skillshot account and receive your Creator Rank role', type: 1 },
+    { name: 'link', description: 'Get the official link to connect your Discord account to Skillshot', type: 1 },
+    { name: 'sync', description: 'Synchronize your Discord Creator Rank role with your Skillshot account', type: 1 },
+  ];
+  const cmdRes = await callDiscordApi(`/applications/${DISCORD_CLIENT_ID}/guilds/${DISCORD_GUILD_ID}/commands`, {
+    method: 'PUT',
+    body: JSON.stringify(commands),
+  });
+
+  // 6. Bot Permissions Check
   const permissions = await getDiscordBotPermissions();
 
   return NextResponse.json({
