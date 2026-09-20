@@ -504,9 +504,13 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
           <div className="profileCollectionPreview">
             {profile.collections.map(collection => (
               <button type="button" className="profileFolderBox" onClick={() => setTab('collections')} key={collection.id}>
-                <span className="folderTab"><b>{collection.name}</b></span>
+                <span className="folderTab">
+                  <UiIcon name="folder" size={12} className="folderTabIcon" />
+                  <b>{collection.name}</b>
+                  {collection.isPrivate && <UiIcon name="lock" size={10} />}
+                </span>
                 <span className="folderBody">
-                  {collection.coverUrl ? <img src={collection.coverUrl} alt="" loading="lazy"/> : <span className="profileCollectionPlaceholder"><UiIcon name="bookmark"/></span>}
+                  {collection.coverUrl ? <img src={collection.coverUrl} alt="" loading="lazy"/> : <span className="profileCollectionPlaceholder"><UiIcon name="folder" size={24}/></span>}
                   <small>{collection.postCount} {collection.postCount === 1 ? 'Skillshot' : 'Skillshots'}</small>
                 </span>
               </button>

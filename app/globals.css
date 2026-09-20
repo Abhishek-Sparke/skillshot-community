@@ -3165,43 +3165,244 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   background: rgba(255, 91, 66, 0.1);
 }
 
+/* ==========================================================================
+   COLLECTIONS: FOLDER BOXES, CREATION BAR, AND EDIT FORMS
+   ========================================================================== */
+
+.newCollectionBarContainer {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
 .newCollectionBar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
   width: 100%;
-  min-height: 52px;
-  margin-bottom: 18px;
-  border: 1px dashed color-mix(in srgb, var(--profile-line, var(--line)) 80%, #ff6688);
-  border-radius: 14px;
-  background: color-mix(in srgb, #ff6688 8%, transparent);
+  min-height: 64px;
+  padding: 12px 20px;
+  border: 1px dashed color-mix(in srgb, var(--profile-line, var(--line)) 70%, #ff6688);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 102, 136, 0.06), rgba(216, 93, 255, 0.04));
   color: inherit;
   font: inherit;
-  font-weight: 800;
   cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
 }
+
 .newCollectionBar:hover {
-  background: color-mix(in srgb, #ff6688 14%, transparent);
+  transform: translateY(-2px);
+  border-color: #ff6688;
+  background: linear-gradient(135deg, rgba(255, 102, 136, 0.12), rgba(216, 93, 255, 0.08));
+  box-shadow: 0 8px 22px rgba(255, 102, 136, 0.12);
 }
+
+.newCollectionBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+
+.newCollectionBarIcon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff6688, #d85dff);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 102, 136, 0.3);
+  flex-shrink: 0;
+}
+
+.newCollectionBarBadge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #101622;
+  color: #ff6688;
+  border: 1.5px solid #ff6688;
+}
+
+.newCollectionBarInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.newCollectionBarTitle {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.newCollectionBarSubtitle {
+  font-size: 13px;
+  color: var(--secondary-text, #7a8b9e);
+  font-weight: 500;
+}
+
+.newCollectionBarCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #ff6688;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(255, 102, 136, 0.28);
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.newCollectionBar:hover .newCollectionBarCta {
+  transform: scale(1.04);
+}
+
+/* Folder Grid */
 .folderGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 20px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 26px 20px;
 }
+
+/* The Folder Box */
 .folderBox {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.folderBox:hover {
+  transform: translateY(-4px);
+}
+
 .folderBox.folderSkeleton {
-  height: 168px;
+  height: 180px;
   border-radius: 0 16px 16px 16px;
   background: linear-gradient(90deg, #182230, #223044, #182230);
   background-size: 180% 100%;
   animation: topRefreshBar 1.2s linear infinite;
 }
+
+/* Tab row at the top */
+.folderBoxTabRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
+  margin-bottom: -1px;
+}
+
+.folderTab,
+.profileFolderBox .folderTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 72%;
+  min-height: 32px;
+  margin: 0;
+  padding: 5px 14px 2px;
+  border: 1px solid var(--profile-line, var(--line));
+  border-bottom: 0;
+  border-radius: 10px 14px 0 0;
+  background: #1a2535;
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.folderTabIcon {
+  color: #ff83a2;
+  flex-shrink: 0;
+}
+
+.folderTab b,
+.folderTabTitle,
+.profileFolderBox .folderTab b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.folderTabLock {
+  color: #ff91ad;
+  flex-shrink: 0;
+}
+
+.folderTab.mini {
+  max-width: min(320px, 65vw);
+}
+
+/* Action buttons on the corner of the folder */
+.folderActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.9;
+  transition: opacity 0.18s ease;
+}
+
+.folderBox:hover .folderActions {
+  opacity: 1;
+}
+
+.folderActionEdit,
+.folderActionDelete {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--profile-line, #2a3749);
+  border-radius: 8px;
+  background: rgba(18, 25, 36, 0.88);
+  backdrop-filter: blur(6px);
+  color: #d1dbe6;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.folderActionDelete {
+  width: 28px;
+  padding: 0;
+  justify-content: center;
+}
+
+.folderActionEdit:hover {
+  background: #ff6688;
+  border-color: #ff6688;
+  color: #fff;
+}
+
+.folderActionDelete:hover {
+  background: #e03131;
+  border-color: #e03131;
+  color: #fff;
+}
+
+/* Clickable folder body */
 .folderBoxHit {
-  display: grid;
+  display: block;
   width: 100%;
   padding: 0;
   border: 0;
@@ -3210,32 +3411,7 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   text-align: left;
   cursor: pointer;
 }
-.folderTab,
-.profileFolderBox .folderTab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 78%;
-  min-height: 28px;
-  margin: 0;
-  padding: 4px 12px 0;
-  border: 1px solid var(--profile-line, var(--line));
-  border-bottom: 0;
-  border-radius: 12px 14px 0 0;
-  background: #1a2432;
-  color: #fff;
-}
-.folderTab b,
-.profileFolderBox .folderTab b {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  font-weight: 800;
-}
-.folderTab.mini {
-  max-width: min(280px, 60vw);
-}
+
 .folderBody,
 .profileFolderBox .folderBody {
   display: grid;
@@ -3244,65 +3420,180 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   aspect-ratio: 4 / 3;
   border: 1px solid var(--profile-line, var(--line));
   border-radius: 0 16px 16px 16px;
-  background: #121a24;
-  box-shadow: 0 10px 24px #0004;
+  background: linear-gradient(150deg, #131b26 0%, #0d131c 100%);
+  box-shadow: 0 10px 26px -6px rgba(0, 0, 0, 0.38), 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.folderBox:hover .folderBody,
+.profileFolderBox:hover .folderBody {
+  border-color: color-mix(in srgb, #ff6688 60%, var(--profile-line, var(--line)));
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 102, 136, 0.25);
+}
+
+.folderCoverWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.folderCoverWrapper img,
 .folderBody img,
-.folderPlaceholder,
 .profileFolderBox .folderBody img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
 }
-.folderPlaceholder {
-  display: grid;
-  place-items: center;
-  color: #8ea0b5;
+
+.folderBox:hover .folderCoverWrapper img,
+.profileFolderBox:hover .folderBody img {
+  transform: scale(1.03);
 }
-.folderBody small,
-.profileFolderBox .folderBody small {
+
+.folderCoverGradient {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
-  padding: 3px 8px;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10, 14, 20, 0.85) 0%, rgba(10, 14, 20, 0.3) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+.folderPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top, #192433 0%, #0f151f 100%);
+  color: #7b8ea3;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.folderMetaBottom {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 2;
+}
+
+.folderCountPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(8, 12, 18, .72);
-  color: #eef3f8;
-  font-size: 10px;
+  background: rgba(10, 15, 23, 0.82);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+  font-size: 11px;
   font-weight: 800;
 }
-.folderActions {
-  position: absolute;
-  top: 32px;
-  right: 8px;
-  z-index: 2;
-  display: flex;
-  gap: 6px;
+
+.folderDescTruncate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: rgba(230, 238, 248, 0.85);
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
-.folderActions button {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border: 1px solid #314155;
-  border-radius: 8px;
-  background: rgba(12, 18, 26, .84);
-  color: #f3f6fa;
-  cursor: pointer;
-}
+
+/* Open Collection View Header Bar */
 .collectionOpenBar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(22, 31, 44, 0.5);
+  border: 1px solid var(--profile-line, var(--line));
 }
+
+.backFoldersBtn {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ff83a2;
+}
+
 .collectionOpenTitle {
   display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
-  flex: 1;
+}
+
+.collectionOpenCount {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 102, 136, 0.12);
+  color: #ff83a2;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.collectionOpenActions {
+  display: flex;
   align-items: center;
   gap: 8px;
 }
+
+.editCollectionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--profile-line, #334458);
+  border-radius: 9px;
+  background: rgba(28, 38, 52, 0.8);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.editCollectionBtn:hover {
+  border-color: #ff6688;
+  background: #ff6688;
+  color: #fff;
+}
+
+.deleteCollectionBtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--profile-line, #334458);
+  border-radius: 9px;
+  background: rgba(28, 38, 52, 0.8);
+  color: #d1dbe6;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.deleteCollectionBtn:hover {
+  background: #e03131;
+  border-color: #e03131;
+  color: #fff;
+}
+
+/* Modal Form Styles */
 .modalOverlay.collectionFormOverlay {
   position: fixed;
   inset: 0;
@@ -3311,77 +3602,546 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(0, 0, 0, .62);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(6px);
+  animation: modalFadeIn 0.2s ease-out;
 }
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .collectionModal {
-  width: min(640px, 100%);
-  max-height: 88vh;
-  overflow: auto;
+  width: min(680px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
   border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--paper, #fff);
+  border-radius: 20px;
+  background: var(--paper, #111823);
   color: var(--ink);
-  padding: 22px;
+  padding: 24px 26px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  animation: modalSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.collectionModal h3 { margin: 0 0 14px; }
-.collectionModal form { display: grid; gap: 14px; }
-.collectionModal label { display: grid; gap: 7px; font-size: 13px; font-weight: 800; }
-.collectionModal input[type=text],
-.collectionModal textarea {
+
+@keyframes modalSlideUp {
+  from { transform: translateY(16px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.collectionModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.collectionModalHeaderTitle {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.collectionModalHeaderIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff6688, #d85dff);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(255, 102, 136, 0.3);
+}
+
+.collectionModalHeader h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.collectionModalSubtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--secondary-text);
+  font-weight: 500;
+}
+
+.collectionModalCloseBtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--secondary-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.collectionModalCloseBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+}
+
+.collectionModalForm {
+  display: grid;
+  gap: 18px;
+}
+
+.collectionFormField {
+  display: grid;
+  gap: 7px;
+}
+
+.collectionFieldLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.collectionCharCounter {
+  font-size: 11px;
+  color: var(--secondary-text);
+  font-weight: 600;
+}
+
+.collectionFormField input[type="text"],
+.collectionFormField textarea {
   width: 100%;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--paper);
+  border-radius: 12px;
+  background: var(--surface, #161f2c);
   color: var(--ink);
-  padding: 11px 12px;
+  padding: 12px 14px;
   font: inherit;
-  font-weight: 400;
+  font-size: 14px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
-.collectionModal textarea { min-height: 72px; resize: vertical; }
-.collectionModal .checkboxLabel {
+
+.collectionFormField input[type="text"]:focus,
+.collectionFormField textarea:focus {
+  outline: none;
+  border-color: #ff6688;
+  box-shadow: 0 0 0 3px rgba(255, 102, 136, 0.18);
+}
+
+.collectionFormField textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.collectionPrivacyCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface, #161f2c);
+  cursor: pointer;
+  transition: border-color 0.18s ease;
+}
+
+.collectionPrivacyCheckbox:hover {
+  border-color: #ff668866;
+}
+
+.collectionPrivacyCheckbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #ff6688;
+  cursor: pointer;
+}
+
+.checkboxTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.checkboxTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.checkboxSub {
+  font-size: 12px;
+  color: var(--secondary-text);
+}
+
+/* Post Picker in modal */
+.collectionPostPicker {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface, #141b27);
+  display: grid;
+  gap: 12px;
+}
+
+.collectionPostPickerHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.collectionPostPicker legend {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.collectionPostPicker p {
+  margin: 3px 0 0;
+  color: var(--secondary-text);
+  font-size: 12px;
+}
+
+.collectionPickerMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.collectionSelectedCounter {
+  font-size: 12px;
+  color: #ff83a2;
+  font-weight: 700;
+  background: rgba(255, 102, 136, 0.12);
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.collectionPickerQuickActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.collectionQuickBtn {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.collectionQuickBtn:hover {
+  border-color: #ff6688;
+  color: #ff6688;
+}
+
+.collectionPickerFilterRow {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-weight: 600;
-}
-.collectionPostPicker {
-  margin: 0;
-  padding: 12px;
+  padding: 6px 12px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 9px;
+  background: var(--paper, #101620);
+  color: var(--secondary-text);
 }
-.collectionPostPicker legend { padding: 0 6px; font-weight: 800; }
-.collectionPostPicker p { margin: 0 0 10px; color: var(--secondary-text); font-size: 13px; font-weight: 500; }
+
+.collectionPickerFilterRow input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.collectionPickerFilterRow button {
+  border: 0;
+  background: transparent;
+  color: var(--secondary-text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
 .collectionPostPickerGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
+
 .collectionPostPick {
   position: relative;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
   overflow: hidden;
   padding: 6px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper, #111723);
   cursor: pointer;
+  transition: all 0.18s ease;
 }
-.collectionPostPick input { position: absolute; opacity: 0; pointer-events: none; }
-.collectionPostPick img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 7px; }
-.collectionPostPick span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 700; }
-.collectionPostPick.selected { border-color: #ff6688; box-shadow: 0 0 0 2px #ff668855; }
-.collectionPostPickerEmpty { display: grid; gap: 8px; padding: 8px 0; }
-.collectionFormError { margin: 0; color: #c32929; font-weight: 700; }
-.modalActions { display: flex; justify-content: flex-end; gap: 12px; }
+
+.collectionPostPick:hover {
+  transform: translateY(-2px);
+  border-color: #ff668888;
+}
+
+.collectionPostPick input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.collectionPostPickThumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.collectionPostPickThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.collectionPostPick:hover .collectionPostPickThumb img {
+  transform: scale(1.05);
+}
+
+.collectionPickCheck {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(10, 15, 24, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  transition: all 0.15s ease;
+}
+
+.collectionPickCheck.checked {
+  background: #ff6688;
+  border-color: #ff6688;
+}
+
+.collectionPostPick.selected {
+  border-color: #ff6688;
+  background: rgba(255, 102, 136, 0.08);
+  box-shadow: 0 0 0 1px #ff6688;
+}
+
+.collectionPickTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--ink);
+}
+
+.collectionPostPickerEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 12px;
+  color: var(--secondary-text);
+  text-align: center;
+}
+
+.collectionUploadShortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #ff6688;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.collectionFormError {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(224, 49, 49, 0.12);
+  border: 1px solid rgba(224, 49, 49, 0.3);
+  color: #ff6b6b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .modalActions .quietButton,
-.modalActions .primary { border: 0; min-height: 40px; padding: 0 14px; border-radius: 10px; cursor: pointer; }
-.modalActions .primary { background: var(--ink); color: #fff; font-weight: 800; }
+.modalActions .primary {
+  border: 0;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.modalActions .quietButton {
+  background: transparent;
+  color: var(--secondary-text);
+}
+
+.modalActions .quietButton:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.modalActions .primary {
+  background: linear-gradient(135deg, #ff6688, #d85dff);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 102, 136, 0.3);
+}
+
+.modalActions .primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(255, 102, 136, 0.4);
+}
+
+.modalActions .primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
 
 @media (max-width: 700px) {
-  .folderGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; }
+  .folderGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
   .collectionOpenBar { flex-wrap: wrap; }
+  .collectionModal {
+    padding: 18px 16px;
+  }
+  .newCollectionBar {
+    padding: 10px 14px;
+  }
+  .newCollectionBarSubtitle {
+    display: none;
+  }
+}
+
+/* Light mode adjustments */
+:root[data-theme=light] .newCollectionBar {
+  background: linear-gradient(135deg, rgba(255, 102, 136, 0.06), rgba(216, 93, 255, 0.04));
+  border-color: #ffd1dc;
+  color: #191c22;
+}
+
+:root[data-theme=light] .newCollectionBar:hover {
+  background: linear-gradient(135deg, rgba(255, 102, 136, 0.12), rgba(216, 93, 255, 0.08));
+}
+
+:root[data-theme=light] .folderTab,
+:root[data-theme=light] .profileFolderBox .folderTab {
+  background: #efe9dd;
+  color: #191c22;
+  border-color: #d9d3df;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+:root[data-theme=light] .folderTabIcon {
+  color: #e03164;
+}
+
+:root[data-theme=light] .folderBody,
+:root[data-theme=light] .profileFolderBox .folderBody {
+  background: #f7f3ea;
+  border-color: #d9d3df;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+:root[data-theme=light] .folderBox:hover .folderBody,
+:root[data-theme=light] .profileFolderBox:hover .folderBody {
+  border-color: #ff6688;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 102, 136, 0.2);
+}
+
+:root[data-theme=light] .folderActionEdit,
+:root[data-theme=light] .folderActionDelete {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #d9d3df;
+  color: #2b333e;
+}
+
+:root[data-theme=light] .folderPlaceholder {
+  background: radial-gradient(circle at top, #f5f0e6 0%, #ebe4d5 100%);
+  color: #728090;
+}
+
+:root[data-theme=light] .folderCountPill {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #191c22;
+}
+
+:root[data-theme=light] .collectionOpenBar {
+  background: #f7f4ed;
+  border-color: #ded7c8;
+}
+
+:root[data-theme=light] .editCollectionBtn,
+:root[data-theme=light] .deleteCollectionBtn {
+  background: #fff;
+  border-color: #d9d3df;
+  color: #2b333e;
+}
+
+:root[data-theme=light] .collectionModal {
+  background: #fff;
+  color: #191c22;
+}
+
+:root[data-theme=light] .collectionFormField input[type="text"],
+:root[data-theme=light] .collectionFormField textarea,
+:root[data-theme=light] .collectionPrivacyCheckbox,
+:root[data-theme=light] .collectionPostPicker {
+  background: #f8f6f0;
+}
+
+:root[data-theme=light] .collectionPostPick {
+  background: #fff;
 }
 
 .portfolioGalleryGrid {

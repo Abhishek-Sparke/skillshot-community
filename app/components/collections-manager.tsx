@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import ImageViewer from './image-viewer';
 import UiIcon from './ui-icon';
@@ -63,6 +63,7 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
   const [newDesc, setNewDesc] = useState('');
   const [newPrivate, setNewPrivate] = useState(false);
   const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
+  const [postSearchQuery, setPostSearchQuery] = useState('');
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState('');
   const [previewPost, setPreviewPost] = useState<PortfolioPost | null>(null);
@@ -84,7 +85,7 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
 
   const loadOwnPosts = useCallback(async () => {
     try {
-      const res = await fetch(`/api/posts?username=${encodeURIComponent(username)}&limit=30`);
+      const res = await fetch(`/api/posts?username=${encodeURIComponent(username)}&limit=50`);
       if (!res.ok) return;
       const data = await res.json();
       setAllPosts(data.posts || []);
@@ -103,7 +104,7 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
     let active = true;
     if (mode === 'gallery') {
       setPostsLoading(true);
-      fetch(`/api/posts?username=${encodeURIComponent(username)}&limit=30`)
+      fetch(`/api/posts?username=${encodeURIComponent(username)}&limit=50`)
         .then(res => res.json())
         .then(data => {
           if (active) {
@@ -140,6 +141,7 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
     setNewDesc('');
     setNewPrivate(false);
     setSelectedPostIds([]);
+    setPostSearchQuery('');
     setFormError('');
     setFormOpen(true);
     await loadOwnPosts();
@@ -151,10 +153,11 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
     setNewName(collection.name);
     setNewDesc(collection.description);
     setNewPrivate(collection.isPrivate);
+    setPostSearchQuery('');
     setFormError('');
     setFormOpen(true);
     const [postsRes, collectionRes] = await Promise.all([
-      fetch(`/api/posts?username=${encodeURIComponent(username)}&limit=30`).then(res => res.ok ? res.json() : { posts: [] }).catch(() => ({ posts: [] })),
+      fetch(`/api/posts?username=${encodeURIComponent(username)}&limit=50`).then(res => res.ok ? res.json() : { posts: [] }).catch(() => ({ posts: [] })),
       fetch(`/api/collections/${collection.id}`).then(res => res.ok ? res.json() : null).catch(() => null),
     ]);
     setAllPosts(postsRes.posts || []);
@@ -166,11 +169,26 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
     setFormOpen(false);
     setEditing(null);
     setFormError('');
+    setPostSearchQuery('');
   };
 
   const togglePost = (id: string) => {
     setSelectedPostIds(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]);
   };
+
+  const selectAllPosts = () => {
+    setSelectedPostIds(allPosts.map(p => p.id));
+  };
+
+  const clearSelectedPosts = () => {
+    setSelectedPostIds([]);
+  };
+
+  const filteredPosts = useMemo(() => {
+    if (!postSearchQuery.trim()) return allPosts;
+    const query = postSearchQuery.trim().toLowerCase();
+    return allPosts.filter(p => p.title.toLowerCase().includes(query) || (p.description && p.description.toLowerCase().includes(query)));
+  }, [allPosts, postSearchQuery]);
 
   const handleSaveCollection = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -241,57 +259,137 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
   const formModal = formOpen ? (
     <div className="modalOverlay collectionFormOverlay" onClick={closeForm}>
       <div className="collectionModal" onClick={event => event.stopPropagation()} role="dialog" aria-labelledby="collectionFormTitle">
-        <h3 id="collectionFormTitle">{editing ? 'Edit collection' : 'Create collection'}</h3>
-        <form onSubmit={handleSaveCollection}>
-          <label>
-            Collection name
+        <div className="collectionModalHeader">
+          <div className="collectionModalHeaderTitle">
+            <span className="collectionModalHeaderIcon">
+              <UiIcon name="folder" size={20} />
+            </span>
+            <div>
+              <h3 id="collectionFormTitle">{editing ? 'Edit collection' : 'Create collection'}</h3>
+              <p className="collectionModalSubtitle">
+                {editing ? 'Update the folder name, description, or selected Skillshots.' : 'Name your folder and select which of your uploaded Skillshots to include.'}
+              </p>
+            </div>
+          </div>
+          <button type="button" className="collectionModalCloseBtn" onClick={closeForm} aria-label="Close dialog">
+            <UiIcon name="close" size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSaveCollection} className="collectionModalForm">
+          <div className="collectionFormField">
+            <div className="collectionFieldLabelRow">
+              <label htmlFor="colNameInput">Collection name</label>
+              <span className="collectionCharCounter">{newName.length}/60</span>
+            </div>
             <input
+              id="colNameInput"
               type="text"
-              placeholder="e.g. Photography, Best Work"
+              placeholder="e.g. Photography, 3D Art, Best Work"
               value={newName}
               onChange={event => setNewName(event.target.value)}
               maxLength={60}
               required
               autoFocus
             />
-          </label>
-          <label>
-            Description (optional)
+          </div>
+
+          <div className="collectionFormField">
+            <div className="collectionFieldLabelRow">
+              <label htmlFor="colDescInput">Description (optional)</label>
+              <span className="collectionCharCounter">{newDesc.length}/280</span>
+            </div>
             <textarea
+              id="colDescInput"
               placeholder="Brief description of this folder"
               value={newDesc}
               onChange={event => setNewDesc(event.target.value)}
               maxLength={280}
             />
-          </label>
-          <label className="checkboxLabel">
+          </div>
+
+          <label className="checkboxLabel collectionPrivacyCheckbox">
             <input type="checkbox" checked={newPrivate} onChange={event => setNewPrivate(event.target.checked)} />
-            <span>Make collection private (only visible to you)</span>
+            <div className="checkboxTextGroup">
+              <span className="checkboxTitle">
+                <UiIcon name={newPrivate ? 'lock' : 'eye'} size={14} />
+                Make collection private
+              </span>
+              <span className="checkboxSub">Only visible to you on your profile</span>
+            </div>
           </label>
+
           <fieldset className="collectionPostPicker">
-            <legend>Select Skillshots to include</legend>
-            <p>Choose from work you uploaded. Selected shots are stored in this folder.</p>
+            <div className="collectionPostPickerHeader">
+              <div>
+                <legend>Select Skillshots to include</legend>
+                <p>Choose from work you uploaded. Selected shots are stored in this folder.</p>
+              </div>
+              {allPosts.length > 0 && (
+                <div className="collectionPickerMeta">
+                  <span className="collectionSelectedCounter">
+                    <b>{selectedPostIds.length}</b> of {allPosts.length} selected
+                  </span>
+                  <div className="collectionPickerQuickActions">
+                    <button type="button" className="collectionQuickBtn" onClick={selectAllPosts}>
+                      Select all
+                    </button>
+                    <button type="button" className="collectionQuickBtn" onClick={clearSelectedPosts}>
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {allPosts.length > 4 && (
+              <div className="collectionPickerFilterRow">
+                <UiIcon name="search" size={14} />
+                <input
+                  type="text"
+                  placeholder="Filter uploaded Skillshots..."
+                  value={postSearchQuery}
+                  onChange={e => setPostSearchQuery(e.target.value)}
+                />
+                {postSearchQuery && (
+                  <button type="button" onClick={() => setPostSearchQuery('')} aria-label="Clear search">
+                    <UiIcon name="close" size={12} />
+                  </button>
+                )}
+              </div>
+            )}
+
             {allPosts.length ? (
               <div className="collectionPostPickerGrid">
-                {allPosts.map(post => {
+                {filteredPosts.map(post => {
                   const selected = selectedPostIds.includes(post.id);
                   return (
                     <label key={post.id} className={`collectionPostPick ${selected ? 'selected' : ''}`}>
                       <input type="checkbox" checked={selected} onChange={() => togglePost(post.id)} />
-                      <img src={post.imageUrl} alt="" />
-                      <span>{post.title}</span>
+                      <div className="collectionPostPickThumb">
+                        <img src={post.imageUrl} alt="" loading="lazy" />
+                        <span className={`collectionPickCheck ${selected ? 'checked' : ''}`}>
+                          {selected && <UiIcon name="check" size={12} />}
+                        </span>
+                      </div>
+                      <span className="collectionPickTitle" title={post.title}>{post.title}</span>
                     </label>
                   );
                 })}
               </div>
             ) : (
               <div className="collectionPostPickerEmpty">
+                <UiIcon name="folder" size={32} />
                 <p>You have not uploaded any Skillshots yet.</p>
-                <Link href="/upload">Upload a Skillshot</Link>
+                <Link href="/upload" className="collectionUploadShortcut">
+                  <UiIcon name="plus" size={14} /> Upload a Skillshot
+                </Link>
               </div>
             )}
           </fieldset>
+
           {formError && <p className="collectionFormError" role="alert">{formError}</p>}
+
           <div className="modalActions">
             <button type="button" className="quietButton" onClick={closeForm}>Cancel</button>
             <button type="submit" className="primary" disabled={creating}>
@@ -337,17 +435,37 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
       {mode === 'folders' && !activeCollectionId && (
         <>
           {isSelf && (
-            <button type="button" className="newCollectionBar" onClick={openCreateForm}>
-              <UiIcon name="plus"/> New collection
-            </button>
+            <div className="newCollectionBarContainer">
+              <button
+                type="button"
+                className="newCollectionBar"
+                onClick={openCreateForm}
+                aria-label="Create new collection"
+              >
+                <div className="newCollectionBarLeft">
+                  <span className="newCollectionBarIcon">
+                    <UiIcon name="folder" size={20} />
+                    <span className="newCollectionBarBadge"><UiIcon name="plus" size={10} /></span>
+                  </span>
+                  <div className="newCollectionBarInfo">
+                    <strong className="newCollectionBarTitle">New collection</strong>
+                    <span className="newCollectionBarSubtitle">Organize your uploaded Skillshots into curated folders</span>
+                  </div>
+                </div>
+                <span className="newCollectionBarCta">
+                  <UiIcon name="plus" size={14} /> Create folder
+                </span>
+              </button>
+            </div>
           )}
+
           {loading ? (
             <div className="folderGrid">
               {[0, 1, 2].map(n => <div key={n} className="folderBox folderSkeleton" />)}
             </div>
           ) : collections.length === 0 ? (
             <div className="portfolioEmptyState">
-              <span><UiIcon name="bookmark" size={24}/></span>
+              <span><UiIcon name="folder" size={28}/></span>
               <h3>No collections yet.</h3>
               <p>{isSelf ? 'Create a folder and pick Skillshots you have uploaded.' : 'This creator has not curated any folders yet.'}</p>
               {isSelf && <button type="button" className="primary" onClick={openCreateForm}><UiIcon name="plus"/> Create collection</button>}
@@ -356,26 +474,68 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
             <div className="folderGrid">
               {collections.map(collection => (
                 <article key={collection.id} className="folderBox">
-                  <button type="button" className="folderBoxHit" onClick={() => setActiveCollectionId(collection.id)} aria-label={`Open ${collection.name}`}>
+                  <div className="folderBoxTabRow">
                     <span className="folderTab" title={collection.name}>
-                      <b>{collection.name}</b>
-                      {collection.isPrivate && <UiIcon name="lock" size={12}/>}
+                      <UiIcon name="folder" size={13} className="folderTabIcon" />
+                      <b className="folderTabTitle">{collection.name}</b>
+                      {collection.isPrivate && <UiIcon name="lock" size={11} className="folderTabLock" />}
                     </span>
-                    <span className="folderBody">
-                      {collection.coverUrl ? <img src={collection.coverUrl} alt="" /> : <span className="folderPlaceholder"><UiIcon name="bookmark" size={28}/></span>}
-                      <small>{collection.postCount} {collection.postCount === 1 ? 'Skillshot' : 'Skillshots'}</small>
-                    </span>
-                  </button>
-                  {isSelf && (
-                    <div className="folderActions">
-                      <button type="button" title="Edit collection name" onClick={event => openEditForm(collection, event)}>
-                        <UiIcon name="edit" size={14}/>
-                      </button>
-                      <button type="button" title="Delete collection" onClick={event => handleDeleteCollection(collection.id, event)}>
-                        <UiIcon name="trash" size={14}/>
-                      </button>
+                    {isSelf && (
+                      <div className="folderActions">
+                        <button
+                          type="button"
+                          className="folderActionEdit"
+                          title="Edit collection name"
+                          aria-label={`Edit ${collection.name}`}
+                          onClick={event => openEditForm(collection, event)}
+                        >
+                          <UiIcon name="edit" size={13} />
+                          <span className="folderActionText">Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="folderActionDelete"
+                          title="Delete collection"
+                          aria-label={`Delete ${collection.name}`}
+                          onClick={event => handleDeleteCollection(collection.id, event)}
+                        >
+                          <UiIcon name="trash" size={13} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="folderBoxHit"
+                    onClick={() => setActiveCollectionId(collection.id)}
+                    aria-label={`Open folder ${collection.name}`}
+                  >
+                    <div className="folderBody">
+                      {collection.coverUrl ? (
+                        <div className="folderCoverWrapper">
+                          <img src={collection.coverUrl} alt="" loading="lazy" />
+                          <div className="folderCoverGradient" />
+                        </div>
+                      ) : (
+                        <div className="folderPlaceholder">
+                          <UiIcon name="folder" size={32} />
+                          <span>Empty folder</span>
+                        </div>
+                      )}
+                      <div className="folderMetaBottom">
+                        <span className="folderCountPill">
+                          <UiIcon name="bookmark" size={10} />
+                          {collection.postCount} {collection.postCount === 1 ? 'Skillshot' : 'Skillshots'}
+                        </span>
+                        {collection.description && (
+                          <span className="folderDescTruncate" title={collection.description}>
+                            {collection.description}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </button>
                 </article>
               ))}
             </div>
@@ -386,15 +546,34 @@ export default function CollectionsManager({ username, isSelf, mode = 'gallery' 
       {mode === 'folders' && activeCollectionId && (
         <>
           <div className="collectionOpenBar">
-            <button type="button" className="quietButton" onClick={() => setActiveCollectionId(null)}>← Folders</button>
+            <button type="button" className="quietButton backFoldersBtn" onClick={() => setActiveCollectionId(null)}>
+              ← All Folders
+            </button>
             <div className="collectionOpenTitle">
-              <span className="folderTab mini"><b>{activeCollection?.name || 'Collection'}</b></span>
-              {activeCollection?.isPrivate && <UiIcon name="lock" size={14}/>}
+              <span className="folderTab mini">
+                <UiIcon name="folder" size={13} />
+                <b>{activeCollection?.name || 'Collection'}</b>
+                {activeCollection?.isPrivate && <UiIcon name="lock" size={12} />}
+              </span>
+              <span className="collectionOpenCount">
+                {collectionPosts.length} {collectionPosts.length === 1 ? 'Skillshot' : 'Skillshots'}
+              </span>
             </div>
             {isSelf && activeCollection && (
-              <button type="button" className="createCollectionBtn" onClick={() => openEditForm(activeCollection)}>
-                <UiIcon name="edit"/> Edit name
-              </button>
+              <div className="collectionOpenActions">
+                <button type="button" className="createCollectionBtn editCollectionBtn" onClick={() => openEditForm(activeCollection)}>
+                  <UiIcon name="edit" size={14} /> Edit name & posts
+                </button>
+                <button
+                  type="button"
+                  className="deleteCollectionBtn"
+                  title="Delete collection"
+                  aria-label="Delete collection"
+                  onClick={event => handleDeleteCollection(activeCollection.id, event)}
+                >
+                  <UiIcon name="trash" size={14} />
+                </button>
+              </div>
             )}
           </div>
           {gallery}
