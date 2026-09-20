@@ -41,7 +41,10 @@
 
 .conversation .conversationActions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .commentLikeBtn,.commentReplyBtn{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:6px 12px;border:1px solid transparent;border-radius:8px;background:transparent;color:#5c5850;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s ease;user-select:none}
-.commentLikeBtn:hover,.commentReplyBtn:hover{background:var(--surface-soft);color:var(--ink);border-color:var(--line)}
+.commentLikeBtn:hover{background:var(--surface-soft);color:var(--ink);border-color:var(--line)}
+.commentReplyBtn .actionIcon{transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.commentReplyBtn:hover{background:color-mix(in srgb,var(--accent,#ff5039) 9%,var(--surface-soft));color:var(--accent,#ff5039);border-color:color-mix(in srgb,var(--accent,#ff5039) 25%,var(--line))}
+.commentReplyBtn:hover .actionIcon{transform:scale(1.2)}
 .commentLikeBtn.liked,.commentLikeBtn[aria-pressed="true"]{color:#e53935;background:#fff0ed;border-color:#ffd8d3}
 .commentLikeBtn.liked .actionIcon,.commentLikeBtn[aria-pressed="true"] .actionIcon{fill:#e53935;stroke:#e53935;animation:heartPulse .24s ease-out}
 @keyframes heartPulse{0%{transform:scale(1)}50%{transform:scale(1.24)}100%{transform:scale(1)}}
@@ -148,6 +151,7 @@
 .cardFooterActions{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 .cardActionBtn{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;padding:4px 6px;border-radius:6px;transition:all .15s ease}
 .cardActionBtn:hover{color:var(--ink);background:var(--surface-soft)}
+a.cardActionBtn[href*="#comments"]:hover{color:var(--accent,#ff5039);background:color-mix(in srgb,var(--accent,#ff5039) 10%,transparent);transform:scale(1.05)}
 .cardActionBtn.liked{color:var(--red)}
 .cardActionBtn.saved{color:var(--accent);font-weight:700}
 .shotHoverActions button.saved{background:var(--accent);color:#fff}
@@ -3892,10 +3896,25 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   transition: all 0.15s ease;
 }
 
-.reactionBtn:hover,
-.replyCountBtn:hover {
+.reactionBtn:hover {
   border-color: var(--ink);
   color: var(--ink);
+}
+
+.replyCountBtn .uiIcon,
+.replyCountBtn svg {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.replyCountBtn:hover {
+  border-color: color-mix(in srgb, var(--accent, #ff5039) 45%, var(--line));
+  color: var(--accent, #ff5039);
+  background: color-mix(in srgb, var(--accent, #ff5039) 8%, transparent);
+}
+
+.replyCountBtn:hover .uiIcon,
+.replyCountBtn:hover svg {
+  transform: scale(1.18);
 }
 
 .reactionBtn.reacted {
@@ -5606,7 +5625,10 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .portfolioCardActions{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding-top:2px;color:#aab5c4}
 .portfolioCounters,.portfolioUtilityActions{display:flex;align-items:center;gap:10px;min-width:0}
 .portfolioCounters :is(span,a){display:inline-flex;align-items:center;gap:4px;color:inherit;font-size:12px;line-height:1;text-decoration:none;white-space:nowrap}
-.portfolioCounters svg{width:14px;height:14px}
+.portfolioCounters a{padding:3px 7px;margin:-3px -7px;border-radius:6px;transition:color .18s ease,background .18s ease}
+.portfolioCounters a:hover{color:var(--accent,#ff5039);background:color-mix(in srgb,var(--accent,#ff5039) 10%,transparent)}
+.portfolioCounters svg{width:14px;height:14px;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.portfolioCounters a:hover svg{transform:scale(1.22)}
 .portfolioUtilityActions{gap:3px;margin-left:auto}
 .portfolioUtilityActions :is(button,a){display:grid;width:28px;height:28px;place-items:center;padding:0;border:0;border-radius:8px;background:transparent;color:#aab5c4;cursor:pointer}
 .portfolioUtilityActions :is(button,a):hover{background:#ffffff0d;color:#fff}
@@ -5925,8 +5947,11 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 .discussionImagePreview img{display:block;width:100%;height:auto;max-height:280px;object-fit:contain}
 .discussionCardBottom{margin-top:auto;padding-top:13px}
 .discussionInteractions{min-width:0;gap:6px}
-.discussionCard .reactionBtn,.discussionCard .replyCountBtn{min-height:30px;padding:5px 8px;border:0;background:transparent;color:var(--secondary-text);display:inline-flex;align-items:center;gap:6px;line-height:1}
-.discussionCard .reactionBtn:hover,.discussionCard .replyCountBtn:hover{background:color-mix(in srgb,var(--ink) 5%,transparent);border-color:transparent}
+.discussionCard .reactionBtn,.discussionCard .replyCountBtn{min-height:30px;padding:5px 8px;border:0;border-radius:8px;background:transparent;color:var(--secondary-text);display:inline-flex;align-items:center;gap:6px;line-height:1;transition:color .18s ease,background .18s ease,transform .18s ease}
+.discussionCard .replyCountBtn .uiIcon{transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.discussionCard .reactionBtn:hover{background:color-mix(in srgb,var(--ink) 5%,transparent);border-color:transparent}
+.discussionCard .replyCountBtn:hover{background:color-mix(in srgb,var(--accent,#ff5039) 10%,transparent);color:var(--accent,#ff5039);border-color:transparent}
+.discussionCard .replyCountBtn:hover .uiIcon{transform:scale(1.2)}
 .discussionCard .reactionBtn.reacted{border:0;background:color-mix(in srgb,var(--red) 9%,transparent);color:var(--red)}
 .discussionSaveState{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;color:var(--secondary-text)}
 .discussionSaveState.saved{background:color-mix(in srgb,var(--red) 9%,transparent);color:var(--red)}
