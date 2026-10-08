@@ -35,5 +35,11 @@ next-env.d.ts
 /dist/
 /.wrangler/
 /outputs/
-/work/
 *.tsbuildinfo
+
+# python
+.venv
+__pycache__/
+*.py[cod]
+services/cyberbully/.venv/
+

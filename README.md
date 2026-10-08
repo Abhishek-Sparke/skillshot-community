@@ -41,6 +41,10 @@ Copy `.env.example` to `.env.local` and configure:
 - `MODERATION_PROVIDER` — `openai` for the built-in OpenAI adapter, or `custom` (the legacy default) for a compatible service
 - `OPENAI_API_KEY` — server-only key when using `openai`; see [moderation setup](MODERATION_SETUP.md). Never use a `NEXT_PUBLIC_` key.
 - `MODERATION_STRICT` — keep `true` in production (the default when unset). Unscanned Skillshots wait for staff review; unapproved avatar changes leave the existing avatar intact. Explicit `false` permits unscanned images only when no provider is configured; a configured provider failure always holds content.
+- `CYBERBULLY_SERVICE_URL` — optional Python AI text moderation microservice URL (default: `http://localhost:8001`). See [MODERATION_SETUP.md](MODERATION_SETUP.md).
+- `CYBERBULLY_SERVICE_TOKEN` — optional shared server secret for authenticating requests to the Cyberbully microservice.
+- `CYBERBULLY_REVIEW_THRESHOLD` — review threshold for AI flags (default: `0.50`).
+- `CYBERBULLY_HIGH_CONFIDENCE_THRESHOLD` — high confidence threshold for elevated severity AI flags (default: `0.90`).
 
 Use these Google OAuth callback URLs:
 
@@ -49,6 +53,16 @@ Use these Google OAuth callback URLs:
 
 ## Run locally
 
+### Terminal 1: Cyberbully AI Moderation Service (Optional / Recommended)
+```bash
+cd services/cyberbully
+python -m venv .venv
+.\.venv\Scripts\activate       # On Windows (or source .venv/bin/activate on Linux/macOS)
+pip install -r requirements.txt
+uvicorn app:app --host 127.0.0.1 --port 8001
+```
+
+### Terminal 2: Skillshot Next.js App
 1. Install Node.js 22.13 or newer.
 2. Run `pnpm install` (recommended) or `npm install`.
 3. Create `.env.local` from `.env.example`.

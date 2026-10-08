@@ -67,6 +67,7 @@ async function routeHarness({kind='posts',decision=safe,authenticated=true,stora
     if(id.endsWith('/moderation'))return {moderateText:async()=>kind==='posts'?safe:decision,moderateImage:async()=>decision,scanUnavailable,commentModerationError};
     if(id.endsWith('/image-processing'))return processing;
     if(id.endsWith('/upload-policy'))return policy;
+    if(id.endsWith('/cyberbully-moderation'))return {moderateWithCyberbully:async()=>null,evaluateCyberbullyScore:()=>({action:'ALLOW',severity:'BORDERLINE'})};
     if(id.endsWith('/pagination'))return {};
     if(id.endsWith('/xp'))return {XP_REWARDS:{SKILLSHOT_PUBLISHED:100},awardXp:async()=>({awarded:true}),awardCommentXp:async()=>({eligible:true}),reverseCommentXp:async()=>undefined};
     throw Error('Unexpected dependency '+id);

@@ -3,6 +3,7 @@ import { ensureUser, getReadyDb } from '../../../../../lib/db';
 import { normalizeRole } from '../../../../../lib/roles';
 import { rateLimit } from '../../../../../lib/rate-limit';
 import { moderateText, commentModerationError } from '../../../../../lib/moderation';
+import { moderateWithCyberbully, evaluateCyberbullyScore } from '../../../../../lib/cyberbully-moderation';
 import { requirePrincipal } from '../../../../../lib/authz';
 import { notifyComment } from '../../../../../lib/comment-notifications';
 import { awardCommentXp, isMeaningfulComment, reverseCommentXp } from '../../../../../lib/xp';
@@ -39,6 +40,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const body = String(payload.body || '').trim().slice(0, 1000);
   let parentId=typeof payload.parentId==='string'&&payload.parentId?payload.parentId:null;
   if (!body) return Response.json({ error: 'Comment required' }, { status: 400 });
+  const cyberbullyResult = await moderateWithCyberbully(body);
   const decision = await moderateText(body);
   const moderationError = commentModerationError(decision);
   if (moderationError) return Response.json({ error: moderationError.error }, { status: moderationError.status });
@@ -52,6 +54,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if(parentId){const roots=await sql.query(`WITH RECURSIVE thread AS(SELECT id,parent_id,0 depth FROM comments WHERE id=$1 AND post_id=$2 UNION ALL SELECT c.id,c.parent_id,t.depth+1 FROM comments c JOIN thread t ON c.id=t.parent_id WHERE c.post_id=$2 AND t.depth<20)SELECT id FROM thread WHERE parent_id IS NULL LIMIT 1`,[parentId,postId]);if(!roots.length)return Response.json({error:'This reply thread is unavailable.'},{status:409});parentId=String(roots[0].id);}
   const commentStatus = 'VISIBLE';
   await sql.query(`INSERT INTO comments (id,post_id,user_id,parent_id,body,status) VALUES ($1,$2,$3,$4,$5,$6)`, [id, postId, user.userId, parentId, body, commentStatus]);
+  if (cyberbullyResult) {
+    const evaluation = evaluateCyberbullyScore(cyberbullyResult);
+    if (evaluation.action !== 'ALLOW') {
+      const queueId = crypto.randomUUID();
+      const providerRef = JSON.stringify({
+        provider: 'Cyberbully',
+        category: evaluation.category,
+        score: cyberbullyResult.score,
+      });
+      await sql.query(
+        `INSERT INTO moderation_queue (id,source,target_type,target_id,creator_id,category,severity,status,provider_ref) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [queueId, 'AI', 'COMMENT', id, user.userId, evaluation.category, evaluation.severity, 'PENDING', providerRef]
+      );
+    }
+  }
   await awardCommentXp(id);
   await notifyComment(postId,id,user.userId,String(profile.display_name??user.displayName),body,parent[0]?.user_id).catch(()=>undefined);
   const username=String(profile.username??user.email.split('@')[0]);
@@ -65,14 +82,32 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const commentId = new URL(request.url).searchParams.get('commentId');
   const body = String((await request.json()).body || '').trim().slice(0, 1000);
   if (!commentId || !body) return Response.json({ error: 'Comment required' }, { status: 400 });
+  const cyberbullyResult = await moderateWithCyberbully(body);
   const decision=await moderateText(body);
   const moderationError = commentModerationError(decision);
   if (moderationError) return Response.json({ error: moderationError.error }, { status: moderationError.status });
   const status='VISIBLE';
-  const updated = await (await getReadyDb()).query(
+  const sql = await getReadyDb();
+  const updated = await sql.query(
     `UPDATE comments SET body=$1,status=$2,edited_at=now() WHERE id=$3 AND post_id=$4 AND user_id=$5 AND status='VISIBLE' RETURNING id,body`,
     [body,status,commentId,postId,userId],
   );
+  if (!updated.length) return Response.json({ error: 'Comment not found' }, { status: 404 });
+  if (cyberbullyResult) {
+    const evaluation = evaluateCyberbullyScore(cyberbullyResult);
+    if (evaluation.action !== 'ALLOW') {
+      const queueId = crypto.randomUUID();
+      const providerRef = JSON.stringify({
+        provider: 'Cyberbully',
+        category: evaluation.category,
+        score: cyberbullyResult.score,
+      });
+      await sql.query(
+        `INSERT INTO moderation_queue (id,source,target_type,target_id,creator_id,category,severity,status,provider_ref) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [queueId, 'AI', 'COMMENT', commentId, userId, evaluation.category, evaluation.severity, 'PENDING', providerRef]
+      );
+    }
+  }
   if (!updated.length) return Response.json({ error: 'Comment not found' }, { status: 404 });
   if(isMeaningfulComment(body))await awardCommentXp(commentId);else await reverseCommentXp(commentId,'Comment edited and no longer eligible');
   return Response.json({ id: updated[0].id, body: updated[0].body });

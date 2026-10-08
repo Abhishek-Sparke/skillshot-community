@@ -16,12 +16,22 @@ export async function GET(request:Request,{params}:{params:Promise<{id:string}>}
     const reports=await sql.query(`SELECT r.id,r.category,r.details,r.created_at,r.status,u.username reporter FROM reports r LEFT JOIN users u ON u.id=r.reporter_id WHERE r.case_id=$1 ORDER BY r.created_at,r.id LIMIT 21 OFFSET $2`,[item.id,(page('reportsPage')-1)*20]);
     const summary=await sql.query(`SELECT category,count(*)::int count FROM reports WHERE case_id=$1 GROUP BY category`,[item.id]);
     const events=await sql.query(`SELECT e.id,e.action,e.reason,e.metadata,e.created_at,u.username actor FROM report_case_events e LEFT JOIN users u ON u.id=e.actor_id WHERE case_id=$1 ORDER BY e.created_at DESC,e.id DESC LIMIT 31 OFFSET $2`,[item.id,(page('historyPage')-1)*30]);
-    const flags=await sql.query(`SELECT category,severity,status,created_at FROM moderation_queue WHERE case_id=$1 AND source<>'REPORT' ORDER BY created_at DESC LIMIT 20`,[item.id]);
+    const flags=await sql.query(`SELECT category,severity,status,created_at,provider_ref FROM moderation_queue WHERE case_id=$1 AND source<>'REPORT' ORDER BY created_at DESC LIMIT 20`,[item.id]);
+    const parsedFlags=flags.map((flag: Record<string, unknown>)=>{
+      let ai: { provider?: string; category?: string; score?: number } | null = null;
+      if (typeof flag.provider_ref === 'string') {
+        try {
+          const parsed = JSON.parse(flag.provider_ref);
+          if (parsed && typeof parsed === 'object') ai = parsed;
+        } catch { /* non-JSON provider_ref */ }
+      }
+      return { ...flag, ai };
+    });
     const content=await caseContent(item.target_type,item.target_id);
     const actions=caseActions(auth.principal,item.target_type,content?.profile?.role,String(content?.profile?.id||''));
     const staff=actions.some(action=>['ASSIGN','ESCALATE'].includes(action))?await sql.query(`SELECT id,username,display_name,role,status,custom_permissions FROM users WHERE status='ACTIVE' AND role IN ('OWNER','ADMIN','HEAD_MODERATOR','MODERATOR') ORDER BY username LIMIT 500`):[];
     const reviewers=staff.filter(user=>eligibleReviewer(user as {id:string;role:unknown;status:unknown},item.target_type)).map(user=>({id:user.id,username:user.username,role:user.role,canEscalate:eligibleReviewer(user as {id:string;role:unknown;status:unknown},item.target_type,auth.principal)}));
-    return Response.json({case:item,content,actions,reports:reports.slice(0,20),reportsMore:reports.length>20,summary,events:events.slice(0,30),historyMore:events.length>30,flags,reviewers},{headers:{'Cache-Control':'private, no-store'}});
+    return Response.json({case:item,content,actions,reports:reports.slice(0,20),reportsMore:reports.length>20,summary,events:events.slice(0,30),historyMore:events.length>30,flags:parsedFlags,reviewers},{headers:{'Cache-Control':'private, no-store'}});
   }catch{return Response.json({error:'Case details could not be loaded. Please try again.'},{status:503});}
 }
 export async function POST(request:Request,{params}:{params:Promise<{id:string}>}) {
