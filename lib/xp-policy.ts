@@ -5,6 +5,7 @@ export const XP_REWARDS = Object.freeze({
   DISCUSSION_CREATED: configured('XP_DISCUSSION_CREATED', 15), DISCUSSION_REPLY: configured('XP_DISCUSSION_REPLY', 5),
   HELPFUL_CONTRIBUTION: configured('XP_HELPFUL_CONTRIBUTION', 25), FEATURED_SKILLSHOT: configured('XP_FEATURED_SKILLSHOT', 250),
   SKILLSHOT_OF_WEEK: configured('XP_SKILLSHOT_OF_WEEK', 500),
+  CHALLENGE_SUBMISSION: configured('XP_CHALLENGE_SUBMISSION', 50),
 });
 function configured(name:string,fallback:number){const value=Number(process.env[name]);return Number.isFinite(value)&&value>=0?Math.floor(value):fallback;}
 export function normalizeCommentForXp(value:string){return value.normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim();}

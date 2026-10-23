@@ -21,6 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       AND (c.status='VISIBLE' OR (c.status='DELETED' AND c.parent_id IS NULL AND EXISTS(SELECT 1 FROM comments reply WHERE reply.parent_id=c.id AND reply.status='VISIBLE')))
       AND (($3::text IS NULL AND c.parent_id IS NULL) OR c.parent_id=$3)
       AND ($3::text IS NULL OR EXISTS(SELECT 1 FROM comments root WHERE root.id=$3 AND root.post_id=$1 AND root.status IN ('VISIBLE','DELETED')))
+      AND ($2 = '' OR NOT EXISTS(SELECT 1 FROM user_blocks ub WHERE (ub.blocker_id = $2 AND ub.blocked_id = c.user_id) OR (ub.blocker_id = c.user_id AND ub.blocked_id = $2)))
     ORDER BY (c.id=p.pinned_comment_id) DESC NULLS LAST,
       CASE WHEN $4='relevant' THEN (SELECT count(*) FROM comment_reactions cr WHERE cr.comment_id=c.id)+(SELECT count(*) FROM comments r WHERE r.parent_id=c.id AND r.status='VISIBLE') END DESC,
       CASE WHEN $4='oldest' OR $3::text IS NOT NULL THEN c.created_at END ASC,c.created_at DESC,c.id DESC LIMIT 21 OFFSET $5`,[id,user?.userId||'',parent,sort,(page-1)*20]);
@@ -49,8 +50,25 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const sql = await getReadyDb();
   const post = await sql.query(`SELECT id FROM posts WHERE id=$1 AND status='VISIBLE' LIMIT 1`,[postId]);
   if(!post.length)return Response.json({error:'Post not found'},{status:404});
+  const postOwner = await sql.query(`SELECT user_id FROM posts WHERE id=$1 LIMIT 1`, [postId]);
+  const postCreatorId = postOwner[0]?.user_id ? String(postOwner[0].user_id) : '';
+  if (postCreatorId && postCreatorId !== user.userId) {
+    const blockCheck = await sql.query(
+      `SELECT 1 FROM user_blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1) LIMIT 1`,
+      [user.userId, postCreatorId]
+    );
+    if (blockCheck.length > 0) return Response.json({ error: 'You cannot comment on this post.' }, { status: 403 });
+  }
   const parent=parentId?await sql.query(`SELECT c.id,c.user_id,u.username FROM comments c JOIN users u ON u.id=c.user_id WHERE c.id=$1 AND c.post_id=$2 AND c.status='VISIBLE' LIMIT 1`,[parentId,postId]):[];
   if(parentId&&!parent.length)return Response.json({error:'The comment you are replying to is unavailable.'},{status:404});
+  if(parentId && parent.length && parent[0].user_id !== user.userId) {
+    const parentAuthorId = String(parent[0].user_id);
+    const parentBlockCheck = await sql.query(
+      `SELECT 1 FROM user_blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1) LIMIT 1`,
+      [user.userId, parentAuthorId]
+    );
+    if (parentBlockCheck.length > 0) return Response.json({ error: 'You cannot reply to this comment.' }, { status: 403 });
+  }
   if(parentId){const roots=await sql.query(`WITH RECURSIVE thread AS(SELECT id,parent_id,0 depth FROM comments WHERE id=$1 AND post_id=$2 UNION ALL SELECT c.id,c.parent_id,t.depth+1 FROM comments c JOIN thread t ON c.id=t.parent_id WHERE c.post_id=$2 AND t.depth<20)SELECT id FROM thread WHERE parent_id IS NULL LIMIT 1`,[parentId,postId]);if(!roots.length)return Response.json({error:'This reply thread is unavailable.'},{status:409});parentId=String(roots[0].id);}
   const commentStatus = 'VISIBLE';
   await sql.query(`INSERT INTO comments (id,post_id,user_id,parent_id,body,status) VALUES ($1,$2,$3,$4,$5,$6)`, [id, postId, user.userId, parentId, body, commentStatus]);

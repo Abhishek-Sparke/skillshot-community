@@ -99,6 +99,7 @@ export async function GET(request: Request) {
  * Handles Discord member join webhook events (GUILD_MEMBER_ADD) or direct member welcome dispatch.
  */
 export async function POST(request: Request) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let body: any = {};
   try {
     body = await request.json();

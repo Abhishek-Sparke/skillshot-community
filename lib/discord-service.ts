@@ -5,10 +5,8 @@ import {
   DISCORD_RANK_CHANNEL_ID,
   DISCORD_WELCOME_CHANNEL_ID,
   DISCORD_EMBED_COLOR,
-  VERIFY_BUTTON_CUSTOM_ID,
   DISCORD_CREATOR_RANK_ROLES,
   MANAGED_DISCORD_ROLE_IDS,
-  type isManagedCreatorRankRole,
 } from './discord-config';
 import { rankFromXp, type CreatorRankId, CREATOR_RANKS } from './creator-rank';
 
@@ -46,6 +44,7 @@ function getBotToken(): string | null {
 export async function callDiscordApi(
   endpoint: string,
   options: RequestInit = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ status: number; ok: boolean; data?: any; headers: Headers }> {
   const token = getBotToken();
   if (!token) {
@@ -73,7 +72,7 @@ export async function callDiscordApi(
     // Handle Discord Rate Limits (429)
     if (res.status === 429) {
       const retryAfter = res.headers.get('Retry-After');
-      const errData = await res.json().catch(() => ({}));
+      const errData = (await res.json().catch(() => ({}))) as Record<string, unknown>;
       return {
         status: 429,
         ok: false,
@@ -86,13 +85,14 @@ export async function callDiscordApi(
       return { status: 204, ok: true, headers: res.headers };
     }
 
-    const data = await res.json().catch(() => null);
+    const data = (await res.json().catch(() => null)) as Record<string, unknown> | unknown[] | null;
     return { status: res.status, ok: res.ok, data, headers: res.headers };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Network error communicating with Discord API';
     return {
       status: 500,
       ok: false,
-      data: { message: err?.message || 'Network error communicating with Discord API' },
+      data: { message: errorMessage },
       headers: new Headers(),
     };
   }
@@ -485,9 +485,9 @@ export async function reconcileAllDiscordRoles(limit = 100): Promise<{
 export async function getGuildChannels(): Promise<Array<{ id: string; name: string; type: number }>> {
   const res = await callDiscordApi(`/guilds/${DISCORD_GUILD_ID}/channels`);
   if (!res.ok || !Array.isArray(res.data)) return [];
-  return res.data
-    .filter((c: any) => c.type === 0 || c.type === 5)
-    .map((c: any) => ({ id: String(c.id), name: String(c.name), type: Number(c.type) }));
+  return (res.data as Array<{ id: unknown; name: unknown; type: unknown }>)
+    .filter((c) => c.type === 0 || c.type === 5)
+    .map((c) => ({ id: String(c.id), name: String(c.name), type: Number(c.type) }));
 }
 
 /**
@@ -662,37 +662,41 @@ export async function postOrUpdateRankVerificationMessage(channelIdInput?: strin
   });
 
   if (!postRes.ok) {
-    const errMsg = postRes.data?.message || `Failed to post message (Discord HTTP ${postRes.status})`;
-      await sql.query(
-        `INSERT INTO discord_verification_messages (id, channel_id, message_id, last_posted_at, status, last_error)
-         VALUES ($1, $2, null, now(), 'FAILED', $3)
-         ON CONFLICT (channel_id) DO UPDATE
-         SET status = 'FAILED', last_error = $3, last_posted_at = now()`,
-        [crypto.randomUUID(), channelId, errMsg]
-      );
-      return {
-        success: false,
-        message: `Failed to post verification message to Discord channel ${channelId}: ${errMsg}`,
-        channelId,
-      };
-    }
-
-    messageId = String(postRes.data?.id);
-
+    const errObj = postRes.data as Record<string, unknown> | null;
+    const errMsg = (errObj?.message as string) || `Failed to post message (Discord HTTP ${postRes.status})`;
     await sql.query(
       `INSERT INTO discord_verification_messages (id, channel_id, message_id, last_posted_at, status, last_error)
-       VALUES ($1, $2, $3, now(), 'ACTIVE', null)
+       VALUES ($1, $2, null, now(), 'FAILED', $3)
        ON CONFLICT (channel_id) DO UPDATE
-       SET message_id = $3, last_posted_at = now(), status = 'ACTIVE', last_error = null`,
-      [crypto.randomUUID(), channelId, messageId]
+       SET status = 'FAILED', last_error = $3, last_posted_at = now()`,
+      [crypto.randomUUID(), channelId, errMsg]
     );
-
     return {
-      success: true,
-      message: `Posted fresh rank verification message to #${channelId}!`,
-      messageId,
+      success: false,
+      message: `Failed to post verification message to Discord channel ${channelId}: ${errMsg}`,
       channelId,
+      channelName: channelName || undefined,
     };
+  }
+
+  const postData = postRes.data as Record<string, unknown> | null;
+  messageId = String(postData?.id);
+
+  await sql.query(
+    `INSERT INTO discord_verification_messages (id, channel_id, message_id, last_posted_at, status, last_error)
+     VALUES ($1, $2, $3, now(), 'ACTIVE', null)
+     ON CONFLICT (channel_id) DO UPDATE
+     SET message_id = $3, last_posted_at = now(), status = 'ACTIVE', last_error = null`,
+    [crypto.randomUUID(), channelId, messageId]
+  );
+
+  return {
+    success: true,
+    message: `Posted fresh rank verification message to #${channelName || channelId}!`,
+    messageId,
+    channelId,
+    channelName: channelName || undefined,
+  };
   }
 
 export type BotPermissionCheck = {
@@ -1111,18 +1115,23 @@ export async function getGuildMembersStatus(): Promise<Array<{
 
   const sql = await getReadyDb();
   const welcomedRows = await sql.query(`SELECT discord_user_id FROM discord_welcomed_members`);
-  const welcomedSet = new Set<string>(welcomedRows.map((r: any) => String(r.discord_user_id)));
+  const welcomedSet = new Set<string>(welcomedRows.map((r: Record<string, unknown>) => String(r.discord_user_id)));
 
-  return res.data
-    .filter((m: any) => m?.user?.id)
-    .map((m: any) => ({
-      id: String(m.user.id),
-      username: String(m.user.username),
-      isBot: Boolean(m.user.bot),
+  type RawMemberItem = {
+    user?: { id?: string; username?: string; bot?: boolean };
+    joined_at?: string | null;
+  };
+
+  return (res.data as RawMemberItem[])
+    .filter((m) => m?.user?.id)
+    .map((m) => ({
+      id: String(m.user!.id),
+      username: String(m.user!.username || 'Unknown'),
+      isBot: Boolean(m.user!.bot),
       joinedAt: m.joined_at || null,
-      welcomed: welcomedSet.has(String(m.user.id)),
+      welcomed: welcomedSet.has(String(m.user!.id)),
     }))
-    .sort((a: any, b: any) => {
+    .sort((a, b) => {
       if (!a.joinedAt) return 1;
       if (!b.joinedAt) return -1;
       return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
@@ -1200,12 +1209,16 @@ export async function syncNewMemberWelcomes(options?: {
       welcomed: 0,
       skipped: 0,
       total: 0,
-      message: res.data?.message || 'Failed to fetch guild members from Discord API',
+      message: ((res.data as Record<string, unknown>)?.message as string) || 'Failed to fetch guild members from Discord API',
     };
   }
 
   // Sort members by joined_at descending (most recent first)
-  const sortedMembers = [...res.data].sort((a: any, b: any) => {
+  type GuildMemberItem = {
+    user?: { id: string; username: string; bot?: boolean };
+    joined_at?: string | null;
+  };
+  const sortedMembers = [...(res.data as GuildMemberItem[])].sort((a, b) => {
     if (!a.joined_at) return 1;
     if (!b.joined_at) return -1;
     return new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime();
@@ -1249,6 +1262,71 @@ export async function syncNewMemberWelcomes(options?: {
     total: res.data.length,
     welcomedUsers,
     message: `Scanned ${res.data.length} server member(s): ${welcomed} welcomed, ${skipped} skipped.`,
+  };
+}
+
+/**
+ * Post a standout Skillshot embed to a Discord channel (e.g. #showcase or rank channel).
+ */
+export async function broadcastTopSkillshotToDiscord(channelId?: string): Promise<{ success: boolean; message: string }> {
+  const targetChannel = channelId || DISCORD_RANK_CHANNEL_ID;
+  if (!targetChannel) return { success: false, message: 'No target Discord channel configured' };
+
+  const sql = await getReadyDb();
+  const rows = await sql.query(`
+    SELECT p.id, p.title, p.description, p.category, p.image_url, u.display_name, u.username, u.creator_rank,
+      (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS reaction_count
+    FROM posts p
+    JOIN users u ON u.id = p.user_id
+    WHERE p.status = 'VISIBLE' AND u.status = 'ACTIVE'
+    ORDER BY reaction_count DESC, p.created_at DESC
+    LIMIT 1
+  `);
+  if (!rows.length) return { success: false, message: 'No visible Skillshots to broadcast' };
+  const shot = rows[0];
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://skillshot-community.vercel.app';
+  const shotUrl = `${appUrl}/shots/${shot.id}`;
+  const payload = {
+    embeds: [
+      {
+        author: {
+          name: `🏆 Skillshot Spotlight by @${shot.username}`,
+          url: `${appUrl}/users/${encodeURIComponent(String(shot.username))}`,
+        },
+        title: String(shot.title),
+        url: shotUrl,
+        description: String(shot.description || 'Check out this awesome Skillshot on the community!'),
+        color: DISCORD_EMBED_COLOR,
+        image: {
+          url: `${appUrl}/api/images/${shot.id}`,
+        },
+        footer: {
+          text: `Category: ${shot.category} • ${shot.reaction_count} Likes • Skillshot Community`,
+        },
+      },
+    ],
+    components: [
+      {
+        type: 1,
+        components: [
+          {
+            type: 2,
+            style: 5,
+            label: '👀 View on Skillshot',
+            url: shotUrl,
+          },
+        ],
+      },
+    ],
+  };
+
+  const res = await callDiscordApi(`/channels/${targetChannel}/messages`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return {
+    success: res.ok,
+    message: res.ok ? `Broadcasted "${shot.title}" to Discord channel!` : 'Failed to post message to Discord channel',
   };
 }
 

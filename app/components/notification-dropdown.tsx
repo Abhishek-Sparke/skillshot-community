@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import Link from 'next/link';
@@ -148,7 +149,7 @@ export default function NotificationDropdown({ isOpen, onClose, onUnreadChange }
     }
   };
 
-  const handleItemClick = async (item: NotificationItem, e: React.MouseEvent) => {
+  const handleItemClick = async (item: NotificationItem, e: React.MouseEvent | React.KeyboardEvent) => {
     // If tooltip button or inside popover was clicked, don't navigate
     if ((e.target as HTMLElement).closest('.notifTooltipTrigger') || (e.target as HTMLElement).closest('.notifCommentPopover')) {
       return;
@@ -304,7 +305,7 @@ export default function NotificationDropdown({ isOpen, onClose, onUnreadChange }
                   tabIndex={0}
                   onKeyDown={e => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                      handleItemClick(item, e as any);
+                      handleItemClick(item, e);
                     }
                   }}
                 >

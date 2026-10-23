@@ -27,6 +27,7 @@ export async function GET(request: Request) {
     : await findRankChannel();
 
   // 4. Post or Update Verification Message
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let postResult: any = null;
   if (rankChannel?.id) {
     postResult = await postOrUpdateRankVerificationMessage(rankChannel.id);
@@ -44,7 +45,7 @@ export async function GET(request: Request) {
     { name: 'link', description: 'Get the official link to connect your Discord account to Skillshot', type: 1 },
     { name: 'sync', description: 'Synchronize your Discord Creator Rank role with your Skillshot account', type: 1 },
   ];
-  const cmdRes = await callDiscordApi(`/applications/${DISCORD_CLIENT_ID}/guilds/${DISCORD_GUILD_ID}/commands`, {
+  await callDiscordApi(`/applications/${DISCORD_CLIENT_ID}/guilds/${DISCORD_GUILD_ID}/commands`, {
     method: 'PUT',
     body: JSON.stringify(commands),
   });

@@ -54,6 +54,7 @@ export async function GET(request: Request) {
       AND ($7::timestamptz IS NULL OR (p.created_at, p.id) < ($7::timestamptz, $8::text))
       AND ($9::text='latest' OR p.created_at>=now()-interval '45 days')
       AND ($12::text IS NULL OR EXISTS(SELECT 1 FROM saved_posts saved_by WHERE saved_by.post_id=p.id AND saved_by.user_id=$12))
+      AND ($11 = '' OR NOT EXISTS(SELECT 1 FROM user_blocks ub WHERE (ub.blocker_id = $11 AND ub.blocked_id = p.user_id) OR (ub.blocker_id = p.user_id AND ub.blocked_id = $11)))
     ORDER BY CASE WHEN $9='trending' THEN ((SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.id)*3 + (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE')*5 + GREATEST(0,14-EXTRACT(EPOCH FROM (now()-p.created_at))/86400.0)) END DESC,
       p.created_at DESC,p.id DESC LIMIT $10
   `, [mine ? user!.userId : null, requestedUsername, likedByUsername, following, user?.userId ?? '', category, sort === 'trending' ? null : cursor.date, sort === 'trending' ? '' : cursor.id, sort, limit + 1, user?.userId ?? '', saved ? user!.userId : null]);

@@ -1,5 +1,6 @@
 import PublicNavbar from '../components/public-navbar';
 import CommunityFeed from '../components/community-feed';
+import CommunityChallengeBanner from '../components/community-challenge-banner';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,7 @@ export default function CommunityPage() {
         <h1>Discover what creators are making.</h1>
         <p>Explore Skillshots from gaming, development, design, photography, art and more.</p>
       </header>
+      <CommunityChallengeBanner />
       <section className="feed communityFeed shell" aria-label="Community Skillshots"><CommunityFeed /></section>
     </main>
   );

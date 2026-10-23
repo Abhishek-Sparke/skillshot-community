@@ -13,7 +13,7 @@ import { requireClientAuth, signInPath } from '../../lib/auth-path';
 type Post = {
   id:string; title:string; description:string; tags:string[]; skills:string[]; category:string; author:string; username:string;
   avatarUrl:string; authorRole:UserRole; creatorRank:CreatorRankId; createdAt:number; reactionCount:number; commentCount:number; viewerLiked:boolean; viewerSaved?:boolean;
-  signedIn:boolean; isOwner:boolean; canPin:boolean; commentReview:{hide:boolean;delete:boolean}|null; imageUrl:string; previewUrl:string; downloadUrl:string; imageWidth:number; imageHeight:number;
+  signedIn:boolean; isOwner:boolean; canPin:boolean; isPinned?:boolean; commentReview:{hide:boolean;delete:boolean}|null; imageUrl:string; previewUrl:string; downloadUrl:string; imageWidth:number; imageHeight:number;
 };
 function initials(name:string){return name.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'S';}
 
@@ -32,6 +32,7 @@ export default function ShotDetail({id}:{id:string}) {
 
   async function toggleLike(){if(!post)return;if(!requireClientAuth(post.signedIn,'/shots/'+id,'Sign in to like this Skillshot'))return;const response=await fetch('/api/posts/'+id+'/react',{method:'POST'});if(response.status===401){window.location.assign(signInPath('/shots/'+id,'Sign in to like this Skillshot'));return;}if(!response.ok){setStatus('Could not update your reaction.');return;}const data=await response.json();setPost(current=>current?{...current,viewerLiked:data.liked,reactionCount:Math.max(0,current.reactionCount+(data.liked?1:-1))}:current);setStatus('');}
   async function toggleSave(){if(!post)return;if(!requireClientAuth(post.signedIn,'/shots/'+id,'Sign in to save this Skillshot'))return;const response=await fetch('/api/posts/'+id+'/save',{method:'POST'});if(response.status===401){window.location.assign(signInPath('/shots/'+id,'Sign in to save this Skillshot'));return;}if(!response.ok){setStatus('Could not update your saved status.');return;}const data=await response.json();setPost(current=>current?{...current,viewerSaved:Boolean(data.saved)}:current);setStatus('');}
+  async function togglePin(){if(!post||!post.isOwner)return;const response=await fetch('/api/posts/'+id+'/pin',{method:'POST'});if(!response.ok){setStatus('Could not update pinned status.');return;}const data=await response.json();setPost(current=>current?{...current,isPinned:Boolean(data.pinned)}:current);setStatus(data.message||'Updated pinned status.');}
   async function shareSkillshot(){try{await navigator.clipboard.writeText(window.location.href);setSharedLabel('Copied!');setTimeout(()=>setSharedLabel('Share'),2000);}catch{setStatus('Could not copy link.');}}
   async function deletePost(){if(!window.confirm('Delete this Skillshot? It will be hidden immediately and retained briefly for safety review.'))return;const response=await fetch('/api/posts/'+id,{method:'DELETE'});if(!response.ok){setStatus('Could not delete this Skillshot.');return;}window.location.assign('/my-posts');}
   if(loading)return <main className="detailPage shell"><div className="detailSkeleton" aria-live="polite"><span/><div><i/><i/><i/></div></div></main>;
@@ -78,6 +79,7 @@ export default function ShotDetail({id}:{id:string}) {
           </button>
           {moreOpen&&<div className="detailMoreMenu">
             <a className="detailMenuItem" href={'/chats?shareShotId=' + id + '&shareShotTitle=' + encodeURIComponent(post.title) + '&shareShotImage=' + encodeURIComponent(post.imageUrl) + '&shareShotAuthor=' + encodeURIComponent(post.username)}>💬 Share into Chat</a>
+            {post.isOwner&&<button className="detailMenuItem" type="button" onClick={togglePin}>{post.isPinned ? '📌 Unpin from Profile' : '📌 Pin to Profile'}</button>}
             <a className="detailMenuItem" href={post.downloadUrl} download>↓ Download image</a>
             <div className="detailMenuReport"><ReportButton targetType="SKILLSHOT" targetId={post.id}/></div>
             {post.isOwner&&<button className="detailMenuDelete" type="button" onClick={deletePost}>Delete Skillshot</button>}

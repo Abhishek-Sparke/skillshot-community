@@ -60,7 +60,7 @@ export async function GET(request: Request) {
   tokenParams.set('code', code);
   tokenParams.set('redirect_uri', redirectUri);
 
-  let tokenData: any;
+  let tokenData: { access_token?: string; error_description?: string } | null = null;
   try {
     const tokenRes = await fetch(`${DISCORD_API_BASE}/oauth2/token`, {
       method: 'POST',
@@ -68,9 +68,9 @@ export async function GET(request: Request) {
       body: tokenParams.toString(),
     });
 
-    tokenData = await tokenRes.json();
-    if (!tokenRes.ok || !tokenData.access_token) {
-      return redirectSettings(`error=${encodeURIComponent(tokenData.error_description || 'Failed to exchange authorization code.')}`);
+    tokenData = (await tokenRes.json().catch(() => null)) as { access_token?: string; error_description?: string } | null;
+    if (!tokenRes.ok || !tokenData?.access_token) {
+      return redirectSettings(`error=${encodeURIComponent(tokenData?.error_description || 'Failed to exchange authorization code.')}`);
     }
   } catch {
     return redirectSettings('error=Network+error+connecting+to+Discord+servers.');

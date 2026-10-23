@@ -117,7 +117,7 @@ export async function GET() {
     lastError: row.last_error ? String(row.last_error) : null,
   }));
 
-  const guildMembers = (guildMembersRaw as any[]) || [];
+  const guildMembers = guildMembersRaw || [];
 
   return NextResponse.json({
     stats,
@@ -139,6 +139,7 @@ export async function POST(request: Request) {
   }
   const principal = auth.principal;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let body: any = {};
   try {
     body = await request.json();

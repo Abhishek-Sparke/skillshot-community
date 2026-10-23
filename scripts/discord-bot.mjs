@@ -180,7 +180,7 @@ function connect() {
       if (op === 0) {
         if (t === 'READY') {
           sessionId = d.session_id;
-          console.log(`[Bot] 🚀 Ready! Logged in as ${d.user.username}#${d.user.discriminator} (ID: ${d.user.id})`);
+          console.log(`[Bot] 🚀 Ready! Logged in as ${d.user.username}#${d.user.discriminator} (ID: ${d.user.id}, Session: ${sessionId})`);
           welcomeChannelId = await findWelcomeChannel();
           console.log(`[Bot] 🎯 Active Welcome Channel: #${welcomeChannelId}`);
           console.log('[Bot] 👂 Listening for member joins (GUILD_MEMBER_ADD)...');

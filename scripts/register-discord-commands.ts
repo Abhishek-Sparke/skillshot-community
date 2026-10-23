@@ -31,6 +31,24 @@ const COMMANDS = [
     description: 'Synchronize your Discord Creator Rank role with your Skillshot account',
     type: 1,
   },
+  {
+    name: 'showcase',
+    description: 'Display a standout Skillshot or random showcase from the community',
+    type: 1,
+  },
+  {
+    name: 'creator',
+    description: "Display a Skillshot creator's profile, rank, and work",
+    type: 1,
+    options: [
+      {
+        name: 'username',
+        description: 'The Skillshot username of the creator',
+        type: 3,
+        required: true,
+      },
+    ],
+  },
 ];
 
 async function registerCommands() {

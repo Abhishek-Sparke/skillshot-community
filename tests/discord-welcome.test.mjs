@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { DISCORD_MIGRATION } from '../lib/discord-schema.ts';
-import { DISCORD_WELCOME_CHANNEL_ID, DISCORD_EMBED_COLOR } from '../lib/discord-config.ts';
 
 const root = process.cwd();
 const read = (file) => fs.readFile(path.join(root, file), 'utf8');

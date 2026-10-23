@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getReadyDb } from '../../../../lib/db';
-import { calculateLevelProgress, calculateRankProgress, rankFromXp } from '../../../../lib/creator-rank';
+import { calculateLevelProgress, calculateRankProgress, rankFromXp, CREATOR_RANKS, type CreatorRankId } from '../../../../lib/creator-rank';
 import { syncMemberCreatorRank, createDiscordVerificationSession, callDiscordApi } from '../../../../lib/discord-service';
-import { DISCORD_CLIENT_ID } from '../../../../lib/discord-config';
+import { DISCORD_CLIENT_ID, DISCORD_EMBED_COLOR } from '../../../../lib/discord-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,9 +54,31 @@ export async function POST(request: Request) {
     console.warn('DISCORD_PUBLIC_KEY is not configured on the server; skipping signature verification.');
   }
 
-  let interaction: any;
+  type DiscordIncomingInteraction = {
+    type?: number;
+    token?: string;
+    data?: {
+      name?: string;
+      custom_id?: string;
+      options?: Array<{ name: string; value: unknown }>;
+    };
+    member?: {
+      user?: {
+        id?: string;
+        username?: string;
+        global_name?: string | null;
+      };
+    };
+    user?: {
+      id?: string;
+      username?: string;
+      global_name?: string | null;
+    };
+  };
+
+  let interaction: DiscordIncomingInteraction;
   try {
-    interaction = JSON.parse(rawBody);
+    interaction = JSON.parse(rawBody) as DiscordIncomingInteraction;
   } catch {
     return new NextResponse('Invalid JSON body', { status: 400 });
   }
@@ -196,6 +218,135 @@ export async function POST(request: Request) {
             ? `✓ **Synchronized!** Your Discord role has been updated to **${rank.label}**.`
             : `⚠️ ${res.message || 'Synchronization could not be completed.'}`,
           flags: 64,
+        },
+      });
+    }
+
+    // /showcase command: Return standout or random visible Skillshot embed
+    if (commandName === 'showcase') {
+      const sql = await getReadyDb();
+      const rows = await sql.query(`
+        SELECT p.id, p.title, p.description, p.category, u.username, u.display_name,
+          (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS reaction_count
+        FROM posts p
+        JOIN users u ON u.id = p.user_id
+        WHERE p.status = 'VISIBLE' AND u.status = 'ACTIVE'
+        ORDER BY random()
+        LIMIT 1
+      `);
+
+      if (!rows.length) {
+        return NextResponse.json({
+          type: 4,
+          data: { content: 'No Skillshots available to showcase at this time.', flags: 64 },
+        });
+      }
+
+      const shot = rows[0];
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://skillshot-community.vercel.app';
+      const shotUrl = `${appUrl}/shots/${shot.id}`;
+
+      return NextResponse.json({
+        type: 4,
+        data: {
+          embeds: [
+            {
+              author: {
+                name: `🏆 Skillshot Community Showcase • by @${shot.username}`,
+                url: `${appUrl}/users/${encodeURIComponent(String(shot.username))}`,
+              },
+              title: String(shot.title),
+              url: shotUrl,
+              description: String(shot.description || 'Check out this showcase on Skillshot!'),
+              color: DISCORD_EMBED_COLOR,
+              image: {
+                url: `${appUrl}/api/images/${shot.id}`,
+              },
+              footer: {
+                text: `${shot.category} • ${shot.reaction_count} Likes • Skillshot Community`,
+              },
+            },
+          ],
+          components: [
+            {
+              type: 1,
+              components: [
+                {
+                  type: 2,
+                  style: 5,
+                  label: '👀 View on Skillshot',
+                  url: shotUrl,
+                },
+              ],
+            },
+          ],
+        },
+      });
+    }
+
+    // /creator command: Look up creator by username
+    if (commandName === 'creator') {
+      const usernameOption = interaction.data?.options?.find(o => o.name === 'username')?.value;
+      const targetUsername = String(usernameOption || '').trim().toLowerCase();
+      if (!targetUsername) {
+        return NextResponse.json({
+          type: 4,
+          data: { content: 'Please provide a Skillshot username.', flags: 64 },
+        });
+      }
+
+      const sql = await getReadyDb();
+      const rows = await sql.query(`
+        SELECT u.id, u.username, u.display_name, u.creator_rank, u.creator_xp, u.bio,
+          (SELECT COUNT(*) FROM posts p WHERE p.user_id = u.id AND p.status = 'VISIBLE') AS post_count,
+          (SELECT COUNT(*) FROM reactions r JOIN posts p ON p.id = r.post_id WHERE p.user_id = u.id) AS likes_received
+        FROM users u
+        WHERE lower(u.username) = lower($1) AND u.status = 'ACTIVE'
+        LIMIT 1
+      `, [targetUsername]);
+
+      if (!rows.length) {
+        return NextResponse.json({
+          type: 4,
+          data: { content: `Creator @${targetUsername} not found on Skillshot.`, flags: 64 },
+        });
+      }
+
+      const creator = rows[0];
+      const rank = CREATOR_RANKS[(creator.creator_rank as CreatorRankId) || 'NEWCOMER'];
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://skillshot-community.vercel.app';
+      const profileUrl = `${appUrl}/users/${encodeURIComponent(String(creator.username))}`;
+
+      return NextResponse.json({
+        type: 4,
+        data: {
+          embeds: [
+            {
+              title: `${creator.display_name} (@${creator.username})`,
+              url: profileUrl,
+              description: String(creator.bio || 'Creator on Skillshot Community.'),
+              color: DISCORD_EMBED_COLOR,
+              fields: [
+                { name: 'Rank', value: `${rank?.symbol || '🌱'} **${rank?.label || 'Newcomer'}**`, inline: true },
+                { name: 'Creator XP', value: `✨ **${creator.creator_xp} XP**`, inline: true },
+                { name: 'Works & Likes', value: `🎨 **${creator.post_count}** shots • ♥ **${creator.likes_received}** likes`, inline: true },
+              ],
+              footer: { text: 'Skillshot Community Creator Profile' },
+            },
+          ],
+          components: [
+            {
+              type: 1,
+              components: [
+                {
+                  type: 2,
+                  style: 5,
+                  label: 'View Profile',
+                  url: profileUrl,
+                },
+              ],
+            },
+          ],
         },
       });
     }

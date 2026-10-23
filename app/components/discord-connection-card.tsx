@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 export interface DiscordStatusData {
   connected: boolean;
@@ -20,7 +21,6 @@ export interface DiscordStatusData {
 }
 
 export default function DiscordConnectionCard() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [data, setData] = useState<DiscordStatusData | null>(null);
   const [loading, setLoading] = useState(true);

@@ -83,6 +83,9 @@ export async function getReadyDb() {
     await sql.query(`CREATE TABLE IF NOT EXISTS follows (follower_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, followed_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (follower_id, followed_id), CHECK (follower_id <> followed_id))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS featured_posts (user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, position smallint NOT NULL CHECK (position BETWEEN 1 AND 3), created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (user_id, post_id), UNIQUE (user_id, position))`);
     await sql.query(`CREATE TABLE IF NOT EXISTS saved_posts (user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE, post_id text NOT NULL REFERENCES posts(id) ON DELETE CASCADE, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (user_id, post_id))`);
+    await sql.query(`CREATE TABLE IF NOT EXISTS user_blocks (blocker_id text NOT NULL, blocked_id text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (blocker_id, blocked_id))`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_user_blocks_blocker ON user_blocks(blocker_id)`);
+    await sql.query(`CREATE INDEX IF NOT EXISTS idx_user_blocks_blocked ON user_blocks(blocked_id)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_saved_posts_user_created ON saved_posts(user_id, created_at DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC)`);
     await sql.query(`CREATE INDEX IF NOT EXISTS idx_posts_visible_created ON posts(status, created_at DESC, id DESC)`);
@@ -119,6 +122,22 @@ export async function getReadyDb() {
     await sql.transaction(COLLECTION_MIGRATION.map(statement=>sql.query(statement)));
     await sql.transaction(XP_MIGRATION.map(statement=>sql.query(statement)));
     await sql.transaction(DISCORD_MIGRATION.map(statement=>sql.query(statement)));
+    await sql.query(`CREATE TABLE IF NOT EXISTS challenges (
+      id text PRIMARY KEY,
+      title text NOT NULL,
+      prompt text NOT NULL,
+      category text NOT NULL DEFAULT 'All',
+      xp_bonus integer NOT NULL DEFAULT 50,
+      badge_icon text NOT NULL DEFAULT '🏆',
+      tag text NOT NULL DEFAULT 'challenge',
+      starts_at timestamptz NOT NULL DEFAULT now(),
+      ends_at timestamptz NOT NULL DEFAULT (now() + interval '7 days'),
+      status text NOT NULL DEFAULT 'ACTIVE',
+      created_at timestamptz NOT NULL DEFAULT now()
+    )`);
+    await sql.query(`INSERT INTO challenges (id, title, prompt, category, xp_bonus, badge_icon, tag, status)
+      VALUES ('weekly-spotlight-1', 'Visual Storytelling', 'Capture a single frame that tells an entire story without any words.', 'Design', 50, '✨', 'visualstory', 'ACTIVE')
+      ON CONFLICT (id) DO NOTHING`);
   })();
   await initialization;
   return sql;

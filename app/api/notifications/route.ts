@@ -48,6 +48,7 @@ export async function GET() {
     [auth.principal.id, auth.principal.role]
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const notifications = rows.map((r: any) => ({
     id: String(r.id),
     type: String(r.type),

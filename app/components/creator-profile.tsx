@@ -520,6 +520,40 @@ export default function CreatorProfile({ username, saved = false, initialTab = '
         </article>
       </div>
 
+      {profile.featuredPosts.length > 0 && (
+        <div className="featuredSection compactFeatured" style={{ marginBottom: '2.5rem' }}>
+          <div className="sectionHead">
+            <div>
+              <p className="eyebrow">PINNED SPOTLIGHT</p>
+              <h2>Selected Skillshots.</h2>
+            </div>
+            {profile.isSelf && <Link className="textLink" href="/profile/edit">Manage spotlight →</Link>}
+          </div>
+          <div className="featuredGrid">
+            {profile.featuredPosts.map(post => (
+              <article className="featuredPost" key={post.id}>
+                <Link className="featuredImage" href={`/shots/${post.id}`}>
+                  <img
+                    src={post.imageUrl}
+                    alt={post.title}
+                    loading="lazy"
+                    width="900"
+                    height="600"
+                    onError={event => { event.currentTarget.style.display = 'none'; }}
+                  />
+                </Link>
+                <div>
+                  <p className="eyebrow">📌 Pinned Spotlight</p>
+                  <h3><Link href={`/shots/${post.id}`}>{post.title}</Link></h3>
+                  {post.description && <p>{post.description}</p>}
+                  <small>♥ {compactNumber(post.reactionCount)} <span>◌ {compactNumber(post.commentCount)}</span></small>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="profileOverviewWork">
         <div className="sectionHead"><div><p className="eyebrow">YOUR WORK</p><h2>{profile.isSelf ? 'Your published work.' : `${profile.displayName}'s published work.`}</h2></div><div className="profileOverviewActions">{profile.isSelf && <Link className="primary" href="/upload"><UiIcon name="plus"/> New Skillshot</Link>}<button type="button" onClick={() => setTab('skillshots')}>View all <UiIcon name="arrow-up-right"/></button></div></div>
         <CollectionsManager username={profile.username} isSelf={profile.isSelf} mode="gallery" />
