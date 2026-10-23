@@ -36,6 +36,8 @@ export default function ShotDetail({ id }: { id: string }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [sharedLabel, setSharedLabel] = useState('Share');
   const [moreOpen, setMoreOpen] = useState(false);
+  const [cinemaMode, setCinemaMode] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -46,6 +48,30 @@ export default function ShotDetail({ id }: { id: string }) {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [id]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        setCinemaMode(prev => !prev);
+      } else if (e.key === 'g' || e.key === 'G') {
+        if (cinemaMode) {
+          e.preventDefault();
+          setShowGrid(prev => !prev);
+        }
+      } else if (e.key === 'Escape') {
+        if (cinemaMode) {
+          setCinemaMode(false);
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [cinemaMode]);
 
   const closeViewer = useCallback(() => setViewerOpen(false), []);
 
@@ -159,6 +185,11 @@ export default function ShotDetail({ id }: { id: string }) {
         className="dominantImageStage"
         style={{ aspectRatio: `${post.imageWidth || 16} / ${post.imageHeight || 9}` }}
       >
+        <div
+          className="ambientGlowBackdrop"
+          style={{ backgroundImage: `url(${post.imageUrl})` }}
+          aria-hidden="true"
+        />
         <button
           type="button"
           className={`detailImageButton ${imgLoaded ? 'imageLoaded' : 'imageLoading'}`}
@@ -198,6 +229,14 @@ export default function ShotDetail({ id }: { id: string }) {
         <div className="detailActionBar">
           <button className={'likeButton ' + (post.viewerLiked ? 'liked' : '')} onClick={toggleLike}>
             {post.viewerLiked ? '♥ Liked' : '♡ Like'} · {post.reactionCount}
+          </button>
+          <button
+            type="button"
+            className={`detailCinemaBtn ${cinemaMode ? 'active' : ''}`}
+            onClick={() => setCinemaMode(v => !v)}
+            title="Toggle Viewfinder Cinema HUD Mode (Shortcut: F)"
+          >
+            🎬 Cinema HUD <kbd className="shortcutKbd">F</kbd>
           </button>
           <a className="detailCommentJump" href="#comments">
             💬 Comment · {post.commentCount}
@@ -287,6 +326,88 @@ export default function ShotDetail({ id }: { id: string }) {
       </div>
 
       {viewerOpen && <ImageViewer src={post.previewUrl || post.imageUrl} alt={post.title} title={post.title} subtitle={'by ' + post.author} onClose={closeViewer} />}
+
+      {/* Viewfinder Cinema HUD Mode Overlay */}
+      {cinemaMode && (
+        <div className="cinemaHudModal" role="dialog" aria-modal="true" aria-label="Viewfinder Cinema HUD">
+          <div className="cinemaAmbientGlow" style={{ backgroundImage: `url(${post.imageUrl})` }} aria-hidden="true" />
+          <div className="viewfinderOverlay">
+            {/* Viewfinder Corner Brackets */}
+            <span className="vfCorner vfTopLeft" aria-hidden="true" />
+            <span className="vfCorner vfTopRight" aria-hidden="true" />
+            <span className="vfCorner vfBottomLeft" aria-hidden="true" />
+            <span className="vfCorner vfBottomRight" aria-hidden="true" />
+
+            {/* Top HUD Bar */}
+            <div className="vfTopBar">
+              <div className="vfSpecsBadge">
+                <span className="vfRecDot" aria-hidden="true" />
+                <span className="vfRecText">REC</span>
+                <span className="vfDivider">|</span>
+                <span className="vfGameTitle">{post.captureSpecs?.game || post.category.toUpperCase()}</span>
+                {post.captureSpecs?.platform && <span className="vfTag">[{post.captureSpecs.platform}]</span>}
+              </div>
+              <div className="vfControls">
+                <button
+                  type="button"
+                  className={`vfGridToggle ${showGrid ? 'active' : ''}`}
+                  onClick={() => setShowGrid(v => !v)}
+                  title="Toggle Rule-of-Thirds Grid (G)"
+                >
+                  📐 3×3 Grid <kbd className="shortcutKbd">G</kbd>
+                </button>
+                <button
+                  type="button"
+                  className="vfCloseButton"
+                  onClick={() => setCinemaMode(false)}
+                  aria-label="Exit Cinema Mode (Esc or F)"
+                >
+                  ✕ Exit <kbd className="shortcutKbd">Esc</kbd>
+                </button>
+              </div>
+            </div>
+
+            {/* Center Image Stage with optional Rule-of-Thirds Grid */}
+            <div className="vfStage">
+              {showGrid && (
+                <div className="vfRuleOfThirdsGrid" aria-hidden="true">
+                  <span className="vfGridLine vfGridH1" />
+                  <span className="vfGridLine vfGridH2" />
+                  <span className="vfGridLine vfGridV1" />
+                  <span className="vfGridLine vfGridV2" />
+                  <span className="vfCenterCross" />
+                </div>
+              )}
+              <img
+                src={post.imageUrl}
+                alt={post.title}
+                className="vfImage"
+                style={{ aspectRatio: `${post.imageWidth || 16} / ${post.imageHeight || 9}` }}
+              />
+            </div>
+
+            {/* Bottom HUD Bar */}
+            <div className="vfBottomBar">
+              <div className="vfShotMeta">
+                <h2 className="vfTitle">{post.title}</h2>
+                <div className="vfAuthor">by <CreatorUsername asSpan name={post.author} username={post.username} creatorRank={post.creatorRank} staffRole={post.authorRole} /></div>
+              </div>
+              <div className="vfTechDetails">
+                <span className="vfSpecItem">📐 {post.captureSpecs?.resolution || `${post.imageWidth}×${post.imageHeight}`}</span>
+                {toolsList.length > 0 && <span className="vfSpecItem">✦ {toolsList.join(', ')}</span>}
+                <button
+                  type="button"
+                  className={`vfLikeBtn ${post.viewerLiked ? 'liked' : ''}`}
+                  onClick={toggleLike}
+                  title="Like this shot"
+                >
+                  ♥ {post.reactionCount}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -37,7 +37,7 @@ export default function CreatorUsername({
   creatorRank = 'NEWCOMER',
   showRankBadge,
   showRoleBadge = true,
-  enableCard = false,
+  enableCard = true,
   cardData,
   href,
   className = '',
@@ -61,7 +61,7 @@ export default function CreatorUsername({
   const profileUrl = href ?? (username ? `/users/${encodeURIComponent(username)}` : '#');
 
   const handleMouseEnter = () => {
-    if (!enableCard) return;
+    if (!enableCard || layout === 'profile' || !username) return;
     if (closeTimer.current) clearTimeout(closeTimer.current);
     openTimer.current = setTimeout(() => {
       setShowPopover(true);

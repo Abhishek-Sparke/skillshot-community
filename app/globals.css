@@ -7967,12 +7967,32 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
 }
 .dominantImageStage {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 16px;
   background: var(--surface-soft);
 }
+.ambientGlowBackdrop {
+  position: absolute;
+  inset: -12px;
+  border-radius: 24px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(50px) saturate(180%);
+  opacity: 0.4;
+  transform: scale(0.97) translateY(8px);
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+:root[data-theme=dark] .ambientGlowBackdrop,
+:root[data-theme=halloween] .ambientGlowBackdrop,
+:root[data-theme=cyberpunk] .ambientGlowBackdrop {
+  opacity: 0.55;
+  filter: blur(64px) saturate(210%);
+}
 .detailImageButton {
   position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   display: block;
@@ -7980,6 +8000,8 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   padding: 0;
   background: transparent;
   cursor: zoom-in;
+  border-radius: 16px;
+  overflow: hidden;
 }
 .thumbHidden {
   opacity: 0;
@@ -7988,4 +8010,686 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   opacity: 1;
   transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Cinema HUD Button */
+.detailCinemaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.detailCinemaBtn:hover {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+.detailCinemaBtn .shortcutKbd {
+  font-size: 10.5px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.15);
+}
+:root[data-theme=dark] .detailCinemaBtn .shortcutKbd,
+:root[data-theme=halloween] .detailCinemaBtn .shortcutKbd,
+:root[data-theme=cyberpunk] .detailCinemaBtn .shortcutKbd {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* ============================================================
+   VIEWFINDER CINEMA HUD MODAL
+   ============================================================ */
+.cinemaHudModal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #030305;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: cinemaFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+@keyframes cinemaFadeIn {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: scale(1); }
+}
+.cinemaAmbientGlow {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(100px) saturate(220%);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+.viewfinderOverlay {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  max-width: 1700px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+/* Viewfinder 4 Corner Brackets */
+.vfCorner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: rgba(255, 255, 255, 0.45);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 3;
+}
+.vfTopLeft { top: 60px; left: 16px; border-width: 2px 0 0 2px; }
+.vfTopRight { top: 60px; right: 16px; border-width: 2px 2px 0 0; }
+.vfBottomLeft { bottom: 64px; left: 16px; border-width: 0 0 2px 2px; }
+.vfBottomRight { bottom: 64px; right: 16px; border-width: 0 2px 2px 0; }
+
+.vfTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 12px;
+  z-index: 4;
+}
+.vfSpecsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 18, 22, 0.7);
+  backdrop-filter: blur(12px);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+.vfRecDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff0055;
+  box-shadow: 0 0 8px #ff0055;
+  animation: vfPulse 1.2s infinite;
+}
+@keyframes vfPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+.vfRecText { font-weight: 800; color: #ff0055; }
+.vfDivider { color: rgba(255,255,255,0.3); }
+.vfGameTitle { font-weight: 700; color: #fff; }
+.vfTag { color: rgba(255,255,255,0.65); font-weight: 600; }
+
+.vfControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.vfGridToggle, .vfCloseButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 22, 28, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.vfGridToggle:hover, .vfCloseButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+.vfGridToggle.active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+.vfControls kbd, .vfTechDetails kbd {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.vfStage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  margin: 12px 0;
+}
+.vfImage {
+  max-width: 94vw;
+  max-height: calc(88vh - 120px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.85);
+  z-index: 1;
+}
+
+/* Rule of Thirds Grid Overlay */
+.vfRuleOfThirdsGrid {
+  position: absolute;
+  inset: 0;
+  max-width: 94vw;
+  max-height: calc(88vh - 120px);
+  margin: auto;
+  pointer-events: none;
+  z-index: 2;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+.vfGridH1 { position: absolute; left: 0; right: 0; top: 33.333%; border-top: 1px dashed rgba(255, 255, 255, 0.25); }
+.vfGridH2 { position: absolute; left: 0; right: 0; top: 66.666%; border-top: 1px dashed rgba(255, 255, 255, 0.25); }
+.vfGridV1 { position: absolute; top: 0; bottom: 0; left: 33.333%; border-left: 1px dashed rgba(255, 255, 255, 0.25); }
+.vfGridV2 { position: absolute; top: 0; bottom: 0; left: 66.666%; border-left: 1px dashed rgba(255, 255, 255, 0.25); }
+.vfCenterCross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,255,255,0.7) 1.5px, transparent 2px);
+}
+
+.vfBottomBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 12px;
+  z-index: 4;
+}
+.vfShotMeta .vfTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+}
+.vfShotMeta .vfAuthor {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+}
+.vfTechDetails {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.vfSpecItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(18, 18, 24, 0.65);
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.vfLikeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 0, 85, 0.18);
+  border: 1px solid rgba(255, 0, 85, 0.4);
+  color: #ff3377;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.vfLikeBtn.liked {
+  background: #ff0055;
+  color: #fff;
+  border-color: #ff0055;
+  box-shadow: 0 0 14px rgba(255, 0, 85, 0.5);
+}
+
+/* ============================================================
+   FEED LAYOUT SWITCHER (Masonry / Grid / Stream)
+   ============================================================ */
+.layoutSwitcher {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+  margin-left: auto;
+}
+.layoutBtn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.15s ease;
+}
+.layoutBtn:hover {
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.05);
+}
+:root[data-theme=dark] .layoutBtn:hover,
+:root[data-theme=halloween] .layoutBtn:hover,
+:root[data-theme=cyberpunk] .layoutBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.layoutBtn.active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+:root[data-theme=cyberpunk] .layoutBtn.active {
+  background: rgba(0, 240, 255, 0.2);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.4);
+}
+
+/* Layout: Uniform Grid */
+.masonryGrid.layout-grid {
+  column-count: auto !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+  gap: 24px !important;
+}
+.masonryGrid.layout-grid .post {
+  break-inside: auto !important;
+  margin-bottom: 0 !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.masonryGrid.layout-grid .uploadedShot {
+  aspect-ratio: 16 / 10 !important;
+}
+.masonryGrid.layout-grid .meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Layout: Filmstrip Stream */
+.masonryGrid.layout-filmstrip {
+  column-count: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 36px !important;
+  max-width: 820px !important;
+  margin: 0 auto !important;
+}
+.masonryGrid.layout-filmstrip .post {
+  width: 100% !important;
+  margin-bottom: 0 !important;
+  border-radius: 20px !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+.masonryGrid.layout-filmstrip .uploadedShot {
+  max-height: 560px !important;
+  border-radius: 18px 18px 0 0 !important;
+}
+.masonryGrid.layout-filmstrip .meta {
+  padding: 22px 24px !important;
+}
+.masonryGrid.layout-filmstrip .postTitle {
+  font-size: 20px !important;
+}
+.masonryGrid.layout-filmstrip .cardDescription {
+  font-size: 14.5px !important;
+  line-height: 1.6 !important;
+  margin: 10px 0 !important;
+  -webkit-line-clamp: 4 !important;
+}
+
+/* ============================================================
+   3D TILT & HOLOGRAPHIC FOIL BADGES
+   ============================================================ */
+.interactiveTiltCard {
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+}
+.interactiveTiltCard:hover {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+}
+:root[data-theme=dark] .interactiveTiltCard:hover,
+:root[data-theme=halloween] .interactiveTiltCard:hover,
+:root[data-theme=cyberpunk] .interactiveTiltCard:hover {
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 16px var(--red-glow, rgba(255, 92, 71, 0.25));
+}
+.holographicFoilOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  mix-blend-mode: color-dodge;
+  transition: opacity 0.22s ease;
+  z-index: 2;
+}
+
+/* ============================================================
+   COMMAND PALETTE / SPOTLIGHT SEARCH (Cmd+K / Ctrl+K)
+   ============================================================ */
+.cmdPaletteOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 16px 24px;
+  animation: cmdFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes cmdFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+.cmdPaletteDialog {
+  width: 100%;
+  max-width: 620px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+:root[data-theme=cyberpunk] .cmdPaletteDialog {
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), 0 0 24px rgba(0, 240, 255, 0.25);
+  border-color: rgba(0, 240, 255, 0.35);
+}
+:root[data-theme=halloween] .cmdPaletteDialog {
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), 0 0 24px rgba(255, 117, 0, 0.25);
+  border-color: rgba(255, 117, 0, 0.35);
+}
+.cmdSearchHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.cmdSearchIcon {
+  font-size: 19px;
+  color: var(--muted);
+  flex: none;
+}
+.cmdSearchInput {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15.5px;
+  font-family: inherit;
+  outline: none;
+}
+.cmdSearchInput::placeholder {
+  color: var(--muted);
+}
+.cmdClearBtn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.cmdClearBtn:hover {
+  color: var(--ink);
+}
+.cmdKbdHint kbd, .cmdFooter kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.cmdResultsContainer {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cmdLoadingBar {
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.cmdEmptyState {
+  padding: 36px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+.cmdEmptyState span {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+}
+.cmdItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.cmdItem.selected {
+  background: var(--surface-soft);
+}
+:root[data-theme=cyberpunk] .cmdItem.selected {
+  background: rgba(0, 240, 255, 0.12);
+  outline: 1px solid rgba(0, 240, 255, 0.3);
+}
+:root[data-theme=halloween] .cmdItem.selected {
+  background: rgba(255, 117, 0, 0.12);
+  outline: 1px solid rgba(255, 117, 0, 0.3);
+}
+.cmdItemIcon {
+  font-size: 18px;
+  flex: none;
+}
+.cmdItemMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cmdItemLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cmdItemSublabel {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cmdItemCategory {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  flex: none;
+}
+.cmdFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-soft);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ============================================================
+   MOBILE FLOATING PILL DOCK (Navigation for Small Screens)
+   ============================================================ */
+.mobileFloatingDock {
+  position: fixed;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+@media (min-width: 769px) {
+  .mobileFloatingDock {
+    display: none !important;
+  }
+}
+.mobileDockPill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--surface-glass, rgba(20, 20, 24, 0.88));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4);
+}
+.dockItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 50px;
+  padding: 4px 6px;
+  border-radius: 12px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 10.5px;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+.dockItem:hover, .dockItem.active {
+  color: var(--ink);
+}
+.dockIcon {
+  font-size: 17px;
+}
+.dockIconWrap {
+  position: relative;
+  display: inline-flex;
+}
+.dockUnreadBadge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  background: #ff0055;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--surface);
+}
+.dockUploadBtn {
+  background: linear-gradient(135deg, var(--red, #ff5c47), #ff8a7a);
+  color: #fff !important;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  min-width: 44px;
+  padding: 0;
+  margin: 0 4px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 14px rgba(255, 92, 71, 0.45);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.dockUploadBtn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(255, 92, 71, 0.6);
+}
+:root[data-theme=cyberpunk] .dockUploadBtn {
+  background: linear-gradient(135deg, #00f0ff, #ff0055);
+  box-shadow: 0 4px 16px rgba(0, 240, 255, 0.55);
+}
+:root[data-theme=halloween] .dockUploadBtn {
+  background: linear-gradient(135deg, #ff7500, #9333ea);
+  box-shadow: 0 4px 16px rgba(255, 117, 0, 0.55);
+}
+.dockUploadPlus {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+
+
+
 

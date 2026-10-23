@@ -4,6 +4,8 @@ import { THEMES, type Theme } from '../../lib/settings-policy';
 export function applyTheme(theme:Theme){
   if (theme === 'halloween') {
     document.documentElement.dataset.theme = 'halloween';
+  } else if (theme === 'cyberpunk') {
+    document.documentElement.dataset.theme = 'cyberpunk';
   } else {
     const dark=theme==='dark'||theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches;
     document.documentElement.dataset.theme=dark?'dark':'light';

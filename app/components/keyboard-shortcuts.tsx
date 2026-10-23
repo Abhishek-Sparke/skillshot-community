@@ -12,6 +12,9 @@ type Shortcut = {
 const SHORTCUTS: Shortcut[] = [
   { key: 'J / ↓', label: 'Next Shot', description: 'Navigate down to the next Skillshot in feed', category: 'Navigation' },
   { key: 'K / ↑', label: 'Previous Shot', description: 'Navigate up to the previous Skillshot in feed', category: 'Navigation' },
+  { key: 'Cmd/Ctrl + K', label: 'Command Palette', description: 'Spotlight search across shots, creators, and quick actions', category: 'General' },
+  { key: 'F', label: 'Cinema HUD Mode', description: 'Enter full-bleed viewfinder theater on shot detail', category: 'Actions' },
+  { key: 'G', label: 'Rule-of-Thirds Grid', description: 'Toggle 3×3 composition grid in Cinema HUD mode', category: 'Actions' },
   { key: 'L', label: 'Like / Appreciate', description: 'Toggle appreciation reaction on the current shot', category: 'Actions' },
   { key: 'S', label: 'Save / Bookmark', description: 'Save shot to your private collection', category: 'Actions' },
   { key: 'C', label: 'Jump to Comments', description: 'Focus immediately into the comment discussion box', category: 'Actions' },

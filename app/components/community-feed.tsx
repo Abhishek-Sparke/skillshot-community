@@ -15,15 +15,30 @@ export type CommunityPost = {
   imageWidth:number; imageHeight:number; isGif:boolean; viewerLiked:boolean; viewerSaved?:boolean; isOwner:boolean;
 };
 type Mode = 'latest' | 'trending' | 'following';
+type LayoutMode = 'masonry' | 'grid' | 'filmstrip';
 type Props = { mine?:boolean; saved?:boolean; username?:string; likedBy?:string; limit?:number; compact?:boolean; showComments?:boolean; emptyTitle?:string; emptyText?:string };
 const categories = ['All','Gaming','Development','Design','Photography','Art','Creative','Projects','Other'];
 function initials(name:string) { return name.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase() || 'S'; }
 
-export default function CommunityFeed({ mine=false,saved=false,username,likedBy,limit,compact=false,showComments=false,emptyTitle,emptyText }:Props) {
+export default function CommunityFeed({ mine=false,saved=false,username,likedBy,limit,compact=false,showComments: _showComments=false,emptyTitle,emptyText }:Props) {
   const [posts,setPosts]=useState<CommunityPost[]>([]); const [query,setQuery]=useState('');
   const [mode,setMode]=useState<Mode>('latest'); const [category,setCategory]=useState('All');
+  const [layout,setLayout]=useState<LayoutMode>(() => {
+    if (typeof window === 'undefined') return 'masonry';
+    try {
+      const saved = localStorage.getItem('skillshot-layout') as LayoutMode | null;
+      return saved && ['masonry', 'grid', 'filmstrip'].includes(saved) ? saved : 'masonry';
+    } catch {
+      return 'masonry';
+    }
+  });
   const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [signedIn,setSignedIn]=useState(false);
   const [previewPost,setPreviewPost]=useState<CommunityPost|null>(null); const [nextCursor,setNextCursor]=useState<string|null>(null); const [loadingMore,setLoadingMore]=useState(false);
+
+  function selectLayout(next: LayoutMode) {
+    setLayout(next);
+    try { localStorage.setItem('skillshot-layout', next); } catch {}
+  }
 
   const makeSearch=useCallback((cursor?:string) => {
     const search=new URLSearchParams();
@@ -59,9 +74,49 @@ export default function CommunityFeed({ mine=false,saved=false,username,likedBy,
 
   if(loading)return <div className="feedSkeleton" aria-label="Loading Skillshots" aria-live="polite">{[0,1,2].map(item=><span key={item} className="skeletonCard"><i/><b/><small/></span>)}</div>;
   return <>
-    {!compact&&<div className="discoveryControls"><div className="communityTools"><label className="communitySearch">⌕<input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search posts, skills, or creators" aria-label="Filter loaded Skillshots"/></label><div className="filters" aria-label="Choose feed"><button className={mode==='latest'&&category==='All'?'active':''} onClick={()=>{selectCategory('All');selectMode('latest');}}>All</button><button className={mode==='latest'&&category!=='All'?'active':''} onClick={()=>selectMode('latest')}>Newest</button><button className={mode==='trending'?'active':''} onClick={()=>selectMode('trending')}>Trending</button><button className={mode==='following'?'active':''} onClick={()=>selectMode('following')}>Following</button></div></div><div className="categoryFilters" aria-label="Filter by category">{categories.map(value=><button key={value} className={category===value?'active':''} onClick={()=>selectCategory(value)}>{value}</button>)}</div></div>}
+    {!compact&&<div className="discoveryControls">
+      <div className="communityTools">
+        <label className="communitySearch">⌕<input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search posts, skills, or creators" aria-label="Filter loaded Skillshots"/></label>
+        <div className="filters" aria-label="Choose feed">
+          <button className={mode==='latest'&&category==='All'?'active':''} onClick={()=>{selectCategory('All');selectMode('latest');}}>All</button>
+          <button className={mode==='latest'&&category!=='All'?'active':''} onClick={()=>selectMode('latest')}>Newest</button>
+          <button className={mode==='trending'?'active':''} onClick={()=>selectMode('trending')}>Trending</button>
+          <button className={mode==='following'?'active':''} onClick={()=>selectMode('following')}>Following</button>
+        </div>
+        <div className="layoutSwitcher" aria-label="Switch feed layout">
+          <button
+            type="button"
+            className={`layoutBtn ${layout === 'masonry' ? 'active' : ''}`}
+            onClick={() => selectLayout('masonry')}
+            title="Masonry Layout"
+            aria-label="Masonry layout"
+          >
+            🏛️
+          </button>
+          <button
+            type="button"
+            className={`layoutBtn ${layout === 'grid' ? 'active' : ''}`}
+            onClick={() => selectLayout('grid')}
+            title="Uniform Grid Tiles"
+            aria-label="Grid layout"
+          >
+            ⏹️
+          </button>
+          <button
+            type="button"
+            className={`layoutBtn ${layout === 'filmstrip' ? 'active' : ''}`}
+            onClick={() => selectLayout('filmstrip')}
+            title="Editorial Stream"
+            aria-label="Stream layout"
+          >
+            📰
+          </button>
+        </div>
+      </div>
+      <div className="categoryFilters" aria-label="Filter by category">{categories.map(value=><button key={value} className={category===value?'active':''} onClick={()=>selectCategory(value)}>{value}</button>)}</div>
+    </div>}
     {error&&<div className="feedState errorState" role="alert">{error}{mode==='following'&&!signedIn&&<a className="primary" href={signInPath('/community','Sign in to see creators you follow')}>Sign in</a>}</div>}
-    {!error&&visible.length===0?<div className="emptyFeed"><span>✦</span><h3>{query?'No matching Skillshots yet.':emptyTitle??(saved?'No saved Skillshots yet':mine?'Have something you’re proud of?':'Nothing here yet.')}</h3><p>{query?'Try another search term or category.':emptyText??(saved?'Save Skillshots you want to revisit.':mine?'Share it with the Skillshot community.':'Try a different feed or be the first to share.')}</p>{!query&&!saved&&<a className="primary" href="/upload">Create your first Skillshot →</a>}</div>:!error&&<div className="masonryGrid">{visible.map((post, index)=><article className="post discoveryCard" key={post.id} style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}>
+    {!error&&visible.length===0?<div className="emptyFeed"><span>✦</span><h3>{query?'No matching Skillshots yet.':emptyTitle??(saved?'No saved Skillshots yet':mine?'Have something you’re proud of?':'Nothing here yet.')}</h3><p>{query?'Try another search term or category.':emptyText??(saved?'Save Skillshots you want to revisit.':mine?'Share it with the Skillshot community.':'Try a different feed or be the first to share.')}</p>{!query&&!saved&&<a className="primary" href="/upload">Create your first Skillshot →</a>}</div>:!error&&<div className={`masonryGrid layout-${layout}`}>{visible.map((post, index)=><article className="post discoveryCard" key={post.id} style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}>
       <div className="shot uploadedShot" style={{aspectRatio:String(shotFrameRatio(post.imageWidth,post.imageHeight))}}><ShotThumbnail key={post.imageUrl} src={post.imageUrl} title={post.title} author={post.author} width={post.imageWidth} height={post.imageHeight} onPreview={()=>setPreviewPost(post)}/>{post.isGif&&<span className="gifBadge" aria-label="Animated GIF">GIF</span>}<div className="shotHoverActions"><button type="button" className={post.viewerLiked?'liked':''} onClick={()=>toggleLike(post)} aria-label={(post.viewerLiked?'Unlike ':'Like ')+post.title}>♥ {post.reactionCount}</button><a href={'/shots/'+post.id+'#comments'} aria-label={post.commentCount+' comments'}>◌ {post.commentCount}</a><button type="button" className={post.viewerSaved?'saved':''} onClick={()=>toggleSave(post)} aria-label={(post.viewerSaved?'Unsave ':'Save ')+post.title}>🔖</button><button type="button" onClick={()=>setPreviewPost(post)} aria-haspopup="dialog" aria-label={'Preview '+post.title}>↗</button></div><a className="postAvatar" href={'/users/'+encodeURIComponent(post.username)} aria-label={"View "+post.author+"'s profile"}><span>{initials(post.author)}</span>{post.avatarUrl&&<img src={post.avatarUrl} alt="" loading="lazy"/>}</a></div>
       <div className="meta"><div className="postIdentity"><a className="postTitle" href={'/shots/'+post.id}>{post.title}</a><small className="authorBlock"><span className="authorName"><CreatorUsername name={post.author} username={post.username} creatorRank={post.creatorRank} staffRole={post.authorRole}/></span></small></div>{post.description&&<p className="cardDescription">{post.description}</p>}<div className="cardSkills">{post.skills.slice(0,3).map(skill=><span key={skill}>#{skill}</span>)}{post.category&&<span>{post.category}</span>}</div><div className="cardFooterActions"><button type="button" className={`cardActionBtn ${post.viewerLiked?'liked':''}`} onClick={()=>toggleLike(post)} aria-label={post.viewerLiked?'Unlike':'Like'}>♡ {post.reactionCount}</button><a className="cardActionBtn" href={'/shots/'+post.id+'#comments'} aria-label={post.commentCount+' comments'}>💬 {post.commentCount}</a><button type="button" className={`cardActionBtn ${post.viewerSaved?'saved':''}`} onClick={()=>toggleSave(post)} aria-label={post.viewerSaved?'Unsave':'Save'}>🔖 {post.viewerSaved?'Saved':'Save'}</button><a className="cardDownload" href={post.downloadUrl} title="Download image">↓</a></div></div>
     </article>)}</div>}

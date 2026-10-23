@@ -59,7 +59,7 @@ body{transition:background-color .15s,color .15s}
 .settingsPage fieldset{border:0;padding:0;margin:0 0 20px;min-width:0}.settingsPage legend{font-weight:700;font-size:15px;margin-bottom:12px}.settingsForm label{display:grid;gap:6px;margin:12px 0}
 .settingsForm input,.settingsForm select,.settingsForm textarea{width:100%;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);font:inherit;font-size:14px;transition:border-color .15s ease,box-shadow .15s ease}.settingsForm input:focus,.settingsForm select:focus,.settingsForm textarea:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(25,24,21,0.08);outline:none}.settingsForm textarea{resize:vertical}
 .preferenceToggle{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}.preferenceToggle input{width:18px;height:18px;accent-color:var(--red);flex:none}.preferenceToggle small{display:block;color:var(--muted);margin-top:4px;font-size:12.5px}.settingsHint{font-size:13px}
-.themeOptions{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px}.themeOption{position:relative;display:grid;gap:10px;padding:12px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}.themeOption:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);border-color:var(--ink)}.themeOption:has(input:checked){outline:2px solid var(--red);border-color:var(--red)}.themeOption input{accent-color:var(--red);width:16px;height:16px}.themeSwatch{height:52px;display:block;border-radius:8px;border:1px solid var(--line);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.05)}.themeSwatch.light{background:#f8f6f0}.themeSwatch.dark{background:#141413}.themeSwatch.system{background:linear-gradient(90deg,#f8f6f0 50%,#141413 50%)}.themeSwatch.halloween{background:linear-gradient(135deg,#0b0713 50%,#ff7500 50%)}
+.themeOptions{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px}.themeOption{position:relative;display:grid;gap:10px;padding:12px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}.themeOption:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);border-color:var(--ink)}.themeOption:has(input:checked){outline:2px solid var(--red);border-color:var(--red)}.themeOption input{accent-color:var(--red);width:16px;height:16px}.themeSwatch{height:52px;display:block;border-radius:8px;border:1px solid var(--line);box-shadow:inset 0 0 0 1px rgba(0,0,0,0.05)}.themeSwatch.light{background:#f8f6f0}.themeSwatch.dark{background:#141413}.themeSwatch.system{background:linear-gradient(90deg,#f8f6f0 50%,#141413 50%)}.themeSwatch.halloween{background:linear-gradient(135deg,#0b0713 50%,#ff7500 50%)}.themeSwatch.cyberpunk{background:linear-gradient(135deg,#07080e 50%,#00f0ff 50%)}
 .settingsActions{display:flex;gap:8px;flex-wrap:wrap}.settingsPage .settingsDanger{color:var(--danger);border-color:currentColor}
 .accountMenuTrigger{display:flex;align-items:center;gap:9px;min-height:44px;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s ease,border-color .15s ease,transform .12s ease}.accountMenuTrigger:hover{background:var(--surface-soft);border-color:var(--ink)}.accountMenuTrigger>span:first-child{display:grid;place-items:center;border-radius:50%;width:30px;height:30px;background:var(--surface-soft);font-size:13px;border:1px solid var(--line)}.accountMenuLabel{font-size:14px}
 .settingsDialog{position:fixed;inset:16px 16px 16px auto;margin:0;width:min(390px,calc(100vw - 32px));max-width:none;height:max-content;max-height:calc(100dvh - 32px);border:1px solid var(--line);border-radius:20px;padding:0;background:var(--surface);color:var(--ink);box-shadow:var(--shadow-lg);overflow:auto;animation:settingsIn .18s cubic-bezier(0.16,1,0.3,1)}.settingsDialog::backdrop{background:rgba(0,0,0,0.45);backdrop-filter:blur(4px)}.settingsDialogInner{padding:20px}.settingsDialog header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.settingsDialog h2{font-size:19px;margin:0;overflow-wrap:anywhere}.settingsDialog header button{flex:none;font-size:23px;width:44px;padding:4px;border-radius:10px}.settingsDialog h3{font-size:10.5px;letter-spacing:1.8px;color:var(--muted);margin:20px 10px 7px;font-weight:800}.settingsMenuRows{display:grid;gap:3px}.settingsMenuRows>a,.settingsMenuRows>button{display:flex;align-items:center;justify-content:space-between;gap:15px;color:inherit;text-decoration:none;border:0;background:transparent;padding:10px 12px;min-height:42px;border-radius:10px;text-align:left;font-size:14px;font-weight:600;transition:background .12s ease}.settingsMenuRows>a:hover,.settingsMenuRows>button:hover{background:var(--surface-soft)}.settingsMenuRows .publicNavLogout{border-top:1px solid var(--line);padding-top:12px;margin-top:8px}.settingsMenuRows .publicNavLogoutButton{width:100%;justify-content:flex-start}
@@ -269,3 +269,108 @@ body{transition:background-color .15s,color .15s}
   color: #ff7500;
   border-color: #ff7500;
 }
+
+/* ============================================================
+   CYBERPUNK NEON NOIR THEME (:root[data-theme=cyberpunk])
+   ============================================================ */
+:root[data-theme=cyberpunk] {
+  --background: #07080e;
+  --surface: #0f111c;
+  --surface-soft: #171b29;
+  --surface-glass: rgba(15, 17, 28, 0.88);
+  --text: #f0f6fc;
+  --secondary-text: #8b9bb0;
+  --border: rgba(0, 240, 255, 0.2);
+  --border-strong: rgba(0, 240, 255, 0.45);
+  --accent: #00f0ff;
+  --hover: #38f8ff;
+  --success: #00ffaa;
+  --warning: #ffe600;
+  --danger: #ff0055;
+  --paper: var(--background);
+  --ink: var(--text);
+  --line: var(--border);
+  --red: #ff0055;
+  --red-hover: #ff2a75;
+  --red-glow: rgba(255, 0, 85, 0.45);
+  --muted: var(--secondary-text);
+  --solid: #00f0ff;
+  --on-solid: #07080e;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.6);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.7), 0 0 16px rgba(0,240,255,0.12);
+  --shadow-lg: 0 16px 44px rgba(0,0,0,0.85), 0 0 24px rgba(0,240,255,0.2);
+  --shadow: 0 18px 60px rgba(0,0,0,0.9);
+  color-scheme: dark;
+}
+
+:root[data-theme=cyberpunk] :is(.post,.freshCard,.discoveryCard,.profileCard,.profileEditor,.searchCreator,.searchSuggestionPanel,.searchFiltersPanel,.accountCard,.comment,.settingsSection,.authCard,.featuredPost,.policyGrid article,.accountList article,.achievementGrid article,.eligibility div,.reportDialog form,.emptyFeed,.profileEmpty,.skeletonCard,.homeFreshCard,.detailSidebar,.detail,.formCard,.creatorResults article,.searchResults article,.imageQuality,.livePreview article,.staffSection,.staffTable article,.staffEmpty,.staffStat,.creatorProfile,.staffAuditCard,.moderationCard,.staffFilters,.staffDialog,.accountAction,.creatorResults>a,.communitySearch,.searchSuggestions) {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+:root[data-theme=cyberpunk] :is(.lede,.eyebrow,.meta p,.user small,.sectionHead p,.authorBlock,.commentBody,.authDescription,.homeFreshFooter,.detailDescription,.imageFacts,.previewAuthor,.staffHint,.profileUsername,.profileDetails,.cardDescription,.noCommentsState) {
+  color: var(--muted);
+}
+
+:root[data-theme=cyberpunk] :is(input,textarea,select) {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme=cyberpunk] :is(.brand span,.staffDashboardLink,.categoryFilters button.active,.downloadButton,.avatarUploadButton) {
+  background: var(--solid) !important;
+  color: var(--on-solid) !important;
+  border-color: var(--solid) !important;
+  box-shadow: 0 0 16px rgba(0,240,255,0.5);
+}
+
+:root[data-theme=cyberpunk] .heroEditorial h1 {
+  text-shadow: 0 0 32px rgba(0, 240, 255, 0.45);
+}
+
+:root[data-theme=cyberpunk] .primary {
+  background: #00f0ff !important;
+  color: #07080e !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.45) !important;
+  font-weight: 800;
+}
+
+:root[data-theme=cyberpunk] .primary:hover {
+  background: #38f8ff !important;
+  box-shadow: 0 0 28px rgba(56, 248, 255, 0.7) !important;
+}
+
+:root[data-theme=cyberpunk] .heroActions .secondary {
+  border-color: rgba(0, 240, 255, 0.35) !important;
+  background: rgba(23, 27, 41, 0.8) !important;
+  color: #f0f6fc !important;
+}
+
+:root[data-theme=cyberpunk] .heroActions .secondary:hover {
+  background: rgba(0, 240, 255, 0.15) !important;
+  border-color: #00f0ff !important;
+}
+
+:root[data-theme=cyberpunk] .creatorBadge {
+  background: rgba(0, 240, 255, 0.15);
+  color: #00f0ff;
+  border-color: rgba(0, 240, 255, 0.4);
+}
+
+:root[data-theme=cyberpunk] .pinnedBadge {
+  background: rgba(255, 0, 85, 0.18);
+  color: #ff3377;
+  border-color: rgba(255, 0, 85, 0.4);
+}
+
+:root[data-theme=cyberpunk] .likeButton.liked,
+:root[data-theme=cyberpunk] .commentLikeBtn.liked {
+  background: rgba(255, 0, 85, 0.2);
+  color: #ff0055;
+  border-color: #ff0055;
+  box-shadow: 0 0 12px rgba(255, 0, 85, 0.4);
+}
+

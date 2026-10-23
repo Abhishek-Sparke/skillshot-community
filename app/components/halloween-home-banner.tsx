@@ -15,7 +15,9 @@ function getSnapshot() {
   if (typeof document === 'undefined') return 'system';
   const pref = document.documentElement.dataset.preference || 'system';
   const theme = document.documentElement.dataset.theme || 'dark';
-  return pref === 'halloween' || theme === 'halloween' ? 'halloween' : pref;
+  if (pref === 'halloween' || theme === 'halloween') return 'halloween';
+  if (pref === 'cyberpunk' || theme === 'cyberpunk') return 'cyberpunk';
+  return pref;
 }
 
 function getServerSnapshot() {
@@ -63,6 +65,14 @@ export default function HalloweenHomeBanner() {
 
             <div className="quickThemePills" aria-label="Quick theme selection">
               <span className="quickThemeLabel">Theme:</span>
+              <button
+                type="button"
+                className={`themePill ${currentTheme === 'cyberpunk' ? 'selected' : ''}`}
+                onClick={() => selectTheme('cyberpunk')}
+                title="Cyberpunk theme"
+              >
+                ⚡ Cyberpunk
+              </button>
               <button
                 type="button"
                 className={`themePill ${currentTheme === 'halloween' ? 'selected' : ''}`}

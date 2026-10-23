@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CreatorUsername from './creator-username';
 import type { UserRole } from '../../lib/roles';
 import { type CreatorRankId, CREATOR_RANKS } from '../../lib/creator-rank';
@@ -10,6 +10,8 @@ export type CreatorCardData = {
   username: string;
   displayName: string;
   avatarUrl?: string;
+  bannerUrl?: string;
+  bio?: string;
   role?: UserRole;
   creatorRank?: CreatorRankId | string;
   skills?: string[];
@@ -34,12 +36,39 @@ function compactNumber(value: number) {
 }
 
 export default function CreatorCard({ data, onFollowToggle, onClose, className = '' }: Props) {
-  const rankKey = (String(data.creatorRank || '').toUpperCase() in CREATOR_RANKS
-    ? String(data.creatorRank).toUpperCase()
+  const [profile, setProfile] = useState<Partial<CreatorCardData>>(data);
+  const rankKey = (String(profile.creatorRank || data.creatorRank || '').toUpperCase() in CREATOR_RANKS
+    ? String(profile.creatorRank || data.creatorRank).toUpperCase()
     : 'NEWCOMER') as CreatorRankId;
   const rankInfo = CREATOR_RANKS[rankKey];
   const [following, setFollowing] = useState(Boolean(data.isFollowing));
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (data.postCount === undefined || !data.avatarUrl) {
+      fetch(`/api/profiles/${encodeURIComponent(data.username)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(res => {
+          if (!active || !res?.profile) return;
+          const p = res.profile;
+          setProfile(prev => ({
+            ...prev,
+            avatarUrl: p.avatar_url ? `/api/avatars/${encodeURIComponent(data.username)}?v=${encodeURIComponent(p.avatar_url)}` : undefined,
+            bannerUrl: p.banner_url ? `/api/banners/${encodeURIComponent(data.username)}?v=${encodeURIComponent(p.banner_url)}` : undefined,
+            bio: p.bio,
+            postCount: p.post_count,
+            followerCount: p.follower_count,
+            isFollowing: p.is_following,
+          }));
+          if (p.is_following !== undefined) {
+            setFollowing(Boolean(p.is_following));
+          }
+        })
+        .catch(() => {});
+    }
+    return () => { active = false; };
+  }, [data.username, data.postCount, data.avatarUrl]);
 
   const handleFollowClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -65,20 +94,22 @@ export default function CreatorCard({ data, onFollowToggle, onClose, className =
     <div className={`creatorIdentityCard ${className}`} onClick={e => e.stopPropagation()}>
       <div className="cardHeader">
         <Link href={`/users/${encodeURIComponent(data.username)}`} className="cardAvatarWrap" onClick={onClose}>
-          {data.avatarUrl ? (
-            <img src={data.avatarUrl} alt="" className="cardAvatar animatedPfp" />
+          {(profile.avatarUrl || data.avatarUrl) ? (
+            <img src={profile.avatarUrl || data.avatarUrl} alt="" className="cardAvatar animatedPfp" />
           ) : (
             <span className="cardAvatarFallback">{initials(data.displayName)}</span>
           )}
         </Link>
         <div className="cardIdentityDetails">
           <div className="cardNameRow">
-            <CreatorUsername name={data.displayName} username={data.username} creatorRank={rankKey} staffRole={data.role} className="cardDisplayName"/>
+            <CreatorUsername name={data.displayName} username={data.username} creatorRank={rankKey} staffRole={data.role} className="cardDisplayName" enableCard={false}/>
           </div>
           <p className="cardRankTitle">{rankInfo.label}</p>
           <span className="cardHandle">@{data.username}</span>
         </div>
       </div>
+
+      {profile.bio && <p className="cardBioSnippet">{profile.bio}</p>}
 
       {data.skills && data.skills.length > 0 && (
         <div className="cardSkillsRow">
@@ -90,11 +121,11 @@ export default function CreatorCard({ data, onFollowToggle, onClose, className =
 
       <div className="cardStatsRow">
         <div className="cardStat">
-          <strong>{compactNumber(data.postCount ?? 0)}</strong>
+          <strong>{compactNumber(profile.postCount ?? data.postCount ?? 0)}</strong>
           <span>Skillshots</span>
         </div>
         <div className="cardStat">
-          <strong>{compactNumber(data.followerCount ?? 0)}</strong>
+          <strong>{compactNumber(profile.followerCount ?? data.followerCount ?? 0)}</strong>
           <span>Followers</span>
         </div>
       </div>
