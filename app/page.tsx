@@ -4,6 +4,7 @@ import HomeFresh, { HomeFreshSkeleton } from './components/home-fresh';
 import PublicNavbar from './components/public-navbar';
 import CreatorUsername from './components/creator-username';
 import DesktopSideAnimations from './components/desktop-side-animations';
+import HalloweenHomeBanner from './components/halloween-home-banner';
 import { getChatGPTUser } from './chatgpt-auth';
 import { signInPath } from '../lib/auth-path';
 import { getReadyDb } from '../lib/db';
@@ -183,6 +184,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Halloween Seasonal Showcase & Quick Theme Option */}
+      <HalloweenHomeBanner />
 
       {/* 2. FRESH FROM THE COMMUNITY (Main Visual Showcase, 3 newest shots) */}
       <section className="feed shell" id="explore">

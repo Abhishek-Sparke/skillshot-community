@@ -32,7 +32,7 @@ export async function GET(request: Request) {
   if (following && !user) return Response.json({ error: 'Sign in to see creators you follow.' }, { status: 401 });
   const sql = await getReadyDb();
   const rows = await sql.query(`
-    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,p.image_width,p.image_height,p.image_type,
+    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.capture_specs, p.created_at,p.image_width,p.image_height,p.image_type,
       u.display_name, u.username, u.email, u.role, u.avatar_url, u.creator_rank,
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.id) AS reaction_count,
       (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id AND c.status='VISIBLE') AS comment_count,
@@ -75,6 +75,7 @@ export async function GET(request: Request) {
     imageUrl: String(row.image_type).toLowerCase() === 'image/gif' ? `/api/images/${row.id}` : `/api/images/${row.id}?variant=thumbnail`,
     previewUrl: `/api/images/${row.id}?variant=display`, downloadUrl: `/api/images/${row.id}?download=1`,
     isOwner: user?.userId === row.user_id, viewerLiked: Boolean(row.viewer_liked), viewerSaved: Boolean(row.viewer_saved),
+    captureSpecs: row.capture_specs && typeof row.capture_specs === 'object' ? row.capture_specs : {},
   })), nextCursor: sort === 'latest' && hasMore ? encodeCursor(visibleRows[visibleRows.length - 1]) : null,
     signedIn: Boolean(user) });
 }
@@ -128,6 +129,7 @@ export async function POST(request: Request) {
       image = new File([new Uint8Array(bytes)], pathname.split('/').pop()!, { type: staged.blob.contentType });
       data = new FormData();
       for (const key of ['title', 'description', 'tags', 'skills', 'category']) data.set(key, typeof body[key] === 'string' ? body[key] as string : '');
+      if (body.capture_specs) data.set('capture_specs', typeof body.capture_specs === 'string' ? body.capture_specs : JSON.stringify(body.capture_specs));
     } else {
       // Compatibility for existing clients; the website now stages directly in
       // private Blob storage so 10 MB uploads do not cross the Function body cap.
@@ -147,6 +149,11 @@ export async function POST(request: Request) {
     const skills = String(data.get('skills') || '').split(',').map(value => value.trim().slice(0, 40)).filter(Boolean).slice(0, 8);
     const requestedCategory = String(data.get('category') || 'Other');
     const category = categories.has(requestedCategory) ? requestedCategory : 'Other';
+    const rawSpecs = String(data.get('capture_specs') || '');
+    let captureSpecs: Record<string, unknown> = {};
+    if (rawSpecs) {
+      try { captureSpecs = JSON.parse(rawSpecs); } catch { /* ignore */ }
+    }
     const sourceBuffer = Buffer.from(await image.arrayBuffer());
     let previews: string[];
     try { previews = await moderationFrames(sourceBuffer, image.type); }
@@ -175,8 +182,8 @@ export async function POST(request: Request) {
     const thumbnail = await put(`shots/${userId}/${id}/thumbnail.webp`, processed.thumbnail, { access: 'private', addRandomSuffix: false, contentType: 'image/webp' });
     uploaded.push(thumbnail.pathname);
     const held = textDecision.level !== 'SAFE' || (process.env.MODERATION_STRICT !== 'false' && imageDecision.level !== 'SAFE');
-    const writes = [sql.query(`INSERT INTO posts (id,user_id,title,description,tags,skills,category,image_url,display_url,thumbnail_url,image_type,image_size,display_size,thumbnail_size,image_width,image_height,status,moderation_category) VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`, [
-      id, userId, title, description, JSON.stringify(tags), JSON.stringify(skills), category, original.pathname, display.pathname, thumbnail.pathname, image.type, image.size, processed.display.length, processed.thumbnail.length, processed.width, processed.height, held ? 'PENDING_MODERATION' : 'VISIBLE', textDecision.category ?? imageDecision.category ?? null,
+    const writes = [sql.query(`INSERT INTO posts (id,user_id,title,description,tags,skills,category,image_url,display_url,thumbnail_url,image_type,image_size,display_size,thumbnail_size,image_width,image_height,status,moderation_category,capture_specs) VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb)`, [
+      id, userId, title, description, JSON.stringify(tags), JSON.stringify(skills), category, original.pathname, display.pathname, thumbnail.pathname, image.type, image.size, processed.display.length, processed.thumbnail.length, processed.width, processed.height, held ? 'PENDING_MODERATION' : 'VISIBLE', textDecision.category ?? imageDecision.category ?? null, JSON.stringify(captureSpecs),
     ])];
     if (held) writes.push(sql.query(`INSERT INTO moderation_queue(id,source,target_type,target_id,creator_id,category,severity,provider_ref) VALUES($1,'AUTOMATIC','SKILLSHOT',$2,$3,$4,$5,$6)`, [crypto.randomUUID(), id, userId, textDecision.category ?? imageDecision.category ?? 'REVIEW', 'BORDERLINE', textDecision.providerRef ?? imageDecision.providerRef ?? null]));
     if (stagingPath) writes.push(sql.query(`UPDATE upload_sessions SET state='COMPLETE',post_id=$2 WHERE pathname=$1`, [stagingPath, id]));

@@ -58,6 +58,7 @@ export async function getReadyDb() {
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS image_height integer`);
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS skills jsonb NOT NULL DEFAULT '[]'::jsonb`);
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS category text NOT NULL DEFAULT 'Other'`);
+    await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS capture_specs jsonb NOT NULL DEFAULT '{}'::jsonb`);
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS deleted_at timestamptz`);
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS legal_hold boolean NOT NULL DEFAULT false`);
     await sql.query(`ALTER TABLE posts ADD COLUMN IF NOT EXISTS appeal_hold boolean NOT NULL DEFAULT false`);

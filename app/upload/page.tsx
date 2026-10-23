@@ -29,6 +29,11 @@ export default function Upload() {
   const [skills, setSkills] = useState('');
   const [tags, setTags] = useState('');
   const [category, setCategory] = useState('');
+  const [specsOpen, setSpecsOpen] = useState(false);
+  const [game, setGame] = useState('');
+  const [platform, setPlatform] = useState('');
+  const [resolution, setResolution] = useState('');
+  const [tools, setTools] = useState('');
 
   useEffect(() => {
     if (!selectedFile || !sourceInfo) return;
@@ -144,12 +149,19 @@ export default function Upload() {
         console.warn('Direct blob staging failed, falling back to direct server upload:', stagingErr);
       }
 
+      const captureSpecs = {
+        game: game.trim(),
+        platform: platform.trim(),
+        resolution: resolution.trim(),
+        tools: tools.split(',').map(t => t.trim()).filter(Boolean),
+      };
+
       setStatus('Checking and optimizing image…');
 
       if (stagedPath) {
         response = await fetch('/api/posts', {
           method: 'POST', headers: { 'content-type': 'application/json' }, signal: controller.signal,
-          body: JSON.stringify({ pathname: stagedPath, title: postTitle, description: postDescription, skills: postSkills, tags: postTags, category: postCategory }),
+          body: JSON.stringify({ pathname: stagedPath, title: postTitle, description: postDescription, skills: postSkills, tags: postTags, category: postCategory, capture_specs: captureSpecs }),
         });
       } else {
         const directData = new FormData();
@@ -159,6 +171,7 @@ export default function Upload() {
         directData.set('skills', postSkills);
         directData.set('tags', postTags);
         directData.set('category', postCategory);
+        directData.set('capture_specs', JSON.stringify(captureSpecs));
 
         response = await fetch('/api/posts', {
           method: 'POST',
@@ -212,6 +225,66 @@ export default function Upload() {
         <label>Skills<input name="skills" maxLength={300} placeholder="Add skills..." value={skills} onChange={event => setSkills(event.target.value)}/><small>Separate skills with commas.</small></label>
         <label>Tags<input name="tags" maxLength={300} placeholder="Add tags..." value={tags} onChange={event=>setTags(event.target.value)}/></label>
         <label>Category <small>(optional)</small><select name="category" value={category} onChange={event => setCategory(event.target.value)}><option value="">Choose a category</option>{CATEGORIES.map(value => <option key={value}>{value}</option>)}</select></label>
+        <div className="captureSpecsAccordion">
+          <button
+            type="button"
+            className="specsAccordionToggle"
+            onClick={() => setSpecsOpen(v => !v)}
+            aria-expanded={specsOpen}
+          >
+            <span>🎮 Capture Specs & Gear <small>(Optional photo mode info)</small></span>
+            <b>{specsOpen ? '−' : '+'}</b>
+          </button>
+          {specsOpen && (
+            <div className="specsFieldsGrid">
+              <label>
+                Game / Software / Engine
+                <input
+                  name="game"
+                  maxLength={60}
+                  placeholder="e.g. Cyberpunk 2077, Blender, Unreal Engine 5, Elden Ring"
+                  value={game}
+                  onChange={e => setGame(e.target.value)}
+                />
+              </label>
+              <label>
+                Platform
+                <select name="platform" value={platform} onChange={e => setPlatform(e.target.value)}>
+                  <option value="">Select Platform</option>
+                  <option value="PC">PC</option>
+                  <option value="PlayStation 5">PlayStation 5</option>
+                  <option value="Xbox Series X">Xbox Series X</option>
+                  <option value="Nintendo Switch">Nintendo Switch</option>
+                  <option value="Steam Deck">Steam Deck</option>
+                  <option value="Mac">Mac</option>
+                  <option value="Mobile">Mobile</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <label>
+                Display Resolution
+                <input
+                  name="resolution"
+                  maxLength={40}
+                  placeholder="e.g. 4K UHD, 1440p, Ultrawide 21:9"
+                  value={resolution}
+                  onChange={e => setResolution(e.target.value)}
+                />
+              </label>
+              <label>
+                Tools & Enhancements
+                <input
+                  name="tools"
+                  maxLength={120}
+                  placeholder="e.g. In-Game Photo Mode, ReShade, Ray Tracing, Ansel"
+                  value={tools}
+                  onChange={e => setTools(e.target.value)}
+                />
+                <small>Separate tools with commas.</small>
+              </label>
+            </div>
+          )}
+        </div>
         <button className="primary" type="submit" disabled={busy || preparing || !prepared}>{busy ? 'Publishing…' : preparing ? 'Checking image…' : !prepared ? 'Select an image to publish' : 'Publish Skillshot'}</button>
         {busy && <div className="uploadProgress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={`Upload ${progress}%`}><span style={{ width: `${progress}%` }}/></div>}
         <p role="status" aria-live="polite">{status}{busy && status === 'Uploading…' ? ` ${progress}%` : ''}</p>

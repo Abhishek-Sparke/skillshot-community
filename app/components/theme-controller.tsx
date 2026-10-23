@@ -2,8 +2,12 @@
 import { useEffect } from 'react';
 import { THEMES, type Theme } from '../../lib/settings-policy';
 export function applyTheme(theme:Theme){
-  const dark=theme==='dark'||theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.dataset.theme=dark?'dark':'light';
+  if (theme === 'halloween') {
+    document.documentElement.dataset.theme = 'halloween';
+  } else {
+    const dark=theme==='dark'||theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.dataset.theme=dark?'dark':'light';
+  }
   document.documentElement.dataset.preference=theme;
   try{localStorage.setItem('skillshot-theme',theme);}catch{}
   document.cookie=`skillshot-theme=${theme}; Path=/; Max-Age=31536000; SameSite=Lax`;

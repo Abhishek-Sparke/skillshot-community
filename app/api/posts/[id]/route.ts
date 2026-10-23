@@ -9,7 +9,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const user = await getChatGPTUser();
   const sql = await getReadyDb();
   const rows = await sql.query(`
-    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.created_at,p.image_width,p.image_height,
+    SELECT p.id, p.user_id, p.title, p.description, p.tags, p.skills, p.category, p.capture_specs, p.created_at,p.image_width,p.image_height,
       u.display_name, u.username, u.email, u.role,u.avatar_url,u.creator_rank,
       (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.id) AS reaction_count,
       (SELECT COUNT(*) FROM comments c WHERE c.post_id=p.id AND c.status='VISIBLE') AS comment_count,
@@ -24,7 +24,9 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const viewerPrincipal=viewer&&'principal'in viewer?viewer.principal:null;
   return Response.json({ post: {
     id: row.id, title: row.title, description: row.description,
-    tags: Array.isArray(row.tags) ? row.tags : [], skills: Array.isArray(row.skills) ? row.skills : [], category: row.category || 'Other', author: row.display_name,
+    tags: Array.isArray(row.tags) ? row.tags : [], skills: Array.isArray(row.skills) ? row.skills : [], category: row.category || 'Other',
+    captureSpecs: row.capture_specs && typeof row.capture_specs === 'object' ? row.capture_specs : {},
+    author: row.display_name,
     username: row.username,
     authorRole: normalizeRole(row.role),
     creatorRank: String(row.creator_rank || 'NEWCOMER'),

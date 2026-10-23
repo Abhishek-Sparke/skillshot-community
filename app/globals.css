@@ -7504,3 +7504,488 @@ body, .publicNavbar, .post, .heroCard, .conversation, .detailSidebar, dialog, .s
   border-color: rgba(34, 197, 94, 0.3);
 }
 
+/* ============================================================
+   PRO KEYBOARD SHORTCUTS & FLOATING HELPER
+   ============================================================ */
+.keyboardShortcutFloat {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 80;
+}
+.shortcutFloatBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface-glass, rgba(20, 20, 19, 0.85));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.shortcutFloatBtn:hover {
+  transform: translateY(-2px);
+  border-color: var(--red);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+.shortcutFloatIcon { font-size: 14px; }
+.shortcutFloatKbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+.keyboardActivePost {
+  outline: 2px solid var(--red) !important;
+  outline-offset: 4px !important;
+  box-shadow: 0 0 24px var(--red-glow, rgba(229, 62, 62, 0.3)) !important;
+  transition: outline 0.15s ease, box-shadow 0.15s ease;
+}
+.shortcutModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  animation: modalFadeIn 0.18s ease;
+}
+.shortcutModalCard {
+  width: 100%;
+  max-width: 540px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  animation: modalCardPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalCardPop { from { transform: scale(0.96) translateY(10px); } to { transform: scale(1) translateY(0); } }
+.shortcutModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.shortcutModalTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.shortcutModalIcon {
+  font-size: 28px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+}
+.shortcutModalHeader h2 {
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+.shortcutModalHeader p {
+  font-size: 13px;
+  margin: 0;
+  color: var(--muted);
+}
+.shortcutModalClose {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 14px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.shortcutModalClose:hover { background: var(--surface-soft); }
+.shortcutList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+.shortcutItem {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.shortcutKbd {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink);
+  box-shadow: 0 2px 0 var(--line);
+}
+.shortcutMeta strong {
+  display: block;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.shortcutMeta span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.shortcutCategory {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.shortcutModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--muted);
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.shortcutGotItBtn {
+  background: var(--red);
+  color: #fff;
+  border: 0;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.shortcutGotItBtn:hover { opacity: 0.9; }
+
+/* ============================================================
+   HALLOWEEN HOME BANNER & QUICK SWITCHER
+   ============================================================ */
+.halloweenHomeSection {
+  margin: 16px auto 28px;
+}
+.halloweenCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(22, 14, 36, 0.95), rgba(11, 7, 19, 0.98));
+  border: 1.5px solid rgba(255, 117, 0, 0.35);
+  box-shadow: 0 8px 32px rgba(11, 7, 19, 0.6), 0 0 24px rgba(255, 117, 0, 0.12);
+  padding: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.isHalloweenActive .halloweenCard {
+  border-color: #ff7500;
+  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.8), 0 0 32px rgba(255, 117, 0, 0.28);
+}
+.halloweenDecor {
+  position: absolute;
+  right: 24px;
+  top: 18px;
+  pointer-events: none;
+  font-size: 48px;
+  display: flex;
+  gap: 16px;
+}
+.spookyPumpkinIcon {
+  font-size: 64px;
+  filter: drop-shadow(0 0 16px rgba(255, 117, 0, 0.6));
+  animation: pumpkinPulse 2.8s ease-in-out infinite;
+}
+.spookyFloatingBat {
+  font-size: 26px;
+  animation: batFloat 3.2s ease-in-out infinite alternate;
+}
+.bat2 { animation-delay: 1.6s; }
+@keyframes pumpkinPulse {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.08) rotate(-4deg); }
+}
+@keyframes batFloat {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-14px) rotate(10deg); }
+}
+.halloweenContent {
+  position: relative;
+  z-index: 2;
+  max-width: 680px;
+}
+.halloweenBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 117, 0, 0.18);
+  border: 1px solid rgba(255, 117, 0, 0.45);
+  color: #ff9100;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+.halloweenTitle {
+  font-size: 24px;
+  font-weight: 900;
+  color: #fdf0dc;
+  margin: 0 0 8px;
+  text-shadow: 0 0 18px rgba(255, 117, 0, 0.35);
+}
+.halloweenDescription {
+  font-size: 14.5px;
+  color: #c9b8a6;
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+.halloweenThemeControls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.halloweenToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: #ff7500;
+  color: #0b0713;
+  font-weight: 800;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(255, 117, 0, 0.45);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.halloweenToggleBtn:hover {
+  background: #ff9100;
+  transform: translateY(-2px);
+  box-shadow: 0 0 28px rgba(255, 145, 0, 0.65);
+}
+.halloweenToggleBtn.active {
+  background: rgba(255, 117, 0, 0.2);
+  color: #ff9100;
+  border: 1.5px solid #ff7500;
+  box-shadow: 0 0 14px rgba(255, 117, 0, 0.3);
+}
+.quickThemePills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.quickThemeLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #a89480;
+  margin-right: 4px;
+}
+.themePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(35, 22, 56, 0.8);
+  border: 1px solid rgba(255, 117, 0, 0.25);
+  color: #fdf0dc;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.themePill:hover {
+  background: rgba(255, 117, 0, 0.15);
+  border-color: #ff7500;
+}
+.themePill.selected {
+  background: #ff7500;
+  color: #0b0713;
+  border-color: #ff7500;
+  box-shadow: 0 0 10px rgba(255, 117, 0, 0.4);
+}
+
+/* ============================================================
+   CAPTURE SPECS & GEAR INSPECTOR (Detail Page & Upload)
+   ============================================================ */
+.captureSpecsInspector {
+  margin: 18px 0;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+}
+.specsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+.specsBadge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.specsSub {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.specsPillsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+.specPillItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.specPillIcon {
+  font-size: 18px;
+  flex: none;
+}
+.specPillMeta small {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.specPillMeta strong {
+  display: block;
+  font-size: 13px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.captureSpecsAccordion {
+  margin: 14px 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-soft);
+}
+.specsAccordionToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.specsAccordionToggle small {
+  color: var(--muted);
+  font-weight: normal;
+  margin-left: 6px;
+}
+.specsFieldsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+}
+@media (max-width: 600px) {
+  .specsFieldsGrid { grid-template-columns: 1fr; }
+  .shortcutItem { grid-template-columns: 60px 1fr; }
+  .shortcutCategory { display: none; }
+  .halloweenDecor { display: none; }
+}
+
+/* ============================================================
+   SHIMMER SKELETON PLACEHOLDERS & SMOOTH HYDRATION
+   ============================================================ */
+.detailImageShimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--surface-soft) 25%, #ede8dd 50%, var(--surface-soft) 75%);
+  background-size: 200% 100%;
+  animation: thumbShimmer 1.5s infinite;
+  border-radius: inherit;
+}
+:root[data-theme=dark] .detailImageShimmer,
+:root[data-theme=halloween] .detailImageShimmer {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-soft) 50%, var(--surface) 75%);
+  background-size: 200% 100%;
+}
+.dominantImageStage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--surface-soft);
+}
+.detailImageButton {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.thumbHidden {
+  opacity: 0;
+}
+.thumbFadeIn {
+  opacity: 1;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+

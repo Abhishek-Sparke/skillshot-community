@@ -1,4 +1,4 @@
-export const THEMES = ['light','dark','system'] as const;
+export const THEMES = ['light','dark','system','halloween'] as const;
 export type Theme = typeof THEMES[number];
 export const MESSAGE_PRIVACY_OPTIONS = ['EVERYONE', 'FOLLOWING', 'FOLLOWERS', 'NOBODY'] as const;
 export type MessagePrivacy = typeof MESSAGE_PRIVACY_OPTIONS[number];

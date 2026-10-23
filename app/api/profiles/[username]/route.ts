@@ -74,6 +74,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ username: 
     skillsCount: skillsList.length,
     commentCount,
     isFeatured: featuredRows.length > 0,
+    pinnedCount: featuredRows.length,
+    xp,
   });
   let canMessage = true;
   let canMessageReason = '';
