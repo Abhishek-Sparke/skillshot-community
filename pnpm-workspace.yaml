@@ -1,5 +1,8 @@
 # Keep install-script approval explicit in CI; do not enable all dependency builds.
+packages:
+  - '.'
 strictDepBuilds: true
 allowBuilds:
   'sharp@0.34.0 || 0.34.5': true
   'unrs-resolver@1.12.2': true
+
